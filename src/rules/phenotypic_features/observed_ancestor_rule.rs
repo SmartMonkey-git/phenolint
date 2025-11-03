@@ -1,11 +1,13 @@
+use crate::rules::rule_registry::RuleRegistration;
 use crate::enums::LintingViolations;
 use crate::linting_report::{LintReport, LintReportInfo};
 use crate::rules::utils;
-use crate::traits::RuleCheck;
+use crate::traits::{LintRule, RuleCheck};
 use ontolius::ontology::OntologyTerms;
 use ontolius::ontology::csr::FullCsrOntology;
 use phenopackets::schema::v2::Phenopacket;
 use std::sync::Arc;
+use crate::register_rule;
 
 /// Validates that observed phenotypic terms don't have redundant observed ancestors.
 ///
@@ -37,6 +39,8 @@ impl ObservedAncestorRule {
         ObservedAncestorRule { hpo }
     }
 }
+
+impl LintRule for ObservedAncestorRule { const RULE_ID: &'static str = "PF007"; }
 
 impl RuleCheck for ObservedAncestorRule {
     fn check(&self, phenopacket: &Phenopacket, report: &mut LintReport) {
@@ -80,14 +84,9 @@ impl RuleCheck for ObservedAncestorRule {
         });
     }
 
-    fn rule_id() -> &'static str
-    where
-        Self: Sized,
-    {
-        "PF007"
-    }
-}
 
+}
+register_rule!(ObservedAncestorRule);
 #[cfg(test)]
 mod tests {
     use crate::test_utils::HPO;
@@ -99,6 +98,7 @@ mod tests {
     use phenopackets::schema::v2::Phenopacket;
     use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
     use rstest::rstest;
+    use pretty_assertions::assert_eq;
 
     #[rstest]
     fn test_find_related_phenotypic_features_case_1() {

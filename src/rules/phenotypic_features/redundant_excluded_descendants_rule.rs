@@ -1,11 +1,13 @@
+use crate::rules::rule_registry::RuleRegistration;
 use crate::enums::LintingViolations;
 use crate::linting_report::{LintReport, LintReportInfo};
 use crate::rules::utils;
-use crate::traits::RuleCheck;
+use crate::traits::{LintRule, RuleCheck};
 use ontolius::ontology::OntologyTerms;
 use ontolius::ontology::csr::FullCsrOntology;
 use phenopackets::schema::v2::Phenopacket;
 use std::sync::Arc;
+use crate::register_rule;
 
 /// Validates that excluded phenotypic terms don't have redundant excluded descendants.
 ///
@@ -37,6 +39,7 @@ impl RedundantExcludedDescendantsRule {
     }
 }
 
+impl LintRule for RedundantExcludedDescendantsRule { const RULE_ID: &'static str = "PF008"; }
 impl RuleCheck for RedundantExcludedDescendantsRule {
     fn check(&self, phenopacket: &Phenopacket, report: &mut LintReport) {
         let (_, excluded) = utils::partition_phenotypic_features(phenopacket);
@@ -77,10 +80,9 @@ impl RuleCheck for RedundantExcludedDescendantsRule {
         });
     }
 
-    fn rule_id() -> &'static str
-    where
-        Self: Sized,
-    {
-        "PF008"
-    }
+
 }
+register_rule!(RedundantExcludedDescendantsRule);
+
+
+//TODO: Tests missing

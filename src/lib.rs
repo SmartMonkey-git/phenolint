@@ -6,3 +6,4 @@ pub mod rules;
 #[cfg(test)]
 pub(crate) mod test_utils;
 pub mod traits;
+mod config;

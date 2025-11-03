@@ -1,12 +1,14 @@
+use crate::rules::rule_registry::RuleRegistration;
 use crate::enums::LintingViolations;
 use crate::linting_report::LintReport;
-use crate::traits::RuleCheck;
+use crate::traits::{LintRule, RuleCheck};
 use ontolius::TermId;
 use ontolius::ontology::HierarchyQueries;
 use ontolius::ontology::csr::FullCsrOntology;
 use phenopackets::schema::v2::Phenopacket;
 use std::str::FromStr;
 use std::sync::Arc;
+use crate::register_rule;
 
 #[derive(Debug)]
 /// Validates that phenotypic feature severity terms are descendants of the Severity term.
@@ -42,6 +44,7 @@ impl SeverityOntologyChildRule {
     }
 }
 
+impl LintRule for SeverityOntologyChildRule { const RULE_ID: &'static str = "PF004"; }
 impl RuleCheck for SeverityOntologyChildRule {
     fn check(&self, phenopacket: &Phenopacket, report: &mut LintReport) {
         phenopacket
@@ -58,10 +61,9 @@ impl RuleCheck for SeverityOntologyChildRule {
             })
     }
 
-    fn rule_id() -> &'static str {
-        "PF004"
-    }
+
 }
+register_rule!(SeverityOntologyChildRule);
 
 #[cfg(test)]
 mod tests {
@@ -69,6 +71,7 @@ mod tests {
     use crate::test_utils::HPO;
     use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
     use rstest::rstest;
+    use pretty_assertions::assert_eq;
 
     #[rstest]
     fn test_find_non_severity() {

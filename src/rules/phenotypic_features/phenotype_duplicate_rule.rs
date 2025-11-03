@@ -1,10 +1,11 @@
+use crate::rules::rule_registry::RuleRegistration;
 use crate::enums::{FixAction, LintingViolations};
 use crate::linting_report::{LintReport, LintReportInfo};
-use crate::traits::RuleCheck;
-use log::debug;
+use crate::traits::{LintRule, RuleCheck};
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
 use std::collections::HashMap;
+use crate::register_rule;
 
 #[derive(Debug, Default)]
 /// Validates that phenotypic features are not duplicated within a phenopacket.
@@ -51,10 +52,13 @@ impl PhenotypeDuplicateRule {
             }
         }
 
-        debug!("Duplicate phenotypic features: {:?}", duplicates);
         duplicates
     }
 }
+register_rule!(PhenotypeDuplicateRule);
+
+impl LintRule for PhenotypeDuplicateRule { const RULE_ID: &'static str = "PF006"; }
+
 impl RuleCheck for PhenotypeDuplicateRule {
     fn check(&self, phenopacket: &Phenopacket, report: &mut LintReport) {
         let duplicate_features =
@@ -82,16 +86,13 @@ impl RuleCheck for PhenotypeDuplicateRule {
         }
     }
 
-    fn rule_id() -> &'static str {
-        "PF006"
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::HPO;
     use rstest::rstest;
+    use pretty_assertions::assert_eq;
 
     #[rstest]
     fn test_find_duplicate_phenotypic_features() {

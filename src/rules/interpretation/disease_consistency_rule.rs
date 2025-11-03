@@ -1,8 +1,10 @@
+use crate::rules::rule_registry::RuleRegistration;
 use crate::enums::{FixAction, LintingViolations};
 use crate::linting_report::{LintReport, LintReportInfo};
-use crate::traits::RuleCheck;
+use crate::traits::{LintRule, RuleCheck};
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::OntologyClass;
+use crate::register_rule;
 
 #[derive(Debug, Default)]
 /// Validates that diseases in interpretations are also present in the diseases list.
@@ -29,6 +31,8 @@ use phenopackets::schema::v2::core::OntologyClass;
 /// data integrity across the phenopacket structure.
 struct DiseaseConsistencyRule;
 
+
+impl LintRule for DiseaseConsistencyRule{ const RULE_ID: &'static str = "INTER001"; }
 impl RuleCheck for DiseaseConsistencyRule {
     fn check(&self, phenopacket: &Phenopacket, report: &mut LintReport) {
         let inter_diseases: Vec<OntologyClass> = phenopacket
@@ -62,10 +66,10 @@ impl RuleCheck for DiseaseConsistencyRule {
         }
     }
 
-    fn rule_id() -> &'static str {
-        "INTER001"
-    }
 }
+
+register_rule!(DiseaseConsistencyRule);
+
 
 #[cfg(test)]
 mod tests {

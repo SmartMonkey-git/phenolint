@@ -1,12 +1,14 @@
 use crate::enums::LintingViolations;
 use crate::linting_report::LintReport;
-use crate::traits::RuleCheck;
+use crate::traits::{LintRule, RuleCheck};
 use ontolius::TermId;
 use ontolius::ontology::HierarchyQueries;
 use ontolius::ontology::csr::FullCsrOntology;
 use phenopackets::schema::v2::Phenopacket;
 use std::str::FromStr;
 use std::sync::Arc;
+use crate::register_rule;
+use crate::rules::rule_registry::RuleRegistration;
 
 #[derive(Debug)]
 /// Validates that phenotypic feature modifiers are descendants of the Clinical Modifier term.
@@ -42,6 +44,8 @@ impl ModifierOntologyChildRule {
     }
 }
 
+impl LintRule for ModifierOntologyChildRule { const RULE_ID: &'static str = "PF002"; }
+
 impl RuleCheck for ModifierOntologyChildRule {
     fn check(&self, phenopacket: &Phenopacket, report: &mut LintReport) {
         phenopacket
@@ -59,17 +63,17 @@ impl RuleCheck for ModifierOntologyChildRule {
             })
     }
 
-    fn rule_id() -> &'static str {
-        "PF002"
-    }
 }
 
+// TODO: Write register function
+register_rule!(ModifierOntologyChildRule);
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::test_utils::HPO;
     use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
     use rstest::rstest;
+    use pretty_assertions::assert_eq;
 
     #[rstest]
     fn test_find_non_modifiers() {

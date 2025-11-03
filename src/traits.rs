@@ -1,11 +1,16 @@
 use crate::linting_report::LintReport;
 use phenopackets::schema::v2::Phenopacket;
 
+
+pub trait LintRule: RuleCheck{
+    const RULE_ID: &'static str;
+}
+
+
 pub trait RuleCheck {
+
     fn check(&self, phenopacket: &Phenopacket, report: &mut LintReport);
-    fn rule_id() -> &'static str
-    where
-        Self: Sized;
+
 }
 
 pub(crate) trait Lint<T> {

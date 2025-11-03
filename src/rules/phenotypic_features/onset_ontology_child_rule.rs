@@ -1,6 +1,7 @@
+use crate::rules::rule_registry::RuleRegistration;
 use crate::enums::LintingViolations;
 use crate::linting_report::LintReport;
-use crate::traits::RuleCheck;
+use crate::traits::{LintRule, RuleCheck};
 use ontolius::TermId;
 use ontolius::ontology::HierarchyQueries;
 use ontolius::ontology::csr::FullCsrOntology;
@@ -8,6 +9,7 @@ use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::time_element::Element;
 use std::str::FromStr;
 use std::sync::Arc;
+use crate::register_rule;
 
 #[derive(Debug)]
 /// Validates that phenotypic feature onset terms are descendants of the Onset term.
@@ -44,6 +46,8 @@ impl OnsetOntologyChildRule {
     }
 }
 
+impl LintRule for OnsetOntologyChildRule { const RULE_ID: &'static str = "PF003"; }
+
 impl RuleCheck for OnsetOntologyChildRule {
     fn check(&self, phenopacket: &Phenopacket, report: &mut LintReport) {
         for feature in &phenopacket.phenotypic_features {
@@ -65,10 +69,9 @@ impl RuleCheck for OnsetOntologyChildRule {
         }
     }
 
-    fn rule_id() -> &'static str {
-        "PF003"
-    }
+
 }
+register_rule!(OnsetOntologyChildRule);
 
 #[cfg(test)]
 mod tests {
@@ -76,6 +79,7 @@ mod tests {
     use crate::test_utils::HPO;
     use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature, TimeElement};
     use rstest::rstest;
+    use pretty_assertions::assert_eq;
 
     #[rstest]
     fn test_find_non_onsets() {

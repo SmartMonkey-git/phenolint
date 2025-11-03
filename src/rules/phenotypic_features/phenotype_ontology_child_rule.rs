@@ -1,3 +1,4 @@
+use crate::rules::rule_registry::RuleRegistration;
 use ontolius::TermId;
 use ontolius::ontology::HierarchyQueries;
 use ontolius::ontology::csr::FullCsrOntology;
@@ -5,9 +6,10 @@ use phenopackets::schema::v2::Phenopacket;
 
 use crate::enums::LintingViolations;
 use crate::linting_report::LintReport;
-use crate::traits::RuleCheck;
+use crate::traits::{LintRule, RuleCheck};
 use std::str::FromStr;
 use std::sync::Arc;
+use crate::register_rule;
 
 #[derive(Debug)]
 /// Validates that phenotypic features are descendants of the Phenotypic abnormality term.
@@ -36,6 +38,8 @@ pub struct PhenotypeOntologyChildRule {
     phenotypic_abnormality: TermId,
 }
 
+impl LintRule for PhenotypeOntologyChildRule { const RULE_ID: &'static str = "PF001"; }
+
 impl RuleCheck for PhenotypeOntologyChildRule {
     fn check(&self, phenopacket: &Phenopacket, report: &mut LintReport) {
         phenopacket
@@ -53,9 +57,7 @@ impl RuleCheck for PhenotypeOntologyChildRule {
             })
     }
 
-    fn rule_id() -> &'static str {
-        "PF001"
-    }
+
 }
 impl PhenotypeOntologyChildRule {
     pub fn new(hpo: Arc<FullCsrOntology>) -> Self {
@@ -65,6 +67,7 @@ impl PhenotypeOntologyChildRule {
         }
     }
 }
+register_rule!(PhenotypeOntologyChildRule);
 
 #[cfg(test)]
 mod tests {
@@ -72,7 +75,7 @@ mod tests {
     use crate::test_utils::HPO;
     use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
     use rstest::rstest;
-
+    use pretty_assertions::assert_eq;
     #[rstest]
     fn test_find_non_phenotypic_abnormalities() {
         let rule = PhenotypeOntologyChildRule::new(HPO.clone());

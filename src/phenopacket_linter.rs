@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 #![allow(unused)]
-use crate::error::LintingError;
+use crate::error::{InstantiationError, LintingError};
 use crate::linting_report::LintReport;
 use crate::traits::{Lint, RuleCheck};
 use phenopackets::schema::v2::Phenopacket;
@@ -14,6 +14,8 @@ use std::path::PathBuf;
 use std::rc::Rc;
 use std::str::FromStr;
 use std::sync::Arc;
+use crate::config::config_loader::ConfigLoader;
+use crate::config::linter_config::LinterConfig;
 
 struct PhenopacketLinter {
     rules: Vec<Box<dyn RuleCheck>>,
@@ -70,6 +72,25 @@ impl PhenopacketLinter {
         });
 
         Ok(())
+    }
+}
+
+
+impl TryFrom<LinterConfig> for PhenopacketLinter {
+    type Error = InstantiationError;
+
+    fn try_from(config: LinterConfig) -> Result<Self, Self::Error> {
+        config.
+    }
+}
+impl TryFrom<&PathBuf> for PhenopacketLinter
+{
+    type Error = InstantiationError;
+
+    fn try_from(value: &PathBuf) -> Result<Self, Self::Error> {
+        let config: LinterConfig = ConfigLoader::load(value.clone())?;
+
+
     }
 }
 

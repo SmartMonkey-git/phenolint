@@ -1,10 +1,12 @@
+use crate::rules::rule_registry::RuleRegistration;
 use crate::enums::LintingViolations;
 use crate::linting_report::LintReport;
-use crate::traits::RuleCheck;
+use crate::traits::{LintRule, RuleCheck};
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::OntologyClass;
 use regex::Regex;
 use serde_json::Value;
+use crate::register_rule;
 
 /// Validator for ensuring ontology term identifiers conform to CURIE format.
 ///
@@ -15,7 +17,7 @@ use serde_json::Value;
 /// consists of alphanumeric characters and underscores.
 #[derive(Debug, Default)]
 pub struct CurieFormatRule;
-
+impl LintRule for CurieFormatRule { const RULE_ID: &'static str = "CURIE:001"; }
 impl RuleCheck for CurieFormatRule {
     /// Validates that all ontology class identifiers in a phenopacket are valid CURIEs.
     ///
@@ -37,9 +39,7 @@ impl RuleCheck for CurieFormatRule {
         Self::inner_validate(value, report);
     }
 
-    fn rule_id() -> &'static str {
-        "CURIE:001"
-    }
+
 }
 impl CurieFormatRule {
     fn inner_validate(value: Value, report: &mut LintReport) {
@@ -78,6 +78,9 @@ impl CurieFormatRule {
         }
     }
 }
+
+register_rule!(CurieFormatRule);
+
 
 #[cfg(test)]
 mod tests {
