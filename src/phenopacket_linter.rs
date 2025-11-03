@@ -75,7 +75,7 @@ impl PhenopacketLinter {
     }
 }
 
-
+/*
 impl TryFrom<LinterConfig> for PhenopacketLinter {
     type Error = InstantiationError;
 
@@ -92,7 +92,7 @@ impl TryFrom<&PathBuf> for PhenopacketLinter
 
 
     }
-}
+}*/
 
 #[cfg(test)]
 mod tests {
