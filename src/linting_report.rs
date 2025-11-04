@@ -2,19 +2,19 @@ use crate::enums::{FixAction, LintingViolations};
 use phenopackets::schema::v2::Phenopacket;
 
 #[derive(Clone, Debug)]
-pub(crate) struct LintReportInfo {
+pub struct LintReportInfo {
     violation: LintingViolations,
     fix: Option<FixAction>,
 }
 
 impl LintReportInfo {
-    pub(crate) fn new(violation: LintingViolations, fix: Option<FixAction>) -> Self {
+    pub fn new(violation: LintingViolations, fix: Option<FixAction>) -> Self {
         Self { violation, fix }
     }
 }
 
 #[derive(Clone, Debug, Default)]
-pub(crate) struct LintReport {
+pub struct LintReport {
     pub fixed_phenopacket: Option<Phenopacket>,
     pub report_info: Vec<LintReportInfo>,
 }

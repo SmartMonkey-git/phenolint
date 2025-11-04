@@ -31,7 +31,7 @@ use crate::rules::rule_registry::RuleRegistration;
 /// invalid because it's a phenotypic abnormality term, not a clinical modifier.
 /// Valid modifiers include terms like "Severe" (HP:0012828) or "Progressive" (HP:0003676),
 /// which are descendants of HP:0012823.
-#[lint_rule(id = "PF002")]
+//#[lint_rule(id = "PF002")]
 pub struct ModifierOntologyChildRule {
     hpo: Arc<FullCsrOntology>,
     clinical_modifiers: TermId,

@@ -31,7 +31,7 @@ use crate::register_rule;
 /// its ancestor "Abnormal heart morphology" (HP:0001627) as observed would be flagged
 /// as redundant. The specific term already conveys all the information of the general
 /// term, making the ancestor annotation unnecessary.
-#[lint_rule(id = "PF007")]
+//#[lint_rule(id = "PF007")]
 struct ObservedAncestorRule {
     hpo: Arc<FullCsrOntology>,
 }

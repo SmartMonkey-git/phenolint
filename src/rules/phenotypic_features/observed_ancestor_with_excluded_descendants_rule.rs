@@ -31,7 +31,7 @@ use crate::register_rule;
 /// marking its descendant "Ventricular septal defect" (HP:0001629) as excluded would
 /// be flagged as contradictory. The presence of the general heart abnormality implies
 /// that specific heart defects cannot be categorically ruled out.
-#[lint_rule(id = "PF009")]
+//#[lint_rule(id = "PF009")]
 struct ObservedAncestorWithExcludedDescendantsRule {
     hpo: Arc<FullCsrOntology>,
 }

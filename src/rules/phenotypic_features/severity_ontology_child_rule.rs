@@ -31,7 +31,7 @@ use crate::register_rule;
 /// because it's a phenotypic abnormality term, not a severity term. Valid severity
 /// terms include "Severe" (HP:0012828), "Moderate" (HP:0012826), "Mild" (HP:0012825),
 /// or "Profound" (HP:0012829), which are all descendants of HP:0012824.
-#[lint_rule(id = "PF004")]
+//#[lint_rule(id = "PF004")]
 pub struct SeverityOntologyChildRule {
     hpo: Arc<FullCsrOntology>,
     severity: TermId,

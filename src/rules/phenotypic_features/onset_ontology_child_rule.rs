@@ -34,7 +34,7 @@ use crate::register_rule;
 /// Valid onset terms include "Congenital onset" (HP:0003577), "Adult onset" (HP:0003581),
 /// or "Childhood onset" (HP:0011463), which are all descendants of HP:0003674.
 ///
-#[lint_rule(id = "PF003")]
+//#[lint_rule(id = "PF003")]
 pub struct OnsetOntologyChildRule {
     hpo: Arc<FullCsrOntology>,
     onsets: TermId,

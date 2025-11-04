@@ -3,7 +3,7 @@ use phenopackets::schema::v2::Phenopacket;
 
 
 // TODO: + Default
-pub trait LintRule: RuleCheck{
+pub trait LintRule: RuleCheck + Default  {
     const RULE_ID: &'static str;
 }
 

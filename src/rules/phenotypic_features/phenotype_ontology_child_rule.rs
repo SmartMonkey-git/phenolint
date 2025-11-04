@@ -34,7 +34,7 @@ use crate::register_rule;
 /// HP:0000118. Valid phenotypic features include terms like "Seizure" (HP:0001250)
 /// or "Intellectual disability" (HP:0001249), which are part of the phenotypic
 /// abnormality hierarchy.
-#[lint_rule(id = "PF001")]
+//#[lint_rule(id = "PF001")]
 pub struct PhenotypeOntologyChildRule {
     hpo: Arc<FullCsrOntology>,
     phenotypic_abnormality: TermId,

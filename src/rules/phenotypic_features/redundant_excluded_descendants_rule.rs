@@ -30,7 +30,7 @@ use crate::register_rule;
 /// descendant "Ventricular septal defect" (HP:0001629) would be flagged as redundant,
 /// since the more general exclusion already covers all specific heart defects.
 #[derive(Debug)]
-#[lint_rule(id = "PF008")]
+//#[lint_rule(id = "PF008")]
 struct RedundantExcludedDescendantsRule {
     hpo: Arc<FullCsrOntology>,
 }
