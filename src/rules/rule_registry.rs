@@ -22,6 +22,7 @@ mod tests {
     use std::collections::HashSet;
     use rstest::rstest;
     use inventory;
+    use regex::Regex;
     use crate::rules::rule_registry::RuleRegistration;
 
     #[rstest]
@@ -33,5 +34,17 @@ mod tests {
             }
             seen_ids.insert(r.rule_id);
         });
+
+
+    }
+
+    #[rstest]
+    fn test_rule_format(){
+        let regex =Regex::new("[A-Z]{1,5}[0-9]{3}").unwrap();
+
+        inventory::iter::<RuleRegistration>().for_each(|r| {
+            regex.is_match(&r.rule_id);
+        });
+
     }
 }
