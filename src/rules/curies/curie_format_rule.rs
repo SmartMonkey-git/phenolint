@@ -6,6 +6,7 @@ use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::OntologyClass;
 use regex::Regex;
 use serde_json::Value;
+use phenolint_macros::lint_rule;
 use crate::register_rule;
 
 /// Validator for ensuring ontology term identifiers conform to CURIE format.
@@ -16,8 +17,8 @@ use crate::register_rule;
 /// letters, numbers, and underscores starting with a letter, and LocalID
 /// consists of alphanumeric characters and underscores.
 #[derive(Debug, Default)]
+#[lint_rule(id = "CURIE001")]
 pub struct CurieFormatRule;
-impl LintRule for CurieFormatRule { const RULE_ID: &'static str = "CURIE:001"; }
 impl RuleCheck for CurieFormatRule {
     /// Validates that all ontology class identifiers in a phenopacket are valid CURIEs.
     ///
@@ -78,8 +79,6 @@ impl CurieFormatRule {
         }
     }
 }
-
-register_rule!(CurieFormatRule);
 
 
 #[cfg(test)]

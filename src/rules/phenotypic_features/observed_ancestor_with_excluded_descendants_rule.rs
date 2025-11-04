@@ -7,6 +7,7 @@ use ontolius::ontology::OntologyTerms;
 use ontolius::ontology::csr::FullCsrOntology;
 use phenopackets::schema::v2::Phenopacket;
 use std::sync::Arc;
+use phenolint_macros::lint_rule;
 use crate::register_rule;
 
 #[derive(Debug)]
@@ -30,6 +31,7 @@ use crate::register_rule;
 /// marking its descendant "Ventricular septal defect" (HP:0001629) as excluded would
 /// be flagged as contradictory. The presence of the general heart abnormality implies
 /// that specific heart defects cannot be categorically ruled out.
+#[lint_rule(id = "PF009")]
 struct ObservedAncestorWithExcludedDescendantsRule {
     hpo: Arc<FullCsrOntology>,
 }
@@ -40,7 +42,6 @@ impl ObservedAncestorWithExcludedDescendantsRule {
     }
 }
 
-impl LintRule for ObservedAncestorWithExcludedDescendantsRule { const RULE_ID: &'static str = "PF009"; }
 impl RuleCheck for ObservedAncestorWithExcludedDescendantsRule {
     fn check(&self, phenopacket: &Phenopacket, report: &mut LintReport) {
         let (observed, excluded) = utils::partition_phenotypic_features(phenopacket);
@@ -84,7 +85,3 @@ impl RuleCheck for ObservedAncestorWithExcludedDescendantsRule {
 
 
 }
-
-register_rule!(ObservedAncestorWithExcludedDescendantsRule);
-
-//TODO: Tests missing

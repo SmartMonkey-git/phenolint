@@ -5,6 +5,7 @@ use crate::traits::{LintRule, RuleCheck};
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
 use std::collections::HashMap;
+use phenolint_macros::lint_rule;
 use crate::register_rule;
 
 #[derive(Debug, Default)]
@@ -29,6 +30,7 @@ use crate::register_rule;
 /// flagged as a duplicate. However, if the two "Seizure" annotations differ in their
 /// modifiers (e.g., one marked as "Severe" and another as "Mild"), they would not
 /// be considered duplicates.
+#[lint_rule(id = "PF006")]
 pub struct PhenotypeDuplicateRule;
 
 impl PhenotypeDuplicateRule {
@@ -55,9 +57,7 @@ impl PhenotypeDuplicateRule {
         duplicates
     }
 }
-register_rule!(PhenotypeDuplicateRule);
 
-impl LintRule for PhenotypeDuplicateRule { const RULE_ID: &'static str = "PF006"; }
 
 impl RuleCheck for PhenotypeDuplicateRule {
     fn check(&self, phenopacket: &Phenopacket, report: &mut LintReport) {

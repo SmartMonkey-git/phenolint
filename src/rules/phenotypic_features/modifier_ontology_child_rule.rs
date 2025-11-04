@@ -7,6 +7,7 @@ use ontolius::ontology::csr::FullCsrOntology;
 use phenopackets::schema::v2::Phenopacket;
 use std::str::FromStr;
 use std::sync::Arc;
+use phenolint_macros::lint_rule;
 use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
 
@@ -30,10 +31,12 @@ use crate::rules::rule_registry::RuleRegistration;
 /// invalid because it's a phenotypic abnormality term, not a clinical modifier.
 /// Valid modifiers include terms like "Severe" (HP:0012828) or "Progressive" (HP:0003676),
 /// which are descendants of HP:0012823.
+#[lint_rule(id = "PF002")]
 pub struct ModifierOntologyChildRule {
     hpo: Arc<FullCsrOntology>,
     clinical_modifiers: TermId,
 }
+
 
 impl ModifierOntologyChildRule {
     fn new(hpo: Arc<FullCsrOntology>) -> Self {
@@ -44,7 +47,6 @@ impl ModifierOntologyChildRule {
     }
 }
 
-impl LintRule for ModifierOntologyChildRule { const RULE_ID: &'static str = "PF002"; }
 
 impl RuleCheck for ModifierOntologyChildRule {
     fn check(&self, phenopacket: &Phenopacket, report: &mut LintReport) {
@@ -65,8 +67,6 @@ impl RuleCheck for ModifierOntologyChildRule {
 
 }
 
-// TODO: Write register function
-register_rule!(ModifierOntologyChildRule);
 #[cfg(test)]
 mod tests {
     use super::*;

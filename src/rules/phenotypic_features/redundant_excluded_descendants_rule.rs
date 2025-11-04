@@ -7,6 +7,7 @@ use ontolius::ontology::OntologyTerms;
 use ontolius::ontology::csr::FullCsrOntology;
 use phenopackets::schema::v2::Phenopacket;
 use std::sync::Arc;
+use phenolint_macros::lint_rule;
 use crate::register_rule;
 
 /// Validates that excluded phenotypic terms don't have redundant excluded descendants.
@@ -29,6 +30,7 @@ use crate::register_rule;
 /// descendant "Ventricular septal defect" (HP:0001629) would be flagged as redundant,
 /// since the more general exclusion already covers all specific heart defects.
 #[derive(Debug)]
+#[lint_rule(id = "PF008")]
 struct RedundantExcludedDescendantsRule {
     hpo: Arc<FullCsrOntology>,
 }
@@ -39,7 +41,6 @@ impl RedundantExcludedDescendantsRule {
     }
 }
 
-impl LintRule for RedundantExcludedDescendantsRule { const RULE_ID: &'static str = "PF008"; }
 impl RuleCheck for RedundantExcludedDescendantsRule {
     fn check(&self, phenopacket: &Phenopacket, report: &mut LintReport) {
         let (_, excluded) = utils::partition_phenotypic_features(phenopacket);
@@ -82,7 +83,6 @@ impl RuleCheck for RedundantExcludedDescendantsRule {
 
 
 }
-register_rule!(RedundantExcludedDescendantsRule);
 
 
 //TODO: Tests missing

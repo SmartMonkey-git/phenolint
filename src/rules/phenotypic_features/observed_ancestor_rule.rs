@@ -7,6 +7,7 @@ use ontolius::ontology::OntologyTerms;
 use ontolius::ontology::csr::FullCsrOntology;
 use phenopackets::schema::v2::Phenopacket;
 use std::sync::Arc;
+use phenolint_macros::lint_rule;
 use crate::register_rule;
 
 /// Validates that observed phenotypic terms don't have redundant observed ancestors.
@@ -30,6 +31,7 @@ use crate::register_rule;
 /// its ancestor "Abnormal heart morphology" (HP:0001627) as observed would be flagged
 /// as redundant. The specific term already conveys all the information of the general
 /// term, making the ancestor annotation unnecessary.
+#[lint_rule(id = "PF007")]
 struct ObservedAncestorRule {
     hpo: Arc<FullCsrOntology>,
 }
@@ -39,8 +41,6 @@ impl ObservedAncestorRule {
         ObservedAncestorRule { hpo }
     }
 }
-
-impl LintRule for ObservedAncestorRule { const RULE_ID: &'static str = "PF007"; }
 
 impl RuleCheck for ObservedAncestorRule {
     fn check(&self, phenopacket: &Phenopacket, report: &mut LintReport) {
@@ -86,7 +86,7 @@ impl RuleCheck for ObservedAncestorRule {
 
 
 }
-register_rule!(ObservedAncestorRule);
+
 #[cfg(test)]
 mod tests {
     use crate::test_utils::HPO;

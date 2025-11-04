@@ -9,6 +9,7 @@ use crate::linting_report::LintReport;
 use crate::traits::{LintRule, RuleCheck};
 use std::str::FromStr;
 use std::sync::Arc;
+use phenolint_macros::lint_rule;
 use crate::register_rule;
 
 #[derive(Debug)]
@@ -33,12 +34,12 @@ use crate::register_rule;
 /// HP:0000118. Valid phenotypic features include terms like "Seizure" (HP:0001250)
 /// or "Intellectual disability" (HP:0001249), which are part of the phenotypic
 /// abnormality hierarchy.
+#[lint_rule(id = "PF001")]
 pub struct PhenotypeOntologyChildRule {
     hpo: Arc<FullCsrOntology>,
     phenotypic_abnormality: TermId,
 }
 
-impl LintRule for PhenotypeOntologyChildRule { const RULE_ID: &'static str = "PF001"; }
 
 impl RuleCheck for PhenotypeOntologyChildRule {
     fn check(&self, phenopacket: &Phenopacket, report: &mut LintReport) {
@@ -67,8 +68,6 @@ impl PhenotypeOntologyChildRule {
         }
     }
 }
-register_rule!(PhenotypeOntologyChildRule);
-
 #[cfg(test)]
 mod tests {
     use super::*;

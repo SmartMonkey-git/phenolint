@@ -855,6 +855,7 @@ dependencies = [
  "inventory",
  "once_cell",
  "ontolius",
+ "phenolint-macros",
  "phenopackets",
  "pretty_assertions",
  "regex",
@@ -863,6 +864,16 @@ dependencies = [
  "serde_json",
  "thiserror 2.0.17",
  "unindent",
+]
+
+[[package]]
+name = "phenolint-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "proc_macro_tools",
+ "quote",
+ "syn 2.0.108",
 ]
 
 [[package]]
@@ -925,6 +936,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5ee95bc4ef87b8d5ba32e8b7714ccc834865276eab0aed5c9958d00ec45f49e8"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "proc_macro_tools"
+version = "0.1.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "73896fc97fb55b1845bcc4517428528b08970fd3042262cf0f5207763e2bacef"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+ "type_constructor",
+ "winterval",
 ]
 
 [[package]]
@@ -1388,6 +1412,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "type_constructor"
+version = "0.1.19"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2a0f49020ae7d75fc293a5d6d284fee30ccd7db17a49444f427413a05a68a076"
+
+[[package]]
 name = "typeid"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1504,6 +1534,12 @@ checksum = "21a0236b59786fed61e2a80582dd500fe61f18b5dca67a4a067d0bc9039339cf"
 dependencies = [
  "memchr",
 ]
+
+[[package]]
+name = "winterval"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a5ea7d17e4377dc68a8741238f8047391896eae89c21297e15828253c40b80aa"
 
 [[package]]
 name = "wit-bindgen"

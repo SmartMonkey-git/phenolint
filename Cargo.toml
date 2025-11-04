@@ -18,6 +18,8 @@ unindent = "0.2.4"
 config = "0.15.18"
 thiserror = "2.0.17"
 inventory = "0.3.21"
+phenolint-macros = { path = "./phenolint_marcos" }
+
 
 [dev-dependencies]
 rstest = "0.26.1"

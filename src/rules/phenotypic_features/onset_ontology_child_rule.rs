@@ -9,6 +9,7 @@ use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::time_element::Element;
 use std::str::FromStr;
 use std::sync::Arc;
+use phenolint_macros::lint_rule;
 use crate::register_rule;
 
 #[derive(Debug)]
@@ -32,6 +33,8 @@ use crate::register_rule;
 /// as invalid because it's a phenotypic abnormality term, not an onset term.
 /// Valid onset terms include "Congenital onset" (HP:0003577), "Adult onset" (HP:0003581),
 /// or "Childhood onset" (HP:0011463), which are all descendants of HP:0003674.
+///
+#[lint_rule(id = "PF003")]
 pub struct OnsetOntologyChildRule {
     hpo: Arc<FullCsrOntology>,
     onsets: TermId,
@@ -46,7 +49,6 @@ impl OnsetOntologyChildRule {
     }
 }
 
-impl LintRule for OnsetOntologyChildRule { const RULE_ID: &'static str = "PF003"; }
 
 impl RuleCheck for OnsetOntologyChildRule {
     fn check(&self, phenopacket: &Phenopacket, report: &mut LintReport) {
@@ -68,10 +70,7 @@ impl RuleCheck for OnsetOntologyChildRule {
             }
         }
     }
-
-
 }
-register_rule!(OnsetOntologyChildRule);
 
 #[cfg(test)]
 mod tests {
