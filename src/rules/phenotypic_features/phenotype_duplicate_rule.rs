@@ -5,6 +5,7 @@ use crate::traits::{LintRule, RuleCheck};
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
 use std::collections::HashMap;
+use annotate_snippets::Report;
 use phenolint_macros::lint_rule;
 use crate::register_rule;
 
@@ -73,7 +74,7 @@ impl RuleCheck for PhenotypeDuplicateRule {
                 if seen.contains(&pf) {
 
                     report.push_info(LintReportInfo::new(
-                        LintingViolation::new(Self::RULE_ID, ""),
+                        LintingViolation::new(Self::RULE_ID, Report::default()),
                         // TODO
                         Some(FixAction::Remove { at: "".to_string() }),
                     ));

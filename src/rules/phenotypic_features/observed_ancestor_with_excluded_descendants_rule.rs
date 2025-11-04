@@ -5,7 +5,7 @@ use ontolius::ontology::OntologyTerms;
 use ontolius::ontology::csr::FullCsrOntology;
 use phenopackets::schema::v2::Phenopacket;
 use std::sync::Arc;
-
+use annotate_snippets::Report;
 
 #[derive(Debug)]
 /// Validates that excluded phenotypic terms don't contradict observed ancestor terms.
@@ -56,7 +56,7 @@ impl RuleCheck for ObservedAncestorWithExcludedDescendantsRule {
                 if !child_terms.is_empty() {
                     // TODO: Add empty check
                     report.push_info(LintReportInfo::new(
-                        LintingViolation::new("PF009", ""),
+                        LintingViolation::new("PF009", Report::default()),
                         None
                     ))
                 }

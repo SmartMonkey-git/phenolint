@@ -1,5 +1,6 @@
+use annotate_snippets::Report;
 use crate::rules::rule_registry::RuleRegistration;
-use crate::linting_report::{LintReport, LintingViolation};
+use crate::linting_report::{LintReport, LintReportInfo, LintingViolation};
 use crate::traits::{LintRule, RuleCheck};
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::OntologyClass;
@@ -46,7 +47,7 @@ impl CurieFormatRule {
         if let Some(ont_class) = Self::get_ontology_class_from_value(&value) {
             let regex = Regex::new("^[A-Z][A-Z0-9_]+:[A-Za-z0-9_]+$").unwrap();
             if !regex.is_match(&ont_class.id) {
-                report.push_violation(LintingViolation::new(Self::RULE_ID, ""));
+                report.push_info(LintReportInfo::new(LintingViolation::new(Self::RULE_ID, Report::default()), None));
             }
         }
 

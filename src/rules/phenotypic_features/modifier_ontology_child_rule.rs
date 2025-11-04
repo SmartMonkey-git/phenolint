@@ -1,4 +1,4 @@
-use crate::linting_report::{LintReport, LintingViolation};
+use crate::linting_report::{LintReport, LintReportInfo, LintingViolation};
 use crate::traits::{LintRule, RuleCheck};
 use ontolius::TermId;
 use ontolius::ontology::HierarchyQueries;
@@ -6,6 +6,7 @@ use ontolius::ontology::csr::FullCsrOntology;
 use phenopackets::schema::v2::Phenopacket;
 use std::str::FromStr;
 use std::sync::Arc;
+use annotate_snippets::Report;
 use phenolint_macros::lint_rule;
 use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
@@ -58,7 +59,7 @@ impl RuleCheck for ModifierOntologyChildRule {
                         &TermId::from_str(&modi.id).unwrap(),
                         &self.clinical_modifiers,
                     ) {
-                        report.push_violation(LintingViolation::new("PF002", ""));
+                        report.push_info(LintReportInfo::new(LintingViolation::new("PF002", Report::default()),None));
                     }
                 })
             })
@@ -68,6 +69,7 @@ impl RuleCheck for ModifierOntologyChildRule {
 
 #[cfg(test)]
 mod tests {
+    use annotate_snippets::Report;
     use super::*;
     use crate::test_utils::HPO;
     use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
@@ -95,6 +97,6 @@ mod tests {
         let mut report = LintReport::new();
         rule.check(&phenopacket, &mut report);
 
-        assert_eq!(report.violations().first().unwrap(), &LintingViolation::new("PF002", ""));
+        assert_eq!(report.violations().first().unwrap(), &LintingViolation::new("PF002", Report::default()));
     }
 }

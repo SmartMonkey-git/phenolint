@@ -23,7 +23,7 @@ struct PhenopacketLinter {
 }
 
 impl Lint<Phenopacket> for PhenopacketLinter {
-    fn lint(&mut self, phenopacket: Phenopacket, fix: bool) -> LintReport {
+    fn lint(&'_ mut self, phenopacket: Phenopacket, fix: bool) -> LintReport<'_> {
         let mut phenopacket = phenopacket.clone();
         let mut report = LintReport::new();
 
@@ -41,7 +41,7 @@ impl Lint<Phenopacket> for PhenopacketLinter {
 }
 
 impl Lint<PathBuf> for PhenopacketLinter {
-    fn lint(&mut self, path: PathBuf, fix: bool) -> LintReport {
+    fn lint(&'_ mut self, path: PathBuf, fix: bool) -> LintReport<'_> {
         let content = std::fs::read_to_string(path).expect("Failed to read file");
         let mut phenopacket: Phenopacket =
             serde_json::from_str(&content).expect("Failed to parse phenopacket");
@@ -50,7 +50,7 @@ impl Lint<PathBuf> for PhenopacketLinter {
 }
 
 impl Lint<&[u8]> for PhenopacketLinter {
-    fn lint(&mut self, bytes: &[u8], fix: bool) -> LintReport {
+    fn lint(&'_ mut self, bytes: &[u8], fix: bool) -> LintReport<'_> {
         let mut phenopacket: Phenopacket =
             serde_json::from_slice(bytes).expect("Failed to parse phenopacket");
         self.lint(phenopacket, fix)

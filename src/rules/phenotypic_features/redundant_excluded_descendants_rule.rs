@@ -4,7 +4,7 @@ use crate::traits::{ RuleCheck};
 use ontolius::ontology::csr::FullCsrOntology;
 use phenopackets::schema::v2::Phenopacket;
 use std::sync::Arc;
-
+use annotate_snippets::Report;
 
 /// Validates that excluded phenotypic terms don't have redundant excluded descendants.
 ///
@@ -53,7 +53,7 @@ impl RuleCheck for RedundantExcludedDescendantsRule {
                 if !child_terms.is_empty() {
                     // TODO: Add empty check
                     report.push_info(LintReportInfo::new(
-                        LintingViolation::new("PF008", ""),
+                        LintingViolation::new("PF008", Report::default()),
                         None,
                     ))
                 }

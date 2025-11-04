@@ -4,7 +4,7 @@ use crate::traits::{ RuleCheck};
 use ontolius::ontology::csr::FullCsrOntology;
 use phenopackets::schema::v2::Phenopacket;
 use std::sync::Arc;
-
+use annotate_snippets::Report;
 
 /// Validates that observed phenotypic terms don't have redundant observed ancestors.
 ///
@@ -56,7 +56,7 @@ impl RuleCheck for ObservedAncestorRule {
                 if !ancestor_terms.is_empty() {
                     // TODO: Add empty check
                     report.push_info(LintReportInfo::new(
-                        LintingViolation::new("PF007", ""), None
+                        LintingViolation::new("PF007", Report::default()), None
                     ))
                 }
             }
@@ -68,6 +68,7 @@ impl RuleCheck for ObservedAncestorRule {
 
 #[cfg(test)]
 mod tests {
+    use annotate_snippets::Report;
     use crate::test_utils::HPO;
 
     use crate::linting_report::{LintReport, LintingViolation};
@@ -115,6 +116,6 @@ mod tests {
         rule.check(&phenopacket, &mut report);
 
         let violations = report.violations();
-        assert_eq!(violations.first().unwrap().clone(), LintingViolation::new("PF007", ""));
+        assert_eq!(violations.first().unwrap().clone(), LintingViolation::new("PF007", Report::default()));
     }
 }

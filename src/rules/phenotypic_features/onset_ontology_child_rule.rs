@@ -1,4 +1,4 @@
-use crate::linting_report::{LintReport, LintingViolation};
+use crate::linting_report::{LintReport, LintReportInfo, LintingViolation};
 use crate::traits::{RuleCheck};
 use ontolius::TermId;
 use ontolius::ontology::HierarchyQueries;
@@ -7,7 +7,7 @@ use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::time_element::Element;
 use std::str::FromStr;
 use std::sync::Arc;
-
+use annotate_snippets::Report;
 
 #[derive(Debug)]
 /// Validates that phenotypic feature onset terms are descendants of the Onset term.
@@ -63,7 +63,7 @@ impl RuleCheck for OnsetOntologyChildRule {
             };
 
             if !self.hpo.is_ancestor_of(&term_id, &self.onsets) {
-                report.push_violation(LintingViolation::new("PF003", ""));
+                report.push_info(LintReportInfo::new(LintingViolation::new("PF003", Report::default()),None));
             }
         }
     }
@@ -71,6 +71,7 @@ impl RuleCheck for OnsetOntologyChildRule {
 
 #[cfg(test)]
 mod tests {
+    use annotate_snippets::Report;
     use super::*;
     use crate::test_utils::HPO;
     use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature, TimeElement};
@@ -99,6 +100,6 @@ mod tests {
         let mut report = LintReport::new();
         rule.check(&phenopacket, &mut report);
 
-        assert_eq!(report.violations().first().unwrap(), &LintingViolation::new("PF003", ""))
+        assert_eq!(report.violations().first().unwrap(), &LintingViolation::new("PF003", Report::default()))
     }
 }

@@ -3,11 +3,11 @@ use ontolius::ontology::HierarchyQueries;
 use ontolius::ontology::csr::FullCsrOntology;
 use phenopackets::schema::v2::Phenopacket;
 
-use crate::linting_report::{LintReport, LintingViolation};
+use crate::linting_report::{LintReport, LintReportInfo, LintingViolation};
 use crate::traits::{ RuleCheck};
 use std::str::FromStr;
 use std::sync::Arc;
-
+use annotate_snippets::Report;
 
 #[derive(Debug)]
 /// Validates that phenotypic features are descendants of the Phenotypic abnormality term.
@@ -50,7 +50,7 @@ impl RuleCheck for PhenotypeOntologyChildRule {
                         &self.phenotypic_abnormality,
                     )
                 {
-                    report.push_violation(LintingViolation::new("PF001", ""));
+                    report.push_info(LintReportInfo::new(LintingViolation::new("PF001", Report::default()), None));
                 }
             })
     }
@@ -67,6 +67,7 @@ impl PhenotypeOntologyChildRule {
 }
 #[cfg(test)]
 mod tests {
+    use annotate_snippets::Report;
     use super::*;
     use crate::test_utils::HPO;
     use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
@@ -95,6 +96,6 @@ mod tests {
         let mut report = LintReport::new();
         rule.check(&phenopacket, &mut report);
 
-       assert_eq!(report.violations().first().unwrap(), &LintingViolation::new("PF001", ""))
+       assert_eq!(report.violations().first().unwrap(), &LintingViolation::new("PF001", Report::default()))
     }
 }

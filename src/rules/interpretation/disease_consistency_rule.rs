@@ -1,3 +1,4 @@
+use annotate_snippets::Report;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::enums::{FixAction};
 use crate::linting_report::{LintReport, LintReportInfo, LintingViolation};
@@ -57,7 +58,7 @@ impl RuleCheck for DiseaseConsistencyRule {
         for inter_disease in inter_diseases.iter() {
             if !diseases.contains(inter_disease) && !seen.contains(&inter_disease) {
                 report.push_info(LintReportInfo::new(
-                    LintingViolation::new(Self::RULE_ID, ""),
+                    LintingViolation::new(Self::RULE_ID, Report::default()),
                     Some(FixAction::Duplicate {
                         from: "".to_string(),
                         to: "".to_string(),
@@ -73,6 +74,7 @@ impl RuleCheck for DiseaseConsistencyRule {
 
 #[cfg(test)]
 mod tests {
+    use annotate_snippets::Report;
     use super::*;
     use phenopackets::schema::v2::Phenopacket;
     use phenopackets::schema::v2::core::{Diagnosis, Disease, Interpretation, OntologyClass};
@@ -150,7 +152,7 @@ mod tests {
         assert_eq!(violations.len(), 1);
         assert_eq!(
             &violations[0],
-            &LintingViolation::new(DiseaseConsistencyRule::RULE_ID, "")
+            &LintingViolation::new(DiseaseConsistencyRule::RULE_ID, Report::default())
         );
     }
 
@@ -207,7 +209,7 @@ mod tests {
         assert_eq!(violations.len(), 1);
         assert_eq!(
             &violations[0],
-            &LintingViolation::new(DiseaseConsistencyRule::RULE_ID, "")
+            &LintingViolation::new(DiseaseConsistencyRule::RULE_ID, Report::default())
         );
     }
 
@@ -281,7 +283,7 @@ mod tests {
         assert_eq!(violations.len(), 1);
         assert_eq!(
             &violations[0],
-            &LintingViolation::new(DiseaseConsistencyRule::RULE_ID, "")
+            &LintingViolation::new(DiseaseConsistencyRule::RULE_ID, Report::default())
         );
     }
 
