@@ -2,6 +2,7 @@ use crate::linting_report::LintReport;
 use phenopackets::schema::v2::Phenopacket;
 
 
+// TODO: + Default
 pub trait LintRule: RuleCheck{
     const RULE_ID: &'static str;
 }
