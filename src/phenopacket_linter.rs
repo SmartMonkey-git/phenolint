@@ -16,6 +16,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 use crate::config::config_loader::ConfigLoader;
 use crate::config::linter_config::LinterConfig;
+use crate::rules::rule_registry::RuleRegistration;
 
 struct PhenopacketLinter {
     rules: Vec<Box<dyn RuleCheck>>,
@@ -75,31 +76,50 @@ impl PhenopacketLinter {
     }
 }
 
-/*
+
 impl TryFrom<LinterConfig> for PhenopacketLinter {
     type Error = InstantiationError;
 
     fn try_from(config: LinterConfig) -> Result<Self, Self::Error> {
-        config.
+
+        let mut rules : Vec<Box<dyn RuleCheck>> = Vec::new();
+        let mut seen_rules = HashSet::new();
+        inventory::iter::<RuleRegistration>().for_each(|r| {
+            if config.rule_ids.contains(&r.rule_id.to_string()) && !seen_rules.contains(&r.rule_id) {
+                rules.push((r.factory)());
+            }
+            seen_rules.insert(r.rule_id);
+        });
+        Ok(PhenopacketLinter::new(rules))
+    }
+}
+
+impl TryFrom<PathBuf> for PhenopacketLinter
+{
+    type Error = InstantiationError;
+
+    fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
+        PhenopacketLinter::try_from(&path)
     }
 }
 impl TryFrom<&PathBuf> for PhenopacketLinter
 {
     type Error = InstantiationError;
 
-    fn try_from(value: &PathBuf) -> Result<Self, Self::Error> {
-        let config: LinterConfig = ConfigLoader::load(value.clone())?;
-
-
+    fn try_from(path: &PathBuf) -> Result<Self, Self::Error> {
+        let config: LinterConfig = ConfigLoader::load(path.clone())?;
+        PhenopacketLinter::try_from(config)
     }
-}*/
+}
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use ontolius::TermId;
-
+    use std::fs::File;
+    use std::io::Write;
     use rstest::*;
+    use tempfile::TempDir;
 
     #[fixture]
     fn term_ancestry() -> Vec<TermId> {
@@ -109,5 +129,20 @@ mod tests {
             "HP:0000366".parse().unwrap(),
             "HP:0000271".parse().unwrap(), // progenitor
         ]
+    }
+
+    const TOML_CONFIG: &[u8] = br#"
+rules = ["CURIE001", "PF006", "INTER001"]
+    "#;
+
+    #[rstest]
+    fn test_try_from(){
+        let tmp_dir= tempfile::tempdir().expect("Failed to create temporary directory");
+        let file_path = tmp_dir.path().join("phenolint.toml");
+        let mut file = File::create(&file_path).unwrap();
+        file.write_all(TOML_CONFIG).unwrap();
+
+        let linter = PhenopacketLinter::try_from(&file_path.clone()).expect("Failed to parse phenolint file");
+        assert_eq!(linter.rules.len(), 3);
     }
 }
