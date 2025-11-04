@@ -1,5 +1,4 @@
-use crate::enums::LintingViolations;
-use crate::linting_report::LintReport;
+use crate::linting_report::{LintReport, LintingViolation};
 use crate::traits::{LintRule, RuleCheck};
 use ontolius::TermId;
 use ontolius::ontology::HierarchyQueries;
@@ -59,7 +58,7 @@ impl RuleCheck for ModifierOntologyChildRule {
                         &TermId::from_str(&modi.id).unwrap(),
                         &self.clinical_modifiers,
                     ) {
-                        report.push_violation(LintingViolations::NonModifier(modi.clone()));
+                        report.push_violation(LintingViolation::new("PF002", ""));
                     }
                 })
             })
@@ -96,13 +95,6 @@ mod tests {
         let mut report = LintReport::new();
         rule.check(&phenopacket, &mut report);
 
-        match report.into_violations().first().unwrap() {
-            LintingViolations::NonModifier(feature) => {
-                assert_eq!(feature, &modifier);
-            }
-            _ => {
-                panic!("Wrong LintingViolation")
-            }
-        }
+        assert_eq!(report.violations().first().unwrap(), &LintingViolation::new("PF002", ""));
     }
 }

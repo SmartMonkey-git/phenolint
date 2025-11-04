@@ -8,7 +8,6 @@ pub struct RuleRegistration {
 
 inventory::collect!(RuleRegistration);
 
-
 #[macro_export]
 macro_rules! register_rule {
     ($rule_type:ty) => {

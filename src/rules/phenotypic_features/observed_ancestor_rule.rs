@@ -1,14 +1,10 @@
-use crate::rules::rule_registry::RuleRegistration;
-use crate::enums::LintingViolations;
-use crate::linting_report::{LintReport, LintReportInfo};
+use crate::linting_report::{LintReport, LintReportInfo, LintingViolation};
 use crate::rules::utils;
-use crate::traits::{LintRule, RuleCheck};
-use ontolius::ontology::OntologyTerms;
+use crate::traits::{ RuleCheck};
 use ontolius::ontology::csr::FullCsrOntology;
 use phenopackets::schema::v2::Phenopacket;
 use std::sync::Arc;
-use phenolint_macros::lint_rule;
-use crate::register_rule;
+
 
 /// Validates that observed phenotypic terms don't have redundant observed ancestors.
 ///
@@ -60,24 +56,7 @@ impl RuleCheck for ObservedAncestorRule {
                 if !ancestor_terms.is_empty() {
                     // TODO: Add empty check
                     report.push_info(LintReportInfo::new(
-                        LintingViolations::ObservedAncestor {
-                            scion: utils::term_to_ontology_class(
-                                self.hpo.term_by_id(phenotypic_term).unwrap_or_else(|| {
-                                    panic!("Could find term for id: '{}'", phenotypic_term)
-                                }),
-                            ),
-                            ancestors: ancestor_terms
-                                .iter()
-                                .map(|ancestor| {
-                                    utils::term_to_ontology_class(
-                                        self.hpo.term_by_id(ancestor).unwrap_or_else(|| {
-                                            panic!("Could find term for id: '{}'", ancestor)
-                                        }),
-                                    )
-                                })
-                                .collect(),
-                        },
-                        None,
+                        LintingViolation::new("PF007", ""), None
                     ))
                 }
             }
@@ -91,8 +70,7 @@ impl RuleCheck for ObservedAncestorRule {
 mod tests {
     use crate::test_utils::HPO;
 
-    use crate::enums::LintingViolations;
-    use crate::linting_report::LintReport;
+    use crate::linting_report::{LintReport, LintingViolation};
     use crate::rules::phenotypic_features::observed_ancestor_rule::ObservedAncestorRule;
     use crate::traits::RuleCheck;
     use phenopackets::schema::v2::Phenopacket;
@@ -136,21 +114,7 @@ mod tests {
         let mut report = LintReport::new();
         rule.check(&phenopacket, &mut report);
 
-        let violations = report.into_violations();
-        assert_eq!(violations.len(), 1);
-        for violation in violations {
-            match violation {
-                LintingViolations::ObservedAncestor {
-                    scion: progenitor,
-                    ancestors,
-                } => {
-                    assert_eq!(progenitor, expected_progenitor);
-                    assert_eq!(ancestors.len(), 2);
-                    assert!(ancestors.contains(&expected_middle));
-                    assert!(ancestors.contains(&expected_ancestor));
-                }
-                _ => panic!("Unexpected violation: {:?}", violation),
-            }
-        }
+        let violations = report.violations();
+        assert_eq!(violations.first().unwrap().clone(), LintingViolation::new("PF007", ""));
     }
 }

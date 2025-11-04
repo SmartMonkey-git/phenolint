@@ -1,6 +1,6 @@
 use crate::rules::rule_registry::RuleRegistration;
-use crate::enums::{FixAction, LintingViolations};
-use crate::linting_report::{LintReport, LintReportInfo};
+use crate::enums::{FixAction};
+use crate::linting_report::{LintReport, LintReportInfo, LintingViolation};
 use crate::traits::{LintRule, RuleCheck};
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
@@ -71,8 +71,9 @@ impl RuleCheck for PhenotypeDuplicateRule {
 
             for (index, pf) in dup_pfs.iter().enumerate() {
                 if seen.contains(&pf) {
+
                     report.push_info(LintReportInfo::new(
-                        LintingViolations::DuplicatePhenotype(Box::new(pf.clone())),
+                        LintingViolation::new(Self::RULE_ID, ""),
                         // TODO
                         Some(FixAction::Remove { at: "".to_string() }),
                     ));

@@ -1,6 +1,5 @@
 use crate::rules::rule_registry::RuleRegistration;
-use crate::enums::LintingViolations;
-use crate::linting_report::LintReport;
+use crate::linting_report::{LintReport, LintingViolation};
 use crate::traits::{LintRule, RuleCheck};
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::OntologyClass;
@@ -47,7 +46,7 @@ impl CurieFormatRule {
         if let Some(ont_class) = Self::get_ontology_class_from_value(&value) {
             let regex = Regex::new("^[A-Z][A-Z0-9_]+:[A-Za-z0-9_]+$").unwrap();
             if !regex.is_match(&ont_class.id) {
-                report.push_violation(LintingViolations::NotACurieID(ont_class));
+                report.push_violation(LintingViolation::new(Self::RULE_ID, ""));
             }
         }
 
@@ -107,7 +106,7 @@ mod tests {
         };
 
         CurieFormatRule.check(&phenopacket, &mut report);
-        assert!(report.into_violations().is_empty());
+        assert!(report.violations().is_empty());
     }
 
     #[rstest]
@@ -129,6 +128,6 @@ mod tests {
         };
 
         CurieFormatRule.check(&phenopacket, &mut report);
-        assert!(!report.into_violations().is_empty());
+        assert!(!report.violations().is_empty());
     }
 }

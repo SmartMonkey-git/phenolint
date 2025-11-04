@@ -1,14 +1,11 @@
-use crate::rules::rule_registry::RuleRegistration;
-use crate::enums::LintingViolations;
-use crate::linting_report::{LintReport, LintReportInfo};
+use crate::linting_report::{LintReport, LintReportInfo, LintingViolation};
 use crate::rules::utils;
-use crate::traits::{LintRule, RuleCheck};
+use crate::traits::{ RuleCheck};
 use ontolius::ontology::OntologyTerms;
 use ontolius::ontology::csr::FullCsrOntology;
 use phenopackets::schema::v2::Phenopacket;
 use std::sync::Arc;
-use phenolint_macros::lint_rule;
-use crate::register_rule;
+
 
 #[derive(Debug)]
 /// Validates that excluded phenotypic terms don't contradict observed ancestor terms.
@@ -59,24 +56,8 @@ impl RuleCheck for ObservedAncestorWithExcludedDescendantsRule {
                 if !child_terms.is_empty() {
                     // TODO: Add empty check
                     report.push_info(LintReportInfo::new(
-                        LintingViolations::ExcludedDescendents {
-                            progenitor: utils::term_to_ontology_class(
-                                self.hpo.term_by_id(phenotypic_term).unwrap_or_else(|| {
-                                    panic!("Could find term for id: '{}'", phenotypic_term)
-                                }),
-                            ),
-                            descendents: child_terms
-                                .iter()
-                                .map(|ancestor| {
-                                    utils::term_to_ontology_class(
-                                        self.hpo.term_by_id(ancestor).unwrap_or_else(|| {
-                                            panic!("Could find term for id: '{}'", ancestor)
-                                        }),
-                                    )
-                                })
-                                .collect(),
-                        },
-                        None,
+                        LintingViolation::new("PF009", ""),
+                        None
                     ))
                 }
             }

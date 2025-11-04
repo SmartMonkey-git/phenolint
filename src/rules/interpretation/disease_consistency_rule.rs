@@ -1,6 +1,6 @@
 use crate::rules::rule_registry::RuleRegistration;
-use crate::enums::{FixAction, LintingViolations};
-use crate::linting_report::{LintReport, LintReportInfo};
+use crate::enums::{FixAction};
+use crate::linting_report::{LintReport, LintReportInfo, LintingViolation};
 use crate::traits::{LintRule, RuleCheck};
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::OntologyClass;
@@ -57,7 +57,7 @@ impl RuleCheck for DiseaseConsistencyRule {
         for inter_disease in inter_diseases.iter() {
             if !diseases.contains(inter_disease) && !seen.contains(&inter_disease) {
                 report.push_info(LintReportInfo::new(
-                    LintingViolations::DiseaseConsistency(inter_disease.clone()),
+                    LintingViolation::new(Self::RULE_ID, ""),
                     Some(FixAction::Duplicate {
                         from: "".to_string(),
                         to: "".to_string(),
@@ -108,7 +108,7 @@ mod tests {
 
         DiseaseConsistencyRule.check(&phenopacket, &mut report);
 
-        assert!(report.into_violations().is_empty());
+        assert!(report.violations().is_empty());
     }
 
     #[test]
@@ -126,7 +126,7 @@ mod tests {
 
         DiseaseConsistencyRule.check(&phenopacket, &mut report);
 
-        assert!(report.into_violations().is_empty());
+        assert!(report.violations().is_empty());
     }
 
     #[test]
@@ -146,12 +146,12 @@ mod tests {
 
         DiseaseConsistencyRule.check(&phenopacket, &mut report);
 
-        let violations = report.into_violations();
+        let violations = report.violations();
         assert_eq!(violations.len(), 1);
-        assert!(matches!(
+        assert_eq!(
             &violations[0],
-            LintingViolations::DiseaseConsistency(term) if term.id == "MONDO:0005148"
-        ));
+            &LintingViolation::new(DiseaseConsistencyRule::RULE_ID, "")
+        );
     }
 
     #[test]
@@ -177,7 +177,7 @@ mod tests {
 
         DiseaseConsistencyRule.check(&phenopacket, &mut report);
 
-        assert!(report.into_violations().is_empty());
+        assert!(report.violations().is_empty());
     }
 
     #[test]
@@ -203,12 +203,12 @@ mod tests {
         let mut report = LintReport::default();
 
         DiseaseConsistencyRule.check(&phenopacket, &mut report);
-        let violations = report.into_violations();
+        let violations = report.violations();
         assert_eq!(violations.len(), 1);
-        assert!(matches!(
+        assert_eq!(
             &violations[0],
-            LintingViolations::DiseaseConsistency(term) if term.id == "MONDO:0005015"
-        ));
+            &LintingViolation::new(DiseaseConsistencyRule::RULE_ID, "")
+        );
     }
 
     #[test]
@@ -230,7 +230,7 @@ mod tests {
 
         DiseaseConsistencyRule.check(&phenopacket, &mut report);
 
-        assert!(report.into_violations().is_empty());
+        assert!(report.violations().is_empty());
     }
 
     #[test]
@@ -255,7 +255,7 @@ mod tests {
 
         DiseaseConsistencyRule.check(&phenopacket, &mut report);
 
-        assert!(report.into_violations().is_empty());
+        assert!(report.violations().is_empty());
     }
 
     #[test]
@@ -276,13 +276,13 @@ mod tests {
         let mut report = LintReport::default();
 
         DiseaseConsistencyRule.check(&phenopacket, &mut report);
-        let violations = report.into_violations();
+        let violations = report.violations();
 
         assert_eq!(violations.len(), 1);
-        assert!(matches!(
+        assert_eq!(
             &violations[0],
-            LintingViolations::DiseaseConsistency(term) if term.id == "MONDO:0007254"
-        ));
+            &LintingViolation::new(DiseaseConsistencyRule::RULE_ID, "")
+        );
     }
 
     #[test]
@@ -306,7 +306,7 @@ mod tests {
 
         DiseaseConsistencyRule.check(&phenopacket, &mut report);
 
-        assert_eq!(report.into_violations().len(), 2);
+        assert_eq!(report.violations().len(), 2);
     }
 
     #[test]
@@ -328,6 +328,6 @@ mod tests {
 
         DiseaseConsistencyRule.check(&phenopacket, &mut report);
 
-        assert!(report.into_violations().is_empty());
+        assert!(report.violations().is_empty());
     }
 }

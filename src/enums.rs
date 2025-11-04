@@ -2,30 +2,8 @@ use phenopackets::schema::v2::core::OntologyClass;
 use phenopackets::schema::v2::core::PhenotypicFeature;
 
 
-pub struct LintingViolation{
-    rule_id: String,
-    message: String,
-    fix_action: Vec<FixAction>,
-}
 
-#[derive(Clone, Debug)]
-pub enum LintingViolations {
-    NonModifier(OntologyClass),
-    NonPhenotypicFeature(OntologyClass),
-    NonOnset(OntologyClass),
-    NonSeverity(OntologyClass),
-    NotACurieID(OntologyClass),
-    DiseaseConsistency(OntologyClass),
-    DuplicatePhenotype(Box<PhenotypicFeature>),
-    ObservedAncestor {
-        scion: OntologyClass,
-        ancestors: Vec<OntologyClass>,
-    },
-    ExcludedDescendents {
-        progenitor: OntologyClass,
-        descendents: Vec<OntologyClass>,
-    },
-}
+
 
 #[derive(Clone, Debug)]
 pub enum FixAction {

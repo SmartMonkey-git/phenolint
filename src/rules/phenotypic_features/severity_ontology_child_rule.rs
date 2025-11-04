@@ -1,6 +1,4 @@
-use crate::rules::rule_registry::RuleRegistration;
-use crate::enums::LintingViolations;
-use crate::linting_report::LintReport;
+use crate::linting_report::{LintReport, LintingViolation};
 use crate::traits::{LintRule, RuleCheck};
 use ontolius::TermId;
 use ontolius::ontology::HierarchyQueries;
@@ -8,8 +6,7 @@ use ontolius::ontology::csr::FullCsrOntology;
 use phenopackets::schema::v2::Phenopacket;
 use std::str::FromStr;
 use std::sync::Arc;
-use phenolint_macros::lint_rule;
-use crate::register_rule;
+
 
 #[derive(Debug)]
 /// Validates that phenotypic feature severity terms are descendants of the Severity term.
@@ -57,7 +54,7 @@ impl RuleCheck for SeverityOntologyChildRule {
                         .hpo
                         .is_ancestor_of(&TermId::from_str(&f.id).unwrap(), &self.severity)
                 {
-                    report.push_violation(LintingViolations::NonSeverity(f.clone()));
+                    report.push_violation(LintingViolation::new("PF004", ""));
                 }
             })
     }
@@ -93,13 +90,6 @@ mod tests {
 
         let mut report = LintReport::new();
         rule.check(&phenopacket, &mut report);
-        match report.into_violations().first().unwrap() {
-            LintingViolations::NonSeverity(severity) => {
-                assert_eq!(severity, severity);
-            }
-            _ => {
-                panic!("Wrong LintingViolation")
-            }
-        }
+        assert_eq!(report.violations().first().unwrap(), &LintingViolation::new("PF004", ""));
     }
 }
