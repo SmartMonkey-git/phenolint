@@ -34,8 +34,6 @@ use crate::register_rule;
 pub struct PhenotypeDuplicateRule;
 
 
-register_rule!(PhenotypeDuplicateRule);
-
 impl PhenotypeDuplicateRule {
     fn filter_by_duplicate_ontology_classes(
         &self,

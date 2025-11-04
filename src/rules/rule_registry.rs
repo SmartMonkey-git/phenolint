@@ -1,5 +1,9 @@
+use crate::traits::RuleCheck;
+
 pub struct RuleRegistration {
     pub rule_id: &'static str,
+    pub factory: fn() -> Box<dyn RuleCheck>,
+
 }
 
 inventory::collect!(RuleRegistration);
@@ -11,7 +15,7 @@ macro_rules! register_rule {
         inventory::submit! {
             RuleRegistration {
                 rule_id: <$rule_type>::RULE_ID,
-                //factory: || Box::new(<$rule_type>::default()),
+                factory: || Box::new(<$rule_type>::default()),
             }
         }
     };
