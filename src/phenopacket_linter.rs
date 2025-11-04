@@ -142,7 +142,7 @@ rules = ["CURIE001", "PF006", "INTER001"]
         let mut file = File::create(&file_path).unwrap();
         file.write_all(TOML_CONFIG).unwrap();
 
-        let linter = PhenopacketLinter::try_from(&file_path.clone()).expect("Failed to parse phenolint file");
+        let linter = PhenopacketLinter::try_from(file_path).expect("Failed to parse phenolint file");
         assert_eq!(linter.rules.len(), 3);
     }
 }
