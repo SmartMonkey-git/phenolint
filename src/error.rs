@@ -2,7 +2,7 @@ use config::ConfigError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum LintingError{
+pub enum LinterError {
 
 }
 

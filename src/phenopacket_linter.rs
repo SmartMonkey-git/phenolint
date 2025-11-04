@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 #![allow(unused)]
-use crate::error::{InstantiationError, LintingError};
+use crate::error::{InstantiationError, LinterError};
 use crate::linting_report::LintReport;
 use crate::traits::{Lint, RuleCheck};
 use phenopackets::schema::v2::Phenopacket;
@@ -61,7 +61,7 @@ impl PhenopacketLinter {
         PhenopacketLinter { rules }
     }
 
-    fn fix(&self, phenopacket: &mut Phenopacket, report: &LintReport) -> Result<(), LintingError> {
+    fn fix(&self, phenopacket: &mut Phenopacket, report: &LintReport) -> Result<(), LinterError> {
         let mut seen = HashSet::new();
         phenopacket.phenotypic_features.retain(|feature| {
             if let Some(f) = &feature.r#type {

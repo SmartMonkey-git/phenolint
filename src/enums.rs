@@ -1,6 +1,12 @@
-use ontolius::TermId;
 use phenopackets::schema::v2::core::OntologyClass;
 use phenopackets::schema::v2::core::PhenotypicFeature;
+
+
+pub struct LintingViolation{
+    rule_id: String,
+    message: String,
+    fix_action: Vec<FixAction>,
+}
 
 #[derive(Clone, Debug)]
 pub enum LintingViolations {
