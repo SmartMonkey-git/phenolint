@@ -1,8 +1,7 @@
 use crate::enums::FixAction;
 use annotate_snippets::renderer::DecorStyle;
 use annotate_snippets::{Renderer, Report};
-use phenopackets::schema::v2::Phenopacket;
-use std::sync::Arc;
+
 
 #[derive(Clone, Debug)]
 pub struct LintingViolation {

@@ -6,15 +6,11 @@ use std::fmt::Display;
 pub(crate) struct Pointer(String);
 
 fn escape(step: &str) -> String {
-    let mut step = step.replace("⁓", "~0");
-    step = step.replace("/", "~1");
-    step
+    step.replace("~", "~0").replace("/", "~1")
 }
 
 fn unescape(step: &str) -> String {
-    let mut step = step.replace("~0", "⁓");
-    step = step.replace("~1", "/");
-    step
+    step.replace("~1", "/").replace("~0", "~")
 }
 
 impl Pointer {
@@ -46,14 +42,10 @@ impl Pointer {
     /// assert_eq!(ptr.position(), "/user");
     /// ```
     pub fn up(&mut self) -> &Self {
-        let mut parts: Vec<&str> = self.0.split('/').collect();
-        if !parts.is_empty() {
-            parts.pop();
-            self.0 = parts.join("/");
-            self
-        } else {
-            self
+        if let Some(pos) = self.0.rfind('/') {
+            self.0.truncate(pos);
         }
+        self
     }
 
     /// Moves the pointer down one level by appending a new path segment.
@@ -90,6 +82,18 @@ impl Pointer {
     pub fn position(&self) -> String {
         let unescaped = unescape(self.0.as_str());
         unescaped
+    }
+
+    pub fn root() -> Self {
+        Self(String::new())
+    }
+
+    pub fn is_root(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    pub fn segments(&self) -> impl Iterator<Item = String> + '_ {
+        self.0.split('/').skip(1).map(|s| unescape(s))
     }
 }
 
