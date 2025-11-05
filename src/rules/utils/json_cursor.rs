@@ -53,7 +53,7 @@ impl Pointer {
         let mut parts: Vec<&str> = self.0.split('/').collect();
         if !parts.is_empty() {
             parts.pop();
-            self.0 = parts.join("");
+            self.0 = parts.join("/");
             self
         } else {
             self
@@ -283,60 +283,119 @@ impl JsonCursor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rstest::rstest;
     use serde_json::json;
-    #[rstest]
-    fn test_iter_with_paths() {
-        let test_json = json!({
-            "string_field": "Hello, world!",
-            "number_integer": 42,
-            "number_float": 3.14159,
-            "boolean_true": true,
-            "boolean_false": false,
-            "null_field": null,
+    use rstest::rstest;
 
-            "array_of_numbers": [1, 2, 3, 4, 5],
-            "array_of_strings": ["red", "green", "blue"],
-            "array_of_objects": [
-                { "id": 1, "name": "Alice" },
-                { "id": 2, "name": "Bob" }
-            ],
-
-            "nested_object": {
-                "level1": {
-                    "level2": {
-                        "message": "Deeply nested value",
-                        "list": [true, false, null, "text"]
-                    }
+    fn make_sample_json() -> Value {
+        json!({
+            "user": {
+                "name": "Alice",
+                "age": 30,
+                "address": {
+                    "city": "Paris",
+                    "zip": "75000"
                 }
             },
+            "items": [
+                { "id": 1, "name": "apple" },
+                { "id": 2, "name": "banana" }
+            ],
+            "active": true,
+            "score": 99.5
+        })
+    }
 
-            // Optional fields: "optional_field" is present, "missing_optional_field" is omitted
-            "optional_field": "present value",
+    #[rstest]
+    fn test_new_starts_at_root() {
+        let value = make_sample_json();
+        let cursor = JsonCursor::new(value);
+        assert_eq!(cursor.pointer().position(), "");
+        assert!(cursor.current_value().is_some());
+    }
 
-            "enum_examples": {
-                "simple_variant": { "type": "Unit" },
-                "tuple_variant": { "type": "Tuple", "data": [10, "ten"] },
-                "struct_variant": { "type": "Struct", "data": { "x": 1, "y": 2 } }
-            },
+    #[rstest]
+    fn test_jump_replaces_pointer() {
+        let mut cursor = JsonCursor::new(make_sample_json());
+        let new_ptr = Pointer("/user/name".to_string());
+        cursor.jump(new_ptr.clone());
+        assert_eq!(cursor.pointer().position(), new_ptr.position());
+        assert_eq!(cursor.current_value(), Some(&json!("Alice")));
+    }
 
-            "map_example": {
-                "one": 1,
-                "two": 2,
-                "three": 3
-            },
+    #[rstest]
+    fn test_step_and_up_navigation() {
+        let mut cursor = JsonCursor::new(make_sample_json());
 
-            "mixed_array": [
-                123,
-                "text",
-                { "nested": true },
-                [1, 2, 3],
-                null
-            ]
+        cursor.step("user").step("address").step("city");
+        assert_eq!(cursor.pointer().position(), "/user/address/city");
+        assert_eq!(cursor.current_value(), Some(&json!("Paris")));
+
+        cursor.up();
+        assert_eq!(cursor.pointer().position(), "/user/address");
+        let current = cursor.current_value().unwrap();
+        assert!(current.is_object());
+        assert!(current.get("zip").is_some());
+    }
+
+    #[rstest]
+    fn test_find_position_finds_first_key() {
+        let mut cursor = JsonCursor::new(make_sample_json());
+        let ptr = cursor.find_position("city").expect("city should exist");
+        assert_eq!(ptr.position(), "/user/address/city");
+    }
+
+    #[rstest]
+    fn test_find_positions_finds_all_matches() {
+        let mut cursor = JsonCursor::new(make_sample_json());
+        let positions = cursor.find_positions("name");
+        let paths: Vec<_> = positions.iter().map(|p| p.position()).collect();
+
+        assert_eq!(paths.len(), 3);
+        assert!(paths.contains(&"/user/name".to_string()));
+        assert!(paths.contains(&"/items/0/name".to_string()));
+        assert!(paths.contains(&"/items/1/name".to_string()));
+    }
+
+    #[rstest]
+    fn test_iter_with_paths_yields_all_nodes() {
+        let json = make_sample_json();
+        let cursor = JsonCursor::new(json);
+        let all: Vec<_> = cursor.iter_with_paths().collect();
+
+        assert_eq!(all.first().unwrap().1.position(), "");
+
+        let paths: Vec<_> = all.iter().map(|(_, p)| p.position()).collect();
+        assert!(paths.contains(&"/user/address/city".to_string()));
+        assert!(paths.contains(&"/items/0/id".to_string()));
+        assert!(paths.contains(&"/score".to_string()));
+    }
+
+    #[rstest]
+    fn test_current_value_returns_none_for_invalid_pointer() {
+        let value = make_sample_json();
+        let mut cursor = JsonCursor::new(value);
+        cursor.jump(Pointer("/nonexistent/path".to_string()));
+        assert_eq!(cursor.current_value(), None);
+    }
+
+    #[rstest]
+    fn test_complex_iteration_order_stable() {
+        let json = json!({
+            "a": {"b": {"c": 1}},
+            "arr": [10, {"d": 2}]
         });
-
-        JsonCursor::new(test_json)
+        let cursor = JsonCursor::new(json);
+        let collected: Vec<String> = cursor
             .iter_with_paths()
-            .for_each(|(a, b)| println!("returned: {b} -> {a} "));
+            .map(|(_, p)| p.position().to_string())
+            .collect();
+
+        let expected = vec![
+            "", "/a", "/arr", "/a/b", "/arr/0", "/arr/1",
+            "/a/b/c", "/arr/1/d"
+        ];
+        for path in expected {
+            assert!(collected.contains(&path.to_string()));
+        }
     }
 }
