@@ -1,1 +1,1 @@
-mod json_cursor;
+pub(crate) mod json_cursor;

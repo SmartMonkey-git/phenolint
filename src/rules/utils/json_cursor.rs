@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use std::fmt::Display;
 
 #[derive(Debug, Clone)]
-struct Pointer(String);
+pub(crate) struct Pointer(String);
 
 
 
@@ -113,7 +113,7 @@ impl Display for Pointer {
 ///
 /// This is useful for iterative traversal, targeted lookups, or maintaining state
 /// as you move around in a nested JSON document.
-struct JsonCursor {
+pub(crate) struct JsonCursor {
     value: Value,
     pointer: Pointer,
 }
@@ -160,7 +160,7 @@ impl JsonCursor {
     /// * `None` if no match is found.
     pub fn find_position(&mut self, target_key: &str) -> Option<Pointer> {
         let target = escape(target_key);
-        for (_, pointer) in self.iter_with_paths(){
+        for (pointer,_) in self.iter_with_paths(){
             if pointer.0.ends_with(&target){
                 return Some(pointer);
             }
@@ -181,7 +181,7 @@ impl JsonCursor {
     pub fn find_positions(&mut self, target_key: &str) -> Vec<Pointer> {
         let target = escape(target_key);
         let mut result = Vec::new();
-        for (_, pointer) in self.iter_with_paths(){
+        for (pointer, _ ) in self.iter_with_paths(){
             if pointer.0.ends_with(&target){
                 result.push(pointer);
             }
@@ -239,7 +239,7 @@ impl JsonCursor {
     ///
     /// # Returns
     /// An iterator over `(&Value, Pointer)` pairs.
-    pub fn iter_with_paths(&self) -> impl Iterator<Item = (&Value, Pointer)> {
+    pub fn iter_with_paths(&self) -> impl Iterator<Item = (Pointer, &Value)> {
         let mut queue = VecDeque::new();
         let current_value = self
             .value
@@ -273,7 +273,7 @@ impl JsonCursor {
                     _ => {}
                 };
 
-                return Some((value, pointer));
+                return Some((pointer,value));
             }
             None
         })
@@ -362,9 +362,9 @@ mod tests {
         let cursor = JsonCursor::new(json);
         let all: Vec<_> = cursor.iter_with_paths().collect();
 
-        assert_eq!(all.first().unwrap().1.position(), "");
+        assert_eq!(all.first().unwrap().0.position(), "");
 
-        let paths: Vec<_> = all.iter().map(|(_, p)| p.position()).collect();
+        let paths: Vec<_> = all.iter().map(|(p, _)| p.position()).collect();
         assert!(paths.contains(&"/user/address/city".to_string()));
         assert!(paths.contains(&"/items/0/id".to_string()));
         assert!(paths.contains(&"/score".to_string()));
@@ -387,7 +387,7 @@ mod tests {
         let cursor = JsonCursor::new(json);
         let collected: Vec<String> = cursor
             .iter_with_paths()
-            .map(|(_, p)| p.position().to_string())
+            .map(|(p, _)| p.position().to_string())
             .collect();
 
         let expected = vec![
