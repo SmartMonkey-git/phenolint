@@ -20,19 +20,19 @@ use crate::linting_policy::LintingPolicy;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::transformer::Transformer;
 
-struct PhenoLinter {
+struct Phenolinter {
     policy: LintingPolicy,
     transformer: Transformer
 }
 
-impl Lint<PathBuf> for PhenoLinter {
+impl Lint<PathBuf> for Phenolinter {
     fn lint(&'_ mut self, path: PathBuf, fix: bool) -> LintReport {
         let phenobytes  =std::fs::read(path).expect("Could not read file");
         self.lint(phenobytes.as_slice(), fix)
     }
 }
 
-impl Lint<&[u8]> for PhenoLinter {
+impl Lint<&[u8]> for Phenolinter {
     fn lint(&mut self, phenobytes: &[u8], fix: bool) -> LintReport {
         let mut report = self.policy.apply(phenobytes);
 
@@ -44,39 +44,39 @@ impl Lint<&[u8]> for PhenoLinter {
     }
 }
 
-impl PhenoLinter {
-    pub fn new(policy: LintingPolicy) -> PhenoLinter {
-        PhenoLinter { policy, transformer: Transformer }
+impl Phenolinter {
+    pub fn new(policy: LintingPolicy) -> Phenolinter {
+        Phenolinter { policy, transformer: Transformer }
     }
 
 }
 
 
-impl TryFrom<LinterConfig> for PhenoLinter {
+impl TryFrom<LinterConfig> for Phenolinter {
     type Error = InstantiationError;
 
     fn try_from(config: LinterConfig) -> Result<Self, Self::Error> {
         let a = config.rule_ids.as_slice();
         let policy = LintingPolicy::from(config.rule_ids.as_slice());
-        Ok(PhenoLinter::new(policy))
+        Ok(Phenolinter::new(policy))
     }
 }
 
-impl TryFrom<PathBuf> for PhenoLinter
+impl TryFrom<PathBuf> for Phenolinter
 {
     type Error = InstantiationError;
 
     fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
-        PhenoLinter::try_from(&path)
+        Phenolinter::try_from(&path)
     }
 }
-impl TryFrom<&PathBuf> for PhenoLinter
+impl TryFrom<&PathBuf> for Phenolinter
 {
     type Error = InstantiationError;
 
     fn try_from(path: &PathBuf) -> Result<Self, Self::Error> {
         let config: LinterConfig = ConfigLoader::load(path.clone())?;
-        PhenoLinter::try_from(config)
+        Phenolinter::try_from(config)
     }
 }
 
@@ -110,7 +110,7 @@ rules = ["CURIE001", "PF006", "INTER001"]
         let mut file = File::create(&file_path).unwrap();
         file.write_all(TOML_CONFIG).unwrap();
 
-        let linter = PhenoLinter::try_from(file_path).expect("Failed to parse phenolint file");
+        let linter = Phenolinter::try_from(file_path).expect("Failed to parse phenolint file");
         //assert_eq!(linter.policy.rules.len(), 3);
     }
 }
