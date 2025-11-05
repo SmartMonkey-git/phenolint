@@ -1,27 +1,28 @@
 use crate::linting_report::{LintReport, LintReportInfo, LintingViolation};
 use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
+use crate::rules::utils::json_cursor::{JsonCursor, Pointer};
 use crate::traits::{LintRule, RuleCheck};
-use annotate_snippets::{AnnotationKind, Level, Renderer, Report, Snippet};
 use annotate_snippets::renderer::DecorStyle;
+use annotate_snippets::{AnnotationKind, Level, Renderer, Report, Snippet};
 use json_spanned_value::spanned::Value as SpannedValue;
 use phenolint_macros::lint_rule;
 use phenopackets::schema::v2::core::OntologyClass;
 use regex::Regex;
 use serde_json::Value;
-use crate::rules::utils::json_cursor::{JsonCursor, Pointer};
 
 #[derive(Debug, Default)]
 #[lint_rule(id = "CURIE001")]
 pub struct CurieFormatRule;
 impl RuleCheck for CurieFormatRule {
     fn check(&self, phenobytes: &[u8], report: &mut LintReport) {
+        let cursor = JsonCursor::new(
+            serde_json::from_slice(phenobytes)
+                .unwrap_or_else(|_| panic!("Could not serialize phenopacket")),
+        );
 
-        let cursor = JsonCursor::new(serde_json::from_slice(phenobytes)
-            .unwrap_or_else(|_| panic!("Could not serialize phenopacket")));
-
-        for (pointer, value) in cursor.iter_with_paths(){
-            if let Some(ont_class) = Self::get_ontology_class_from_value(&value){
+        for (pointer, value) in cursor.iter_with_paths() {
+            if let Some(ont_class) = Self::get_ontology_class_from_value(&value) {
                 let regex = Regex::new("^[A-Z][A-Z0-9_]+:[A-Za-z0-9_]+$").unwrap();
                 if !regex.is_match(&ont_class.id) {
                     report.push_info(LintReportInfo::new(
@@ -34,8 +35,8 @@ impl RuleCheck for CurieFormatRule {
                 }
             }
         }
-
-}}
+    }
+}
 impl CurieFormatRule {
     fn get_ontology_class_from_value(value: &Value) -> Option<OntologyClass> {
         if let Value::Object(map) = &value
@@ -54,28 +55,30 @@ impl CurieFormatRule {
         let json = String::from_utf8(phenobytes.to_vec()).unwrap();
         let value: SpannedValue = json_spanned_value::from_str(&json)
             .unwrap_or_else(|_| panic!("Could not serialize phenopacket"));
-        let(start, end) = value.pointer(pointer.position().as_str()).unwrap().span();
-        let(start_2, end_2) = value.pointer(pointer.clone().up().to_string().as_str()).unwrap().span();
-        let report =
-            &[Level::WARNING
-                .primary_title(format!("[{}] CURIE formatted incorrectly",  Self::RULE_ID))
-                .element(
-                    Snippet::source(json)
-                        .line_start(start_2-2)
-                        .annotation(AnnotationKind::Primary.span(start..end).label(
-                            "Expected CURIE with format CURIE:12345",
-                        ))
-                        .annotation(
-                            AnnotationKind::Context
-                                .span(start_2..end_2)
-                                .label("For this Ontology Class"),
-                        ),
-                )];
+        let (start, end) = value.pointer(pointer.position().as_str()).unwrap().span();
+        let (start_2, end_2) = value
+            .pointer(pointer.clone().up().to_string().as_str())
+            .unwrap()
+            .span();
+        let report = &[Level::WARNING
+            .primary_title(format!("[{}] CURIE formatted incorrectly", Self::RULE_ID))
+            .element(
+                Snippet::source(json)
+                    .line_start(start_2 - 2)
+                    .annotation(
+                        AnnotationKind::Primary
+                            .span(start..end)
+                            .label("Expected CURIE with format CURIE:12345"),
+                    )
+                    .annotation(
+                        AnnotationKind::Context
+                            .span(start_2..end_2)
+                            .label("For this Ontology Class"),
+                    ),
+            )];
 
         let renderer = Renderer::styled().decor_style(DecorStyle::Unicode);
         anstream::println!("{}", renderer.render(report));
-        //value.pointer("")
-
         Report::default()
     }
 }

@@ -5,8 +5,6 @@ use std::fmt::Display;
 #[derive(Debug, Clone)]
 pub(crate) struct Pointer(String);
 
-
-
 fn escape(step: &str) -> String {
     let mut step = step.replace("⁓", "~0");
     step = step.replace("/", "~1");
@@ -19,9 +17,7 @@ fn unescape(step: &str) -> String {
     step
 }
 
-
 impl Pointer {
-
     /// Returns the final segment (tip) of the pointer path.
     ///
     /// For example, if the pointer represents `"/user/name"`,
@@ -95,7 +91,6 @@ impl Pointer {
         let unescaped = unescape(self.0.as_str());
         unescaped
     }
-
 }
 
 impl Display for Pointer {
@@ -103,7 +98,6 @@ impl Display for Pointer {
         write!(f, "{}", self.0)
     }
 }
-
 
 /// A navigational cursor for traversing and manipulating a JSON value tree.
 ///
@@ -118,10 +112,7 @@ pub(crate) struct JsonCursor {
     pointer: Pointer,
 }
 
-
-
 impl JsonCursor {
-
     /// Creates a new cursor positioned at the root of the provided JSON value.
     ///
     /// # Arguments
@@ -142,7 +133,7 @@ impl JsonCursor {
     ///
     /// # Arguments
     /// * `leap` - The new pointer to jump to.
-    pub fn jump(&mut self, leap: Pointer){
+    pub fn jump(&mut self, leap: Pointer) {
         self.pointer = leap;
     }
 
@@ -160,8 +151,8 @@ impl JsonCursor {
     /// * `None` if no match is found.
     pub fn find_position(&mut self, target_key: &str) -> Option<Pointer> {
         let target = escape(target_key);
-        for (pointer,_) in self.iter_with_paths(){
-            if pointer.0.ends_with(&target){
+        for (pointer, _) in self.iter_with_paths() {
+            if pointer.0.ends_with(&target) {
                 return Some(pointer);
             }
         }
@@ -181,14 +172,13 @@ impl JsonCursor {
     pub fn find_positions(&mut self, target_key: &str) -> Vec<Pointer> {
         let target = escape(target_key);
         let mut result = Vec::new();
-        for (pointer, _ ) in self.iter_with_paths(){
-            if pointer.0.ends_with(&target){
+        for (pointer, _) in self.iter_with_paths() {
+            if pointer.0.ends_with(&target) {
                 result.push(pointer);
             }
         }
         result
     }
-
 
     /// Moves the cursor one step deeper into the JSON tree.
     ///
@@ -204,7 +194,6 @@ impl JsonCursor {
         self.pointer.step(step);
         self
     }
-
 
     /// Moves the cursor up one level in the JSON tree.
     ///
@@ -249,10 +238,8 @@ impl JsonCursor {
 
         std::iter::from_fn(move || {
             while let Some((value, pointer)) = queue.pop_front() {
-
                 match value {
-                    Value::Null => {
-                    }
+                    Value::Null => {}
                     Value::Array(list) => {
                         for i in 0..list.len() {
                             let mut new_pointer = pointer.clone();
@@ -273,7 +260,7 @@ impl JsonCursor {
                     _ => {}
                 };
 
-                return Some((pointer,value));
+                return Some((pointer, value));
             }
             None
         })
@@ -283,8 +270,8 @@ impl JsonCursor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::json;
     use rstest::rstest;
+    use serde_json::json;
 
     fn make_sample_json() -> Value {
         json!({
@@ -391,8 +378,7 @@ mod tests {
             .collect();
 
         let expected = vec![
-            "", "/a", "/arr", "/a/b", "/arr/0", "/arr/1",
-            "/a/b/c", "/arr/1/d"
+            "", "/a", "/arr", "/a/b", "/arr/0", "/arr/1", "/a/b/c", "/arr/1/d",
         ];
         for path in expected {
             assert!(collected.contains(&path.to_string()));
