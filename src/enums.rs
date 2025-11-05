@@ -1,8 +1,5 @@
-use phenopackets::schema::v2::core::OntologyClass;
-use phenopackets::schema::v2::core::PhenotypicFeature;
-
 #[derive(Clone, Debug)]
-pub enum FixAction {
+pub enum Patch {
     Add {
         at: String,
         value: String,

@@ -7,7 +7,7 @@ use crate::linting_policy::LintingPolicy;
 use crate::linting_report::LintReport;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::{Lint, RuleCheck};
-use crate::transformer::Transformer;
+use crate::patcher::Patcher;
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::PhenotypicFeature;
 use phenopackets::schema::v2::core::time_element::Element;
@@ -22,7 +22,7 @@ use std::sync::Arc;
 
 struct Phenolinter {
     policy: LintingPolicy,
-    transformer: Transformer,
+    transformer: Patcher,
 }
 
 impl Lint<PathBuf> for Phenolinter {
@@ -37,7 +37,7 @@ impl Lint<&[u8]> for Phenolinter {
         let mut report = self.policy.apply(phenobytes);
 
         if fix && report.has_violations() {
-            let fixed_pp = self.transformer.fix().unwrap();
+            let fixed_pp = self.transformer.patch().unwrap();
             report.fixed_phenopacket = Some(Vec::from(phenobytes))
         }
         report
@@ -48,7 +48,7 @@ impl Phenolinter {
     pub fn new(policy: LintingPolicy) -> Phenolinter {
         Phenolinter {
             policy,
-            transformer: Transformer,
+            transformer: Patcher,
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::enums::FixAction;
+use crate::enums::Patch;
 use annotate_snippets::renderer::DecorStyle;
 use annotate_snippets::{Renderer, Report};
 
@@ -35,11 +35,11 @@ impl LintingViolation {
 #[derive(Clone, Debug)]
 pub struct LintReportInfo {
     violation: LintingViolation,
-    fix: Option<FixAction>,
+    fix: Option<Patch>,
 }
 
 impl LintReportInfo {
-    pub fn new(violation: LintingViolation, fix: Option<FixAction>) -> Self {
+    pub fn new(violation: LintingViolation, fix: Option<Patch>) -> Self {
         Self { violation, fix }
     }
 }
@@ -65,7 +65,7 @@ impl LintReport {
             .collect()
     }
 
-    pub fn fixes(&self) -> Vec<FixAction> {
+    pub fn fixes(&self) -> Vec<Patch> {
         self.report_info
             .clone()
             .into_iter()
