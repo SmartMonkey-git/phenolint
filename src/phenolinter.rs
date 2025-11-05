@@ -1,8 +1,13 @@
 #![allow(dead_code)]
 #![allow(unused)]
+use crate::config::config_loader::ConfigLoader;
+use crate::config::linter_config::LinterConfig;
 use crate::error::{InstantiationError, LinterError};
+use crate::linting_policy::LintingPolicy;
 use crate::linting_report::LintReport;
+use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::{Lint, RuleCheck};
+use crate::transformer::Transformer;
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::PhenotypicFeature;
 use phenopackets::schema::v2::core::time_element::Element;
@@ -14,20 +19,15 @@ use std::path::PathBuf;
 use std::rc::Rc;
 use std::str::FromStr;
 use std::sync::Arc;
-use crate::config::config_loader::ConfigLoader;
-use crate::config::linter_config::LinterConfig;
-use crate::linting_policy::LintingPolicy;
-use crate::rules::rule_registry::RuleRegistration;
-use crate::transformer::Transformer;
 
 struct Phenolinter {
     policy: LintingPolicy,
-    transformer: Transformer
+    transformer: Transformer,
 }
 
 impl Lint<PathBuf> for Phenolinter {
     fn lint(&'_ mut self, path: PathBuf, fix: bool) -> LintReport {
-        let phenobytes  =std::fs::read(path).expect("Could not read file");
+        let phenobytes = std::fs::read(path).expect("Could not read file");
         self.lint(phenobytes.as_slice(), fix)
     }
 }
@@ -46,11 +46,12 @@ impl Lint<&[u8]> for Phenolinter {
 
 impl Phenolinter {
     pub fn new(policy: LintingPolicy) -> Phenolinter {
-        Phenolinter { policy, transformer: Transformer }
+        Phenolinter {
+            policy,
+            transformer: Transformer,
+        }
     }
-
 }
-
 
 impl TryFrom<LinterConfig> for Phenolinter {
     type Error = InstantiationError;
@@ -62,16 +63,14 @@ impl TryFrom<LinterConfig> for Phenolinter {
     }
 }
 
-impl TryFrom<PathBuf> for Phenolinter
-{
+impl TryFrom<PathBuf> for Phenolinter {
     type Error = InstantiationError;
 
     fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
         Phenolinter::try_from(&path)
     }
 }
-impl TryFrom<&PathBuf> for Phenolinter
-{
+impl TryFrom<&PathBuf> for Phenolinter {
     type Error = InstantiationError;
 
     fn try_from(path: &PathBuf) -> Result<Self, Self::Error> {
@@ -84,9 +83,9 @@ impl TryFrom<&PathBuf> for Phenolinter
 mod tests {
     use super::*;
     use ontolius::TermId;
+    use rstest::*;
     use std::fs::File;
     use std::io::Write;
-    use rstest::*;
     use tempfile::TempDir;
 
     #[fixture]
@@ -104,8 +103,8 @@ rules = ["CURIE001", "PF006", "INTER001"]
     "#;
 
     #[rstest]
-    fn test_try_from(){
-        let tmp_dir= tempfile::tempdir().expect("Failed to create temporary directory");
+    fn test_try_from() {
+        let tmp_dir = tempfile::tempdir().expect("Failed to create temporary directory");
         let file_path = tmp_dir.path().join("phenolint.toml");
         let mut file = File::create(&file_path).unwrap();
         file.write_all(TOML_CONFIG).unwrap();

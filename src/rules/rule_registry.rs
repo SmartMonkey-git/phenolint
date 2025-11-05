@@ -3,7 +3,6 @@ use crate::traits::RuleCheck;
 pub struct RuleRegistration {
     pub rule_id: &'static str,
     pub factory: fn() -> Box<dyn RuleCheck>,
-
 }
 
 inventory::collect!(RuleRegistration);
@@ -22,14 +21,14 @@ macro_rules! register_rule {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashSet;
-    use rstest::rstest;
+    use crate::rules::rule_registry::RuleRegistration;
     use inventory;
     use regex::Regex;
-    use crate::rules::rule_registry::RuleRegistration;
+    use rstest::rstest;
+    use std::collections::HashSet;
 
     #[rstest]
-    fn test_rule_id_uniqueness(){
+    fn test_rule_id_uniqueness() {
         let mut seen_ids = HashSet::new();
         inventory::iter::<RuleRegistration>().for_each(|r| {
             if seen_ids.contains(&r.rule_id) {
@@ -38,16 +37,14 @@ mod tests {
             seen_ids.insert(r.rule_id);
         });
         println!("{:#?}", seen_ids);
-
     }
 
     #[rstest]
-    fn test_rule_format(){
+    fn test_rule_format() {
         let regex = Regex::new("[A-Z]{1,5}[0-9]{3}").unwrap();
 
         inventory::iter::<RuleRegistration>().for_each(|r| {
             regex.is_match(&r.rule_id);
         });
-
     }
 }

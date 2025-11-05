@@ -2,10 +2,7 @@ use config::ConfigError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum LinterError {
-
-}
-
+pub enum LinterError {}
 
 #[derive(Error, Debug)]
 pub enum InstantiationError {
@@ -14,7 +11,6 @@ pub enum InstantiationError {
     #[error(transparent)]
     Config(#[from] ConfigError),
 }
-
 
 #[derive(Error, Debug)]
 pub enum FixingError {

@@ -1,14 +1,11 @@
-use std::sync::Arc;
-use annotate_snippets::{Renderer, Report};
+use crate::enums::FixAction;
 use annotate_snippets::renderer::DecorStyle;
-use crate::enums::{FixAction};
+use annotate_snippets::{Renderer, Report};
 use phenopackets::schema::v2::Phenopacket;
-
-
-
+use std::sync::Arc;
 
 #[derive(Clone, Debug)]
-pub struct LintingViolation{
+pub struct LintingViolation {
     rule_id: String,
     report: Report<'static>,
 }
@@ -16,17 +13,24 @@ pub struct LintingViolation{
 impl PartialEq for LintingViolation {
     fn eq(&self, other: &Self) -> bool {
         let renderer = Renderer::styled().decor_style(DecorStyle::Unicode);
-        self.rule_id == other.rule_id && renderer.render(self.report) == renderer.render(other.report)
+        self.rule_id == other.rule_id
+            && renderer.render(self.report) == renderer.render(other.report)
     }
 }
-impl LintingViolation{
-    pub fn new(rule_id: &str, report: Report<'static>) -> LintingViolation{
-        Self{rule_id: rule_id.to_string(),  report }
+impl LintingViolation {
+    pub fn new(rule_id: &str, report: Report<'static>) -> LintingViolation {
+        Self {
+            rule_id: rule_id.to_string(),
+            report,
+        }
     }
 
-    pub fn rule_id(&self) -> String { self.rule_id.clone() }
-    pub fn report(&self) -> Report { self.report.clone() }
-
+    pub fn rule_id(&self) -> String {
+        self.rule_id.clone()
+    }
+    pub fn report(&self) -> Report {
+        self.report.clone()
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -63,9 +67,12 @@ impl LintReport {
     }
 
     pub fn fixes(&self) -> Vec<FixAction> {
-        self.report_info.clone().into_iter().filter_map(|ri| ri.fix).collect()
+        self.report_info
+            .clone()
+            .into_iter()
+            .filter_map(|ri| ri.fix)
+            .collect()
     }
-
 
     pub fn push_info(&mut self, info: LintReportInfo) {
         self.report_info.push(info);

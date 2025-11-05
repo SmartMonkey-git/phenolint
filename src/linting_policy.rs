@@ -1,11 +1,11 @@
-use std::collections::HashSet;
-use std::path::{Path, PathBuf};
 use crate::config::config_loader::ConfigLoader;
 use crate::config::linter_config::LinterConfig;
 use crate::error::InstantiationError;
 use crate::linting_report::LintReport;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::RuleCheck;
+use std::collections::HashSet;
+use std::path::{Path, PathBuf};
 
 #[derive(Default)]
 pub struct LintingPolicy {
@@ -13,11 +13,10 @@ pub struct LintingPolicy {
 }
 
 impl LintingPolicy {
-
     pub(crate) fn new(rules: Vec<Box<dyn RuleCheck>>) -> LintingPolicy {
         LintingPolicy { rules }
     }
-    pub fn apply(&self, phenobytes: &[u8] ) -> LintReport{
+    pub fn apply(&self, phenobytes: &[u8]) -> LintReport {
         let mut report = LintReport::default();
 
         for rule in &self.rules {
@@ -37,8 +36,6 @@ impl LintingPolicy {
     }
 }
 
-
-
 impl From<LinterConfig> for LintingPolicy {
     fn from(config: LinterConfig) -> LintingPolicy {
         LintingPolicy::from(config.rule_ids)
@@ -54,7 +51,8 @@ where
         let mut policy = LintingPolicy::default();
         let mut seen_rules = HashSet::new();
 
-        let rule_ids: HashSet<String> = rule_ids.into_iter()
+        let rule_ids: HashSet<String> = rule_ids
+            .into_iter()
             .map(|s| s.as_ref().to_string())
             .collect();
 
@@ -68,9 +66,3 @@ where
         policy
     }
 }
-
-
-
-
-
-

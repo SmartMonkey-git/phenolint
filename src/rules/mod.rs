@@ -1,5 +1,6 @@
 mod curies;
 mod interpretation;
 mod phenotypic_features;
-mod utils;
 pub mod rule_registry;
+mod utils;
+mod utilss;

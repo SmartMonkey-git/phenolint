@@ -1,21 +1,24 @@
-use annotate_snippets::Report;
-use crate::rules::rule_registry::RuleRegistration;
 use crate::linting_report::{LintReport, LintReportInfo, LintingViolation};
+use crate::register_rule;
+use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::{LintRule, RuleCheck};
+use annotate_snippets::Report;
+use json_spanned_value::spanned::Value as SpannedValue;
+use phenolint_macros::lint_rule;
 use phenopackets::schema::v2::core::OntologyClass;
 use regex::Regex;
 use serde_json::Value;
-use phenolint_macros::lint_rule;
-use crate::register_rule;
-use json_spanned_value::Value as SpannedValue;
+use std::fmt::Display;
+use std::path::PathBuf;
 
 #[derive(Debug, Default)]
 #[lint_rule(id = "CURIE001")]
 pub struct CurieFormatRule;
 impl RuleCheck for CurieFormatRule {
-    fn check(&self,phenobytes: &[u8], report: &mut LintReport) {
-        let value = serde_json::from_slice(phenobytes)
+    fn check(&self, phenobytes: &[u8], report: &mut LintReport) {
+        let value: Value = serde_json::from_slice(phenobytes)
             .unwrap_or_else(|_| panic!("Could not serialize phenopacket"));
+        let mut pointer = PathBuf::default();
 
         let mut stack = vec![&value];
         while let Some(current_value) = stack.pop() {
@@ -23,8 +26,11 @@ impl RuleCheck for CurieFormatRule {
                 let regex = Regex::new("^[A-Z][A-Z0-9_]+:[A-Za-z0-9_]+$").unwrap();
                 if !regex.is_match(&ont_class.id) {
                     report.push_info(LintReportInfo::new(
-                        LintingViolation::new(Self::RULE_ID, Self::write_report(phenobytes, &ont_class.id)),
-                        None
+                        LintingViolation::new(
+                            Self::RULE_ID,
+                            Self::write_report(phenobytes, &ont_class.id),
+                        ),
+                        None,
                     ));
                 }
             }
@@ -43,14 +49,9 @@ impl RuleCheck for CurieFormatRule {
                 _ => {}
             }
         }
-
     }
-
-
 }
 impl CurieFormatRule {
-
-
     fn get_ontology_class_from_value(value: &Value) -> Option<OntologyClass> {
         if let Value::Object(map) = &value
             && map.keys().len() == 2
@@ -64,17 +65,15 @@ impl CurieFormatRule {
         }
     }
 
-    fn write_report<'a>(phenobytes: &[u8], wrong_curie: &str) -> Report<'static> {
+    fn write_report<'a>(phenobytes: &[u8], pointer: &str) -> Report<'static> {
         let value: SpannedValue = json_spanned_value::from_slice(phenobytes)
             .unwrap_or_else(|_| panic!("Could not serialize phenopacket"));
 
+        //value.pointer("")
 
         Report::default()
-
-
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -100,7 +99,12 @@ mod tests {
             }],
             ..Default::default()
         };
-        CurieFormatRule.check(&serde_json::to_string_pretty(&phenopacket).unwrap().as_bytes(), &mut report);
+        CurieFormatRule.check(
+            &serde_json::to_string_pretty(&phenopacket)
+                .unwrap()
+                .as_bytes(),
+            &mut report,
+        );
         assert!(report.violations().is_empty());
     }
 
@@ -122,9 +126,30 @@ mod tests {
             ..Default::default()
         };
 
-        CurieFormatRule.check(&serde_json::to_string_pretty(&phenopacket).unwrap().as_bytes(), &mut report);
+        CurieFormatRule.check(
+            &serde_json::to_string_pretty(&phenopacket)
+                .unwrap()
+                .as_bytes(),
+            &mut report,
+        );
         assert!(!report.violations().is_empty());
     }
 
-
+    #[rstest]
+    fn test_iter() {
+        let phenopacket = Phenopacket {
+            id: "test-phenopacket".to_string(),
+            interpretations: vec![Interpretation {
+                diagnosis: Some(Diagnosis {
+                    disease: Some(OntologyClass {
+                        id: "666".to_string(),
+                        label: "spondylocostal dysostosis".to_string(),
+                    }),
+                    genomic_interpretations: vec![],
+                }),
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+    }
 }
