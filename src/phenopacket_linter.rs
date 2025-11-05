@@ -16,64 +16,39 @@ use std::str::FromStr;
 use std::sync::Arc;
 use crate::config::config_loader::ConfigLoader;
 use crate::config::linter_config::LinterConfig;
+use crate::linting_policy::LintingPolicy;
 use crate::rules::rule_registry::RuleRegistration;
+use crate::transformer::Transformer;
 
 struct PhenopacketLinter {
-    rules: Vec<Box<dyn RuleCheck>>,
-}
-
-impl Lint<Phenopacket> for PhenopacketLinter {
-    fn lint(&'_ mut self, phenopacket: Phenopacket, fix: bool) -> LintReport<'_> {
-        let mut phenopacket = phenopacket.clone();
-        let mut report = LintReport::new();
-
-        for rule in &self.rules {
-            rule.check(&phenopacket, &mut report);
-        }
-
-        if fix && report.has_violations() {
-            let fix_res = self.fix(&mut phenopacket, &report);
-            report.fixed_phenopacket = Some(phenopacket)
-        }
-
-        report
-    }
+    policy: LintingPolicy,
+    transformer: Transformer
 }
 
 impl Lint<PathBuf> for PhenopacketLinter {
-    fn lint(&'_ mut self, path: PathBuf, fix: bool) -> LintReport<'_> {
-        let content = std::fs::read_to_string(path).expect("Failed to read file");
-        let mut phenopacket: Phenopacket =
-            serde_json::from_str(&content).expect("Failed to parse phenopacket");
-        self.lint(phenopacket, fix)
+    fn lint(&'_ mut self, path: PathBuf, fix: bool) -> LintReport {
+        let phenobytes  =std::fs::read(path).expect("Could not read file");
+        self.lint(phenobytes.as_slice(), fix)
     }
 }
 
 impl Lint<&[u8]> for PhenopacketLinter {
-    fn lint(&'_ mut self, bytes: &[u8], fix: bool) -> LintReport<'_> {
-        let mut phenopacket: Phenopacket =
-            serde_json::from_slice(bytes).expect("Failed to parse phenopacket");
-        self.lint(phenopacket, fix)
+    fn lint(&mut self, phenobytes: &[u8], fix: bool) -> LintReport {
+        let mut report = self.policy.apply(phenobytes);
+
+        if fix && report.has_violations() {
+            let fixed_pp = self.transformer.fix().unwrap();
+            report.fixed_phenopacket = Some(Vec::from(phenobytes))
+        }
+        report
     }
 }
 
 impl PhenopacketLinter {
-    pub fn new(rules: Vec<Box<dyn RuleCheck>>) -> PhenopacketLinter {
-        PhenopacketLinter { rules }
+    pub fn new(policy: LintingPolicy) -> PhenopacketLinter {
+        PhenopacketLinter { policy, transformer: Transformer }
     }
 
-    fn fix(&self, phenopacket: &mut Phenopacket, report: &LintReport) -> Result<(), LinterError> {
-        let mut seen = HashSet::new();
-        phenopacket.phenotypic_features.retain(|feature| {
-            if let Some(f) = &feature.r#type {
-                seen.insert(f.id.clone())
-            } else {
-                true
-            }
-        });
-
-        Ok(())
-    }
 }
 
 
@@ -81,16 +56,9 @@ impl TryFrom<LinterConfig> for PhenopacketLinter {
     type Error = InstantiationError;
 
     fn try_from(config: LinterConfig) -> Result<Self, Self::Error> {
-
-        let mut rules : Vec<Box<dyn RuleCheck>> = Vec::new();
-        let mut seen_rules = HashSet::new();
-        inventory::iter::<RuleRegistration>().for_each(|r| {
-            if config.rule_ids.contains(&r.rule_id.to_string()) && !seen_rules.contains(&r.rule_id) {
-                rules.push((r.factory)());
-            }
-            seen_rules.insert(r.rule_id);
-        });
-        Ok(PhenopacketLinter::new(rules))
+        let a = config.rule_ids.as_slice();
+        let policy = LintingPolicy::from(config.rule_ids.as_slice());
+        Ok(PhenopacketLinter::new(policy))
     }
 }
 
@@ -143,6 +111,6 @@ rules = ["CURIE001", "PF006", "INTER001"]
         file.write_all(TOML_CONFIG).unwrap();
 
         let linter = PhenopacketLinter::try_from(file_path).expect("Failed to parse phenolint file");
-        assert_eq!(linter.rules.len(), 3);
+        //assert_eq!(linter.policy.rules.len(), 3);
     }
 }

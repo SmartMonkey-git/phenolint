@@ -14,3 +14,10 @@ pub enum InstantiationError {
     #[error(transparent)]
     Config(#[from] ConfigError),
 }
+
+
+#[derive(Error, Debug)]
+pub enum FixingError {
+    #[error("TODO")]
+    SomeError,
+}

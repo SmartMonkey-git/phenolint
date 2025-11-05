@@ -1,4 +1,5 @@
 use annotate_snippets::Report;
+use json_spanned_value::Spanned;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::linting_report::{LintReport, LintReportInfo, LintingViolation};
 use crate::traits::{LintRule, RuleCheck};
@@ -34,32 +35,32 @@ impl RuleCheck for CurieFormatRule {
     /// # Panics
     ///
     /// Panics if the phenopacket cannot be serialized to JSON
-    fn check(&self, phenopacket: &Phenopacket, report: &mut LintReport) {
+    fn check(&self, phenopacket: &Phenopacket, raw_phenopacket: json_spanned_value::Value, report: &mut LintReport) {
         let value = serde_json::to_value(phenopacket)
             .unwrap_or_else(|_| panic!("Could not serialize phenopacket {}", phenopacket.id));
-        Self::inner_validate(value, report);
+        Self::inner_validate(value, report, phenopacket);
     }
 
 
 }
 impl CurieFormatRule {
-    fn inner_validate(value: Value, report: &mut LintReport) {
+    fn inner_validate(value: Value, report: &mut LintReport, phenopacket: &Phenopacket) {
         if let Some(ont_class) = Self::get_ontology_class_from_value(&value) {
             let regex = Regex::new("^[A-Z][A-Z0-9_]+:[A-Za-z0-9_]+$").unwrap();
             if !regex.is_match(&ont_class.id) {
-                report.push_info(LintReportInfo::new(LintingViolation::new(Self::RULE_ID, Report::default()), None));
+                report.push_info(LintReportInfo::new(LintingViolation::new(Self::RULE_ID, Self::write_report(phenopacket, &ont_class.id)), None));
             }
         }
 
         match value {
             Value::Object(map) => {
                 for (_key, sub_value) in map {
-                    Self::inner_validate(sub_value, report);
+                    Self::inner_validate(sub_value, report, phenopacket);
                 }
             }
             Value::Array(arr) => {
                 for sub_value in arr {
-                    Self::inner_validate(sub_value, report);
+                    Self::inner_validate(sub_value, report, phenopacket);
                 }
             }
             _ => {}
@@ -77,6 +78,17 @@ impl CurieFormatRule {
         } else {
             None
         }
+    }
+
+    fn write_report<'a>(phenopacket: &Phenopacket, wrong_curie: &str) -> Report<'static> {
+        let value = serde_json::to_value(phenopacket)
+            .unwrap_or_else(|_| panic!("Could not serialize phenopacket {}", phenopacket.id));
+        let a: json_spanned_value::Value  = json_spanned_value::from_str(&value.to_string()).unwrap();
+        println!("{}", value.to_string());
+
+        Report::default()
+
+
     }
 }
 
@@ -130,5 +142,11 @@ mod tests {
 
         CurieFormatRule.check(&phenopacket, &mut report);
         assert!(!report.violations().is_empty());
+    }
+
+    #[rstest]
+    fn test_formatting(){
+
+
     }
 }

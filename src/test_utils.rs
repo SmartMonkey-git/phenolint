@@ -14,3 +14,174 @@ fn init_ontolius(hpo_path: PathBuf) -> Arc<FullCsrOntology> {
         .expect("Unable to load ontology");
     Arc::new(ontolius)
 }
+
+
+
+const TEST_PHENOPACKET: &[u8] = br#"
+{
+  "id": "PMID_28239884_Family_1_proband",
+  "subject": {
+    "id": "Family 1 proband",
+    "timeAtLastEncounter": {
+      "age": {
+        "iso8601duration": "P43Y"
+      }
+    },
+    "sex": "FEMALE"
+  },
+  "phenotypicFeatures": [
+    {
+      "type": {
+        "id": "HP:0006482",
+        "label": "Abnormal dental morphology"
+      },
+      "excluded": true
+    },
+    {
+      "type": {
+        "id": "HP:0007530",
+        "label": "Punctate palmoplantar hyperkeratosis"
+      },
+      "onset": {
+        "age": {
+          "iso8601duration": "P18Y"
+        }
+      }
+    },
+    {
+      "type": {
+        "id": "HP:0001595",
+        "label": "Abnormal hair morphology"
+      },
+      "excluded": true
+    },
+    {
+      "type": {
+        "id": "HP:0001597",
+        "label": "Abnormal nail morphology"
+      },
+      "excluded": true
+    }
+  ],
+  "interpretations": [
+    {
+      "id": "FPmjdVuIKbro5Elp8PouTlHr",
+      "progressStatus": "SOLVED",
+      "diagnosis": {
+        "disease": {
+          "id": "OMIM:148600",
+          "label": "Keratoderma, palmoplantar, punctate type IA"
+        },
+        "genomicInterpretations": [
+          {
+            "subjectOrBiosampleId": "Family 1 proband",
+            "interpretationStatus": "CAUSATIVE",
+            "variantInterpretation": {
+              "acmgPathogenicityClassification": "PATHOGENIC",
+              "therapeuticActionability": "UNKNOWN_ACTIONABILITY",
+              "variationDescriptor": {
+                "id": "c506_507insAA_AAGAB_NM_024666v5",
+                "geneContext": {
+                  "valueId": "HGNC:25662",
+                  "symbol": "AAGAB"
+                },
+                "expressions": [
+                  {
+                    "syntax": "hgvs.c",
+                    "value": "NM_024666.5:c.506_507insAA"
+                  },
+                  {
+                    "syntax": "hgvs.g",
+                    "value": "NC_000015.10:g.67231843_67231844dup"
+                  },
+                  {
+                    "syntax": "hgvs.p",
+                    "value": "NP_078942.3:p.(Asn169LysfsTer7)"
+                  }
+                ],
+                "vcfRecord": {
+                  "genomeAssembly": "hg38",
+                  "chrom": "chr15",
+                  "pos": 67231842,
+                  "ref": "A",
+                  "alt": "ATT"
+                },
+                "moleculeContext": "genomic",
+                "allelicState": {
+                  "id": "GENO:0000135",
+                  "label": "heterozygous"
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "diseases": [
+    {
+      "term": {
+        "id": "OMIM:148600",
+        "label": "Keratoderma, palmoplantar, punctate type IA"
+      },
+      "onset": {
+        "age": {
+          "iso8601duration": "P18Y"
+        }
+      }
+    }
+  ],
+  "metaData": {
+    "created": "2025-10-21T19:25:27.158476Z",
+    "createdBy": "0000-0002-0736-9199",
+    "resources": [
+      {
+        "id": "hp",
+        "name": "human phenotype ontology",
+        "url": "http://purl.obolibrary.org/obo/hp.owl",
+        "version": "2025-09-01",
+        "namespacePrefix": "HP",
+        "iriPrefix": "http://purl.obolibrary.org/obo/HP_"
+      },
+      {
+        "id": "geno",
+        "name": "Genotype Ontology",
+        "url": "http://purl.obolibrary.org/obo/geno.owl",
+        "version": "2025-07-25",
+        "namespacePrefix": "GENO",
+        "iriPrefix": "http://purl.obolibrary.org/obo/GENO_"
+      },
+      {
+        "id": "so",
+        "name": "Sequence types and features ontology",
+        "url": "http://purl.obolibrary.org/obo/so.owl",
+        "version": "2024-11-18",
+        "namespacePrefix": "SO",
+        "iriPrefix": "http://purl.obolibrary.org/obo/SO_"
+      },
+      {
+        "id": "omim",
+        "name": "An Online Catalog of Human Genes and Genetic Disorders",
+        "url": "https://www.omim.org",
+        "version": "06/01/25",
+        "namespacePrefix": "OMIM",
+        "iriPrefix": "https://www.omim.org/entry/"
+      },
+      {
+        "id": "hgnc",
+        "name": "HUGO Gene Nomenclature Committee",
+        "url": "https://www.genenames.org",
+        "version": "06/01/25",
+        "namespacePrefix": "HGNC",
+        "iriPrefix": "https://www.genenames.org/data/gene-symbol-report/#!/hgnc_id/"
+      }
+    ],
+    "phenopacketSchemaVersion": "2.0.2",
+    "externalReferences": [
+      {
+        "id": "PMID:28239884",
+        "description": "Mutations in AAGAB underlie autosomal dominant punctate palmoplantar keratoderma"
+      }
+    ]
+  }
+}"#;
