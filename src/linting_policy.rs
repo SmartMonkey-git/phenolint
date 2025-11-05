@@ -19,10 +19,9 @@ impl LintingPolicy {
     }
     pub fn apply(&self, phenobytes: &[u8] ) -> LintReport{
         let mut report = LintReport::default();
-        let spanned_json:json_spanned_value::Value  = json_spanned_value::from_slice(phenobytes).expect("Could not serialize phenopacket to json");
 
         for rule in &self.rules {
-            rule.check(&spanned_json, &mut report)
+            rule.check(phenobytes, &mut report)
         }
 
         report

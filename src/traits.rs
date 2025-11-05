@@ -9,7 +9,7 @@ pub trait LintRule: RuleCheck + Default  {
 
 pub trait RuleCheck {
 
-    fn check(&self, raw_phenopacket: &json_spanned_value::Value, report: &mut LintReport);
+    fn check(&self, phenobytes: &[u8], report: &mut LintReport);
 
 }
 
