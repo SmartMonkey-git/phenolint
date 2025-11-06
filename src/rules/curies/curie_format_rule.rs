@@ -151,22 +151,5 @@ mod tests {
         );
         assert!(!report.violations().is_empty());
     }
-
-    #[rstest]
-    fn test_iter() {
-        let phenopacket = Phenopacket {
-            id: "test-phenopacket".to_string(),
-            interpretations: vec![Interpretation {
-                diagnosis: Some(Diagnosis {
-                    disease: Some(OntologyClass {
-                        id: "666".to_string(),
-                        label: "spondylocostal dysostosis".to_string(),
-                    }),
-                    genomic_interpretations: vec![],
-                }),
-                ..Default::default()
-            }],
-            ..Default::default()
-        };
-    }
+    
 }
