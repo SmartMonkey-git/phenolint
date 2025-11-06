@@ -2,7 +2,7 @@ use crate::linting_report::{LintReport, LintReportInfo, LintingViolation};
 use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::rules::utils::json_cursor::{JsonCursor, Pointer};
-use crate::traits::{LintRule, RuleCheck};
+use crate::traits::{FromContext, LintRule, RuleCheck};
 use annotate_snippets::renderer::DecorStyle;
 use annotate_snippets::{AnnotationKind, Level, Renderer, Report, Snippet};
 use json_spanned_value::spanned::Value as SpannedValue;
@@ -10,10 +10,18 @@ use phenolint_macros::lint_rule;
 use phenopackets::schema::v2::core::OntologyClass;
 use regex::Regex;
 use serde_json::Value;
+use crate::linter_context::LinterContext;
 
 #[derive(Debug, Default)]
 #[lint_rule(id = "CURIE001")]
 pub struct CurieFormatRule;
+
+impl FromContext for CurieFormatRule {
+    fn from_context(_: &LinterContext) -> Option<Box<dyn RuleCheck>> {
+        Some(Box::new(CurieFormatRule))
+    }
+}
+
 impl RuleCheck for CurieFormatRule {
     fn check(&self, phenobytes: &[u8], report: &mut LintReport) {
         let cursor = JsonCursor::new(

@@ -39,7 +39,7 @@ pub struct LintReportInfo {
 
 impl LintReportInfo {
     pub fn new(violation: LintingViolation, patch: Option<Patch>) -> Self {
-        Self { violation,  patch }
+        Self { violation, patch }
     }
 }
 

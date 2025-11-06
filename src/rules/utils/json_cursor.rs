@@ -245,9 +245,8 @@ impl JsonCursor {
         self
     }
 
-
     /// Checks if the cursor is currently at the root of the JSON value.
-    pub fn is_root(& self) -> bool {
+    pub fn is_root(&self) -> bool {
         self.pointer.is_root()
     }
 

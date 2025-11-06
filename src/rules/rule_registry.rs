@@ -1,8 +1,9 @@
+use crate::linter_context::LinterContext;
 use crate::traits::RuleCheck;
 
 pub struct RuleRegistration {
     pub rule_id: &'static str,
-    pub factory: fn() -> Box<dyn RuleCheck>,
+    pub factory: fn(context: &LinterContext) -> Option<Box<dyn RuleCheck>>,
 }
 
 inventory::collect!(RuleRegistration);
@@ -13,7 +14,7 @@ macro_rules! register_rule {
         inventory::submit! {
             RuleRegistration {
                 rule_id: <$rule_type>::RULE_ID,
-                factory: || Box::new(<$rule_type>::default()),
+                factory: |context: &LinterContext| Box::new(<$rule_type>::from_context(context)),
             }
         }
     };

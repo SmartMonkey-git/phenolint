@@ -6,6 +6,7 @@ use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::RuleCheck;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
+use crate::linter_context::LinterContext;
 
 #[derive(Default)]
 pub struct LintingPolicy {
@@ -50,6 +51,7 @@ where
     fn from(rule_ids: T) -> Self {
         let mut policy = LintingPolicy::default();
         let mut seen_rules = HashSet::new();
+        let linter_context = LinterContext::default();
 
         let rule_ids: HashSet<String> = rule_ids
             .into_iter()
@@ -58,7 +60,9 @@ where
 
         for r in inventory::iter::<RuleRegistration>() {
             if rule_ids.contains(r.rule_id) && !seen_rules.contains(&r.rule_id) {
-                policy.push_rule((r.factory)());
+                 if let Some(rule)  = (r.factory)(&linter_context){
+                policy.push_rule(rule);
+                }
             }
             seen_rules.insert(r.rule_id);
         }
