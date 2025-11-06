@@ -166,34 +166,33 @@ mod tests {
     #[fixture]
     fn term_ancestry() -> Vec<TermId> {
         vec![
-            "HP:0000448".parse().unwrap(), // scion
-            "HP:0005105".parse().unwrap(),
-            "HP:0000366".parse().unwrap(),
-            "HP:0000271".parse().unwrap(), // progenitor
+            "HP:0003907".parse().unwrap(), // scion
+            "HP:0009809".parse().unwrap(),
+            "HP:0002817".parse().unwrap(),
+            "HP:0040064".parse().unwrap(), // progenitor
         ]
     }
-    /*
+
     #[rstest]
     fn test_find_ancestors(term_ancestry: Vec<TermId>) {
         let ancestors = find_ancestors(
             HPO.clone(),
             &term_ancestry.iter().cloned().collect(),
-            &"HP:0005105".parse().unwrap(),
+            &"HP:0009809".parse().unwrap(),
         );
 
-        assert!(ancestors.contains(&TermId::from_str("HP:0000366").unwrap()));
-        assert!(ancestors.contains(&TermId::from_str("HP:0000271").unwrap()));
+        assert!(ancestors.contains(&TermId::from_str("HP:0040064").unwrap()));
+        assert!(ancestors.contains(&TermId::from_str("HP:0002817").unwrap()));
     }
-    */
-    /*
+
     #[rstest]
     fn test_find_descendents(term_ancestry: Vec<TermId>) {
         let ancestors = find_descendents(
             HPO.clone(),
             &term_ancestry.iter().cloned().collect(),
-            &"HP:0005105".parse().unwrap(),
+            &"HP:0009809".parse().unwrap(),
         );
 
-        assert!(ancestors.contains(&TermId::from_str("HP:0000448").unwrap()));
-    }    */
+        assert!(ancestors.contains(&TermId::from_str("HP:0003907").unwrap()));
+    }
 }
