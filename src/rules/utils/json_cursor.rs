@@ -5,6 +5,7 @@ use std::fmt::Display;
 #[derive(Debug, Clone)]
 pub(crate) struct Pointer(String);
 
+
 fn escape(step: &str) -> String {
     step.replace("~", "~0").replace("/", "~1")
 }
@@ -84,8 +85,9 @@ impl Pointer {
         unescaped
     }
 
-    pub fn root() -> Self {
-        Self(String::new())
+    pub fn root(&mut self) -> &Self {
+        self.0 = String::new();
+        self
     }
 
     pub fn is_root(&self) -> bool {
@@ -153,7 +155,7 @@ impl JsonCursor {
     /// # Returns
     /// * `Some(Pointer)` if the key is found.
     /// * `None` if no match is found.
-    pub fn find_position(&mut self, target_key: &str) -> Option<Pointer> {
+    pub fn locate(&mut self, target_key: &str) -> Option<Pointer> {
         let target = escape(target_key);
         for (pointer, _) in self.iter_with_paths() {
             if pointer.0.ends_with(&target) {
@@ -173,7 +175,7 @@ impl JsonCursor {
     ///
     /// # Returns
     /// A vector of [`Pointer`]s pointing to all matches.
-    pub fn find_positions(&mut self, target_key: &str) -> Vec<Pointer> {
+    pub fn locate_all(&mut self, target_key: &str) -> Vec<Pointer> {
         let target = escape(target_key);
         let mut result = Vec::new();
         for (pointer, _) in self.iter_with_paths() {
@@ -194,7 +196,7 @@ impl JsonCursor {
     ///
     /// # Returns
     /// A mutable reference to the cursor (for chaining).
-    pub fn step<S: ToString>(&mut self, step: S) -> &mut Self {
+    pub fn down<S: ToString>(&mut self, step: S) -> &mut Self {
         self.pointer.step(step);
         self
     }
@@ -208,6 +210,45 @@ impl JsonCursor {
     pub fn up(&mut self) -> &mut Self {
         self.pointer.up();
         self
+    }
+
+    /// Moves the cursor back to the root of the JSON value.
+    ///
+    /// This resets the internal pointer to the root position (`""`),
+    /// effectively bringing the cursor to the top-level JSON node.
+    ///
+    /// # Returns
+    /// A mutable reference to the cursor (for chaining).
+    pub fn root(&mut self) -> &mut Self {
+        self.pointer.root();
+        self
+    }
+
+    /// Lists the immediate children at the cursor’s current position.
+    ///
+    /// If the cursor points to:
+    /// - An **object**, returns its keys.
+    /// - An **array**, returns its indices as strings (`"0"`, `"1"`, etc.).
+    /// - Any other value type (number, string, boolean, null), returns an empty vector.
+    ///
+    /// # Returns
+    /// A vector of strings representing the names or indices
+    /// of the next available navigation steps.
+    pub fn peek(&self) -> Vec<String> {
+        match self.current_value() {
+            None => {vec![]}
+            Some(value) => {
+                match value {
+                    Value::Array(array) => {
+                        (0..array.len()).into_iter().map(|index| index.to_string()).collect()
+                    }
+                    Value::Object(obj) => {
+                        obj.keys().into_iter().map(|key| key.to_string()).collect()
+                    }
+                    _ =>  vec![]
+                }
+            }
+        }
     }
 
     /// Returns a reference to the JSON value at the cursor's current position.
@@ -317,7 +358,7 @@ mod tests {
     fn test_step_and_up_navigation() {
         let mut cursor = JsonCursor::new(make_sample_json());
 
-        cursor.step("user").step("address").step("city");
+        cursor.down("user").down("address").down("city");
         assert_eq!(cursor.pointer().position(), "/user/address/city");
         assert_eq!(cursor.current_value(), Some(&json!("Paris")));
 
@@ -331,14 +372,14 @@ mod tests {
     #[rstest]
     fn test_find_position_finds_first_key() {
         let mut cursor = JsonCursor::new(make_sample_json());
-        let ptr = cursor.find_position("city").expect("city should exist");
+        let ptr = cursor.locate("city").expect("city should exist");
         assert_eq!(ptr.position(), "/user/address/city");
     }
 
     #[rstest]
     fn test_find_positions_finds_all_matches() {
         let mut cursor = JsonCursor::new(make_sample_json());
-        let positions = cursor.find_positions("name");
+        let positions = cursor.locate_all("name");
         let paths: Vec<_> = positions.iter().map(|p| p.position()).collect();
 
         assert_eq!(paths.len(), 3);
