@@ -151,5 +151,4 @@ mod tests {
         );
         assert!(!report.violations().is_empty());
     }
-    
 }
