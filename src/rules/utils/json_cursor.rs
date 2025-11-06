@@ -80,9 +80,8 @@ impl Pointer {
     ///
     /// # Returns
     /// A string representing the pointer’s current position.
-    pub fn position(&self) -> String {
-        let unescaped = unescape(self.0.as_str());
-        unescaped
+    pub fn position(&self) -> &str {
+        self.0.as_str()
     }
 
     pub fn root(&mut self) -> &Self {
@@ -257,7 +256,7 @@ impl JsonCursor {
     /// * `Some(&Value)` if the pointer resolves to a valid location.
     /// * `None` if the pointer path does not exist.
     pub fn current_value(&self) -> Option<&Value> {
-        self.value.pointer(self.pointer.position().as_str())
+        self.value.pointer(self.pointer.position())
     }
 
     /// Returns a reference to the cursor’s internal pointer.
@@ -277,7 +276,7 @@ impl JsonCursor {
         let mut queue = VecDeque::new();
         let current_value = self
             .value
-            .pointer(self.pointer.position().as_str())
+            .pointer(self.pointer.position())
             .expect("");
         queue.push_back((current_value, self.pointer.clone()));
 
@@ -383,9 +382,9 @@ mod tests {
         let paths: Vec<_> = positions.iter().map(|p| p.position()).collect();
 
         assert_eq!(paths.len(), 3);
-        assert!(paths.contains(&"/user/name".to_string()));
-        assert!(paths.contains(&"/items/0/name".to_string()));
-        assert!(paths.contains(&"/items/1/name".to_string()));
+        assert!(paths.contains(&"/user/name"));
+        assert!(paths.contains(&"/items/0/name"));
+        assert!(paths.contains(&"/items/1/name"));
     }
 
     #[rstest]
@@ -397,9 +396,9 @@ mod tests {
         assert_eq!(all.first().unwrap().0.position(), "");
 
         let paths: Vec<_> = all.iter().map(|(p, _)| p.position()).collect();
-        assert!(paths.contains(&"/user/address/city".to_string()));
-        assert!(paths.contains(&"/items/0/id".to_string()));
-        assert!(paths.contains(&"/score".to_string()));
+        assert!(paths.contains(&"/user/address/city"));
+        assert!(paths.contains(&"/items/0/id"));
+        assert!(paths.contains(&"/score"));
     }
 
     #[rstest]

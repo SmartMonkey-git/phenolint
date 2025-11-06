@@ -55,7 +55,7 @@ impl CurieFormatRule {
         let json = String::from_utf8(phenobytes.to_vec()).unwrap();
         let value: SpannedValue = json_spanned_value::from_str(&json)
             .unwrap_or_else(|_| panic!("Could not serialize phenopacket"));
-        let (start, end) = value.pointer(pointer.position().as_str()).unwrap().span();
+        let (start, end) = value.pointer(pointer.position()).unwrap().span();
         let (start_2, end_2) = value
             .pointer(pointer.clone().up().to_string().as_str())
             .unwrap()
