@@ -8,13 +8,13 @@ use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
 use std::collections::HashSet;
 use std::str::FromStr;
 use std::sync::Arc;
-
+#[allow(dead_code)]
 fn is_mergable_pf(phenotypic_features: &PhenotypicFeature) -> bool {
     phenotypic_features.onset.is_some()
         || phenotypic_features.modifiers.is_empty()
         || phenotypic_features.severity.is_none()
 }
-
+#[allow(dead_code)]
 fn is_empty_pf(phenotypic_features: &PhenotypicFeature) -> bool {
     phenotypic_features.onset.is_none()
         && phenotypic_features.severity.is_none()
@@ -58,6 +58,7 @@ fn is_empty_pf(phenotypic_features: &PhenotypicFeature) -> bool {
 /// let ancestors = obj.find_ancestors(&ancestry_set, &scion_term);
 /// // ancestors will contain only those terms from ancestry_set that are ancestors of scion_term
 /// ```
+#[allow(dead_code)]
 pub(crate) fn find_ancestors(
     hpo: Arc<FullCsrOntology>,
     ancestry: &HashSet<TermId>,
@@ -104,6 +105,7 @@ pub(crate) fn find_ancestors(
 /// let descendants = obj.find_descendents(&ancestry_set, &progenitor_term);
 /// // descendants will contain only those terms from ancestry_set that are descendants of progenitor_term
 /// ```
+#[allow(dead_code)]
 pub(crate) fn find_descendents(
     hpo: Arc<FullCsrOntology>,
     ancestry: &HashSet<TermId>,
@@ -116,6 +118,7 @@ pub(crate) fn find_descendents(
         .collect()
 }
 
+#[allow(dead_code)]
 pub(crate) fn partition_phenotypic_features(
     phenopacket: &Phenopacket,
 ) -> (HashSet<TermId>, HashSet<TermId>) {
@@ -140,6 +143,7 @@ pub(crate) fn partition_phenotypic_features(
 
     (observed, excluded)
 }
+#[allow(dead_code)]
 pub(crate) fn term_to_ontology_class(term: &SimpleTerm) -> OntologyClass {
     OntologyClass {
         id: term.identifier().to_string(),

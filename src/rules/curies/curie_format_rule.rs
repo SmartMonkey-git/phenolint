@@ -24,23 +24,23 @@ impl FromContext for CurieFormatRule {
 
 impl RuleCheck for CurieFormatRule {
     fn check(&self, phenobytes: &[u8], report: &mut LintReport) {
+        let regex = Regex::new("^[A-Z][A-Z0-9_]+:[A-Za-z0-9_]+$").unwrap();
         let cursor = JsonCursor::new(
             serde_json::from_slice(phenobytes)
                 .unwrap_or_else(|_| panic!("Could not serialize phenopacket")),
         );
 
         for (pointer, value) in cursor.iter_with_paths() {
-            if let Some(ont_class) = Self::get_ontology_class_from_value(&value) {
-                let regex = Regex::new("^[A-Z][A-Z0-9_]+:[A-Za-z0-9_]+$").unwrap();
-                if !regex.is_match(&ont_class.id) {
-                    report.push_info(LintReportInfo::new(
-                        LintingViolation::new(
-                            Self::RULE_ID,
-                            Self::write_report(phenobytes, pointer.clone().down("id")),
-                        ),
-                        None,
-                    ));
-                }
+            if let Some(ont_class) = Self::get_ontology_class_from_value(value)
+                && !regex.is_match(&ont_class.id)
+            {
+                report.push_info(LintReportInfo::new(
+                    LintingViolation::new(
+                        Self::RULE_ID,
+                        Self::write_report(phenobytes, pointer.clone().down("id")),
+                    ),
+                    None,
+                ));
             }
         }
     }
@@ -59,7 +59,7 @@ impl CurieFormatRule {
         }
     }
 
-    fn write_report<'a>(phenobytes: &[u8], pointer: &Pointer) -> Report<'static> {
+    fn write_report(phenobytes: &[u8], pointer: &Pointer) -> Report<'static> {
         let json = String::from_utf8(phenobytes.to_vec()).unwrap();
         let value: SpannedValue = json_spanned_value::from_str(&json)
             .unwrap_or_else(|_| panic!("Could not serialize phenopacket"));
@@ -117,7 +117,7 @@ mod tests {
             ..Default::default()
         };
         CurieFormatRule.check(
-            &serde_json::to_string_pretty(&phenopacket)
+            serde_json::to_string_pretty(&phenopacket)
                 .unwrap()
                 .as_bytes(),
             &mut report,
@@ -144,7 +144,7 @@ mod tests {
         };
 
         CurieFormatRule.check(
-            &serde_json::to_string_pretty(&phenopacket)
+            serde_json::to_string_pretty(&phenopacket)
                 .unwrap()
                 .as_bytes(),
             &mut report,

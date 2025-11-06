@@ -1,13 +1,13 @@
 use crate::report::snippet_parser_spec::SnippetParserSpec;
-
+#[allow(dead_code)]
 pub enum Level {
-    ERROR,
-    WARNING,
-    INFO,
-    NOTE,
-    HELP,
+    Error,
+    Warning,
+    Info,
+    Note,
+    Help,
 }
-
+#[allow(dead_code)]
 pub struct ReportParserSpec<T> {
     pub level: Level,
     pub primary_title: String,

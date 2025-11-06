@@ -45,7 +45,7 @@ mod tests {
         let regex = Regex::new("[A-Z]{1,5}[0-9]{3}").unwrap();
 
         inventory::iter::<RuleRegistration>().for_each(|r| {
-            regex.is_match(&r.rule_id);
+            regex.is_match(r.rule_id);
         });
     }
 }

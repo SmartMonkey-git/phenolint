@@ -37,7 +37,7 @@ impl Lint<&[u8]> for Phenolinter {
         let mut report = self.policy.apply(phenobytes);
 
         if fix && report.has_violations() {
-            let fixed_pp = self.transformer.patch().unwrap();
+            self.transformer.patch().unwrap();
             report.fixed_phenopacket = Some(Vec::from(phenobytes))
         }
         report

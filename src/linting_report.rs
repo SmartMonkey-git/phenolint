@@ -26,8 +26,8 @@ impl LintingViolation {
     pub fn rule_id(&self) -> String {
         self.rule_id.clone()
     }
-    pub fn report(&self) -> Report {
-        self.report.clone()
+    pub fn report(&'_ self) -> Report<'_> {
+        self.report
     }
 }
 

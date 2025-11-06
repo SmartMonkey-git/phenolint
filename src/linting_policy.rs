@@ -14,6 +14,7 @@ pub struct LintingPolicy {
 }
 
 impl LintingPolicy {
+    #[allow(dead_code)]
     pub(crate) fn new(rules: Vec<Box<dyn RuleCheck>>) -> LintingPolicy {
         LintingPolicy { rules }
     }
@@ -30,7 +31,7 @@ impl LintingPolicy {
     pub fn push_rule(&mut self, rule: Box<dyn RuleCheck>) {
         self.rules.push(rule);
     }
-
+    #[allow(dead_code)]
     pub fn try_from_path<P: AsRef<Path>>(path: P) -> Result<Self, InstantiationError> {
         let config: LinterConfig = ConfigLoader::load(PathBuf::from(path.as_ref()))?;
         Ok(LintingPolicy::from(config))
@@ -59,6 +60,7 @@ where
             .collect();
 
         for r in inventory::iter::<RuleRegistration>() {
+            #[allow(clippy::collapsible_if)]
             if rule_ids.contains(r.rule_id) && !seen_rules.contains(&r.rule_id) {
                 if let Some(rule) = (r.factory)(&linter_context) {
                     policy.push_rule(rule);

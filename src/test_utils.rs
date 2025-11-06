@@ -17,6 +17,7 @@ fn init_ontolius(hpo_path: PathBuf) -> Arc<FullCsrOntology> {
     Arc::new(ontolius)
 }
 
+#[allow(dead_code)]
 const TEST_PHENOPACKET: &[u8] = br#"
 {
   "id": "PMID_28239884_Family_1_proband",

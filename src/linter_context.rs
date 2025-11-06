@@ -24,11 +24,7 @@ impl LinterContext {
             .get_or_init(|| {
                 let loader = OntologyLoaderBuilder::new().obographs_parser().build();
                 let ontology: Option<FullCsrOntology> = loader.load_from_path(path.clone()).ok();
-                if let Some(ont) = ontology {
-                    Some(Arc::new(ont))
-                } else {
-                    None
-                }
+                ontology.map(Arc::new)
             })
             .clone()
     }
