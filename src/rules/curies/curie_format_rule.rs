@@ -55,24 +55,25 @@ impl CurieFormatRule {
         let json = String::from_utf8(phenobytes.to_vec()).unwrap();
         let value: SpannedValue = json_spanned_value::from_str(&json)
             .unwrap_or_else(|_| panic!("Could not serialize phenopacket"));
-        let (start, end) = value.pointer(pointer.position()).unwrap().span();
-        let (start_2, end_2) = value
-            .pointer(pointer.clone().up().to_string().as_str())
+        let (curie_start, curie_end) = value.pointer(pointer.position()).unwrap().span();
+        let (context_span_start, context_span_end) = value
+            .pointer(pointer.clone().up().position())
             .unwrap()
             .span();
+
         let report = &[Level::WARNING
             .primary_title(format!("[{}] CURIE formatted incorrectly", Self::RULE_ID))
             .element(
                 Snippet::source(json)
-                    .line_start(start_2 - 2)
+                    //.line_start(190 - 2)
                     .annotation(
                         AnnotationKind::Primary
-                            .span(start..end)
+                            .span(curie_start..curie_end)
                             .label("Expected CURIE with format CURIE:12345"),
                     )
                     .annotation(
                         AnnotationKind::Context
-                            .span(start_2..end_2)
+                            .span(context_span_start..context_span_end)
                             .label("For this Ontology Class"),
                     ),
             )];
@@ -124,7 +125,7 @@ mod tests {
             interpretations: vec![Interpretation {
                 diagnosis: Some(Diagnosis {
                     disease: Some(OntologyClass {
-                        id: "666".to_string(),
+                        id: "not_a_curie".to_string(),
                         label: "spondylocostal dysostosis".to_string(),
                     }),
                     genomic_interpretations: vec![],
