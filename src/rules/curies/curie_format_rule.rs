@@ -1,3 +1,4 @@
+use crate::linter_context::LinterContext;
 use crate::linting_report::{LintReport, LintReportInfo, LintingViolation};
 use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
@@ -10,7 +11,6 @@ use phenolint_macros::lint_rule;
 use phenopackets::schema::v2::core::OntologyClass;
 use regex::Regex;
 use serde_json::Value;
-use crate::linter_context::LinterContext;
 
 #[derive(Debug, Default)]
 #[lint_rule(id = "CURIE001")]

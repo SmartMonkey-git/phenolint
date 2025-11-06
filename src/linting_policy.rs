@@ -1,12 +1,12 @@
 use crate::config::config_loader::ConfigLoader;
 use crate::config::linter_config::LinterConfig;
 use crate::error::InstantiationError;
+use crate::linter_context::LinterContext;
 use crate::linting_report::LintReport;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::RuleCheck;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
-use crate::linter_context::LinterContext;
 
 #[derive(Default)]
 pub struct LintingPolicy {
@@ -60,8 +60,8 @@ where
 
         for r in inventory::iter::<RuleRegistration>() {
             if rule_ids.contains(r.rule_id) && !seen_rules.contains(&r.rule_id) {
-                 if let Some(rule)  = (r.factory)(&linter_context){
-                policy.push_rule(rule);
+                if let Some(rule) = (r.factory)(&linter_context) {
+                    policy.push_rule(rule);
                 }
             }
             seen_rules.insert(r.rule_id);
