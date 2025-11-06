@@ -28,7 +28,7 @@ impl RuleCheck for CurieFormatRule {
                     report.push_info(LintReportInfo::new(
                         LintingViolation::new(
                             Self::RULE_ID,
-                            Self::write_report(phenobytes, pointer.clone().step("id")),
+                            Self::write_report(phenobytes, pointer.clone().down("id")),
                         ),
                         None,
                     ));

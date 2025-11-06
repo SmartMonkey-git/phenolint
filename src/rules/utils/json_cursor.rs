@@ -2,13 +2,22 @@ use serde_json::Value;
 use std::collections::VecDeque;
 use std::fmt::Display;
 
+/// A struct representing a JSON Pointer (RFC 6901).
+///
+/// This internally stores the pointer as an escaped string (e.g., "/a/~1b").
 #[derive(Debug, Clone)]
 pub(crate) struct Pointer(String);
 
+/// Escapes a string segment for use in a JSON Pointer.
+///
+/// Replaces "~" with "~0" and "/" with "~1".
 fn escape(step: &str) -> String {
     step.replace("~", "~0").replace("/", "~1")
 }
 
+/// Unescapes a JSON Pointer segment.
+///
+/// Replaces "~1" with "/" and "~0" with "~".
 fn unescape(step: &str) -> String {
     step.replace("~1", "/").replace("~0", "~")
 }
@@ -41,7 +50,7 @@ impl Pointer {
     /// ptr.up();
     /// assert_eq!(ptr.position(), "/user");
     /// ```
-    pub fn up(&mut self) -> &Self {
+    pub fn up(&mut self) -> &mut Self {
         if let Some(pos) = self.0.rfind('/') {
             self.0.truncate(pos);
         }
@@ -65,7 +74,7 @@ impl Pointer {
     /// ptr.step("user").step("name");
     /// assert_eq!(ptr.position(), "/user/name");
     /// ```
-    pub fn step<S: ToString>(&mut self, step: S) -> &Self {
+    pub fn down<S: ToString>(&mut self, step: S) -> &mut Self {
         let step = step.to_string();
         let step = escape(&step);
         self.0 = format!("{}/{}", self.0, step);
@@ -83,11 +92,16 @@ impl Pointer {
         self.0.as_str()
     }
 
-    pub fn root(&mut self) -> &Self {
+    /// Resets the pointer to the root position (`""`).
+    ///
+    /// # Returns
+    /// A mutable reference to `self` (for chaining).
+    pub fn root(&mut self) -> &mut Self {
         self.0 = String::new();
         self
     }
 
+    /// Checks if the pointer is at the root (i.e., is an empty string).
     pub fn is_root(&self) -> bool {
         self.0.is_empty()
     }
@@ -141,7 +155,7 @@ impl JsonCursor {
         self.pointer = ptr;
     }
 
-    pub fn jump_to(&mut self, target_key: &str) -> &Self {
+    pub fn jump_to(&mut self, target_key: &str) -> &mut Self {
         match self.locate(target_key) {
             None => self,
             Some(ptr) => {
@@ -164,9 +178,8 @@ impl JsonCursor {
     /// * `Some(Pointer)` if the key is found.
     /// * `None` if no match is found.
     pub fn locate(&mut self, target_key: &str) -> Option<Pointer> {
-        let target = escape(target_key);
         for (pointer, _) in self.iter_with_paths() {
-            if pointer.0.ends_with(&target) {
+            if pointer.get_tip() == target_key {
                 return Some(pointer);
             }
         }
@@ -187,7 +200,7 @@ impl JsonCursor {
         let target = escape(target_key.to_string().as_str());
         let mut result = Vec::new();
         for (pointer, _) in self.iter_with_paths() {
-            if pointer.0.ends_with(&target) {
+            if pointer.get_tip() == target {
                 result.push(pointer);
             }
         }
@@ -205,7 +218,7 @@ impl JsonCursor {
     /// # Returns
     /// A mutable reference to the cursor (for chaining).
     pub fn down<S: ToString>(&mut self, step: S) -> &mut Self {
-        self.pointer.step(step);
+        self.pointer.down(step);
         self
     }
 
@@ -230,6 +243,12 @@ impl JsonCursor {
     pub fn root(&mut self) -> &mut Self {
         self.pointer.root();
         self
+    }
+
+
+    /// Checks if the cursor is currently at the root of the JSON value.
+    pub fn is_root(& self) -> bool {
+        self.pointer.is_root()
     }
 
     /// Lists the immediate children at the cursor’s current position.
@@ -282,8 +301,9 @@ impl JsonCursor {
     /// An iterator over `(&Value, Pointer)` pairs.
     pub fn iter_with_paths(&self) -> impl Iterator<Item = (Pointer, &Value)> {
         let mut queue = VecDeque::new();
-        let current_value = self.value.pointer(self.pointer.position()).expect("");
-        queue.push_back((current_value, self.pointer.clone()));
+        if let Some(current_value) = self.value.pointer(self.pointer.position()) {
+            queue.push_back((current_value, self.pointer.clone()));
+        }
 
         std::iter::from_fn(move || {
             while let Some((value, pointer)) = queue.pop_front() {
@@ -292,7 +312,7 @@ impl JsonCursor {
                     Value::Array(list) => {
                         for i in 0..list.len() {
                             let mut new_pointer = pointer.clone();
-                            new_pointer.step(i);
+                            new_pointer.down(i);
                             let position = (&list[i], new_pointer);
                             queue.push_back(position.clone());
                         }
@@ -300,7 +320,7 @@ impl JsonCursor {
                     Value::Object(obj) => {
                         for (key, vale) in obj {
                             let mut new_pointer = pointer.clone();
-                            new_pointer.step(key);
+                            new_pointer.down(key);
                             let position = (vale, new_pointer);
 
                             queue.push_back(position.clone());
