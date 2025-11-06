@@ -14,7 +14,7 @@ macro_rules! register_rule {
         inventory::submit! {
             RuleRegistration {
                 rule_id: <$rule_type>::RULE_ID,
-                factory: |context: &LinterContext| Box::new(<$rule_type>::from_context(context)),
+                factory: |context: &LinterContext| <$rule_type>::from_context(context),
             }
         }
     };
