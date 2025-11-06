@@ -5,7 +5,6 @@ use std::fmt::Display;
 #[derive(Debug, Clone)]
 pub(crate) struct Pointer(String);
 
-
 fn escape(step: &str) -> String {
     step.replace("~", "~0").replace("/", "~1")
 }
@@ -137,9 +136,19 @@ impl JsonCursor {
     /// This operation replaces the current pointer entirely.
     ///
     /// # Arguments
-    /// * `leap` - The new pointer to jump to.
-    pub fn jump(&mut self, leap: Pointer) {
-        self.pointer = leap;
+    /// * `ptr` - The new pointer.
+    pub fn point_to(&mut self, ptr: Pointer) {
+        self.pointer = ptr;
+    }
+
+    pub fn jump_to(&mut self, target_key: &str) -> &Self {
+        match self.locate(target_key) {
+            None => self,
+            Some(ptr) => {
+                self.pointer = ptr;
+                self
+            }
+        }
     }
 
     /// Searches for the first occurrence of a key within the JSON tree,
@@ -174,8 +183,8 @@ impl JsonCursor {
     ///
     /// # Returns
     /// A vector of [`Pointer`]s pointing to all matches.
-    pub fn locate_all(&mut self, target_key: &str) -> Vec<Pointer> {
-        let target = escape(target_key);
+    pub fn locate_all<S: ToString>(&mut self, target_key: S) -> Vec<Pointer> {
+        let target = escape(target_key.to_string().as_str());
         let mut result = Vec::new();
         for (pointer, _) in self.iter_with_paths() {
             if pointer.0.ends_with(&target) {
@@ -235,18 +244,17 @@ impl JsonCursor {
     /// of the next available navigation steps.
     pub fn peek(&self) -> Vec<String> {
         match self.current_value() {
-            None => {vec![]}
-            Some(value) => {
-                match value {
-                    Value::Array(array) => {
-                        (0..array.len()).into_iter().map(|index| index.to_string()).collect()
-                    }
-                    Value::Object(obj) => {
-                        obj.keys().into_iter().map(|key| key.to_string()).collect()
-                    }
-                    _ =>  vec![]
-                }
+            None => {
+                vec![]
             }
+            Some(value) => match value {
+                Value::Array(array) => (0..array.len())
+                    .into_iter()
+                    .map(|index| index.to_string())
+                    .collect(),
+                Value::Object(obj) => obj.keys().into_iter().map(|key| key.to_string()).collect(),
+                _ => vec![],
+            },
         }
     }
 
@@ -274,10 +282,7 @@ impl JsonCursor {
     /// An iterator over `(&Value, Pointer)` pairs.
     pub fn iter_with_paths(&self) -> impl Iterator<Item = (Pointer, &Value)> {
         let mut queue = VecDeque::new();
-        let current_value = self
-            .value
-            .pointer(self.pointer.position())
-            .expect("");
+        let current_value = self.value.pointer(self.pointer.position()).expect("");
         queue.push_back((current_value, self.pointer.clone()));
 
         std::iter::from_fn(move || {
@@ -348,7 +353,7 @@ mod tests {
     fn test_jump_replaces_pointer() {
         let mut cursor = JsonCursor::new(make_sample_json());
         let new_ptr = Pointer("/user/name".to_string());
-        cursor.jump(new_ptr.clone());
+        cursor.point_to(new_ptr.clone());
         assert_eq!(cursor.pointer().position(), new_ptr.position());
         assert_eq!(cursor.current_value(), Some(&json!("Alice")));
     }
@@ -405,7 +410,7 @@ mod tests {
     fn test_current_value_returns_none_for_invalid_pointer() {
         let value = make_sample_json();
         let mut cursor = JsonCursor::new(value);
-        cursor.jump(Pointer("/nonexistent/path".to_string()));
+        cursor.point_to(Pointer("/nonexistent/path".to_string()));
         assert_eq!(cursor.current_value(), None);
     }
 

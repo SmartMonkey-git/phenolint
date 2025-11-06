@@ -2,7 +2,6 @@ use crate::enums::Patch;
 use annotate_snippets::renderer::DecorStyle;
 use annotate_snippets::{Renderer, Report};
 
-
 #[derive(Clone, Debug)]
 pub struct LintingViolation {
     rule_id: String,
