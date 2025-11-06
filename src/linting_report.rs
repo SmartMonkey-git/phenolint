@@ -34,12 +34,12 @@ impl LintingViolation {
 #[derive(Clone, Debug)]
 pub struct LintReportInfo {
     violation: LintingViolation,
-    fix: Option<Patch>,
+    patch: Option<Patch>,
 }
 
 impl LintReportInfo {
-    pub fn new(violation: LintingViolation, fix: Option<Patch>) -> Self {
-        Self { violation, fix }
+    pub fn new(violation: LintingViolation, patch: Option<Patch>) -> Self {
+        Self { violation,  patch }
     }
 }
 
@@ -68,7 +68,7 @@ impl LintReport {
         self.report_info
             .clone()
             .into_iter()
-            .filter_map(|ri| ri.fix)
+            .filter_map(|ri| ri.patch)
             .collect()
     }
 
@@ -82,7 +82,7 @@ impl LintReport {
 
     pub fn has_fixes(&self) -> bool {
         for info in &self.report_info {
-            if info.fix.is_some() {
+            if info.patch.is_some() {
                 return true;
             }
         }
