@@ -1,8 +1,9 @@
+use crate::linter_context::LinterContext;
 use crate::linting_report::{LintReport, LintReportInfo, LintingViolation};
 use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::rules::utils::json_cursor::{JsonCursor, Pointer};
-use crate::traits::{LintRule, RuleCheck};
+use crate::traits::{FromContext, LintRule, RuleCheck};
 use annotate_snippets::renderer::DecorStyle;
 use annotate_snippets::{AnnotationKind, Level, Renderer, Report, Snippet};
 use json_spanned_value::spanned::Value as SpannedValue;
@@ -14,25 +15,32 @@ use serde_json::Value;
 #[derive(Debug, Default)]
 #[lint_rule(id = "CURIE001")]
 pub struct CurieFormatRule;
+
+impl FromContext for CurieFormatRule {
+    fn from_context(_: &LinterContext) -> Option<Box<dyn RuleCheck>> {
+        Some(Box::new(CurieFormatRule))
+    }
+}
+
 impl RuleCheck for CurieFormatRule {
     fn check(&self, phenobytes: &[u8], report: &mut LintReport) {
+        let regex = Regex::new("^[A-Z][A-Z0-9_]+:[A-Za-z0-9_]+$").unwrap();
         let cursor = JsonCursor::new(
             serde_json::from_slice(phenobytes)
                 .unwrap_or_else(|_| panic!("Could not serialize phenopacket")),
         );
 
         for (pointer, value) in cursor.iter_with_paths() {
-            if let Some(ont_class) = Self::get_ontology_class_from_value(&value) {
-                let regex = Regex::new("^[A-Z][A-Z0-9_]+:[A-Za-z0-9_]+$").unwrap();
-                if !regex.is_match(&ont_class.id) {
-                    report.push_info(LintReportInfo::new(
-                        LintingViolation::new(
-                            Self::RULE_ID,
-                            Self::write_report(phenobytes, pointer.clone().down("id")),
-                        ),
-                        None,
-                    ));
-                }
+            if let Some(ont_class) = Self::get_ontology_class_from_value(value)
+                && !regex.is_match(&ont_class.id)
+            {
+                report.push_info(LintReportInfo::new(
+                    LintingViolation::new(
+                        Self::RULE_ID,
+                        Self::write_report(phenobytes, pointer.clone().down("id")),
+                    ),
+                    None,
+                ));
             }
         }
     }
@@ -51,7 +59,7 @@ impl CurieFormatRule {
         }
     }
 
-    fn write_report<'a>(phenobytes: &[u8], pointer: &Pointer) -> Report<'static> {
+    fn write_report(phenobytes: &[u8], pointer: &Pointer) -> Report<'static> {
         let json = String::from_utf8(phenobytes.to_vec()).unwrap();
         let value: SpannedValue = json_spanned_value::from_str(&json)
             .unwrap_or_else(|_| panic!("Could not serialize phenopacket"));
@@ -109,7 +117,7 @@ mod tests {
             ..Default::default()
         };
         CurieFormatRule.check(
-            &serde_json::to_string_pretty(&phenopacket)
+            serde_json::to_string_pretty(&phenopacket)
                 .unwrap()
                 .as_bytes(),
             &mut report,
@@ -136,29 +144,11 @@ mod tests {
         };
 
         CurieFormatRule.check(
-            &serde_json::to_string_pretty(&phenopacket)
+            serde_json::to_string_pretty(&phenopacket)
                 .unwrap()
                 .as_bytes(),
             &mut report,
         );
         assert!(!report.violations().is_empty());
-    }
-
-    #[rstest]
-    fn test_iter() {
-        let phenopacket = Phenopacket {
-            id: "test-phenopacket".to_string(),
-            interpretations: vec![Interpretation {
-                diagnosis: Some(Diagnosis {
-                    disease: Some(OntologyClass {
-                        id: "666".to_string(),
-                        label: "spondylocostal dysostosis".to_string(),
-                    }),
-                    genomic_interpretations: vec![],
-                }),
-                ..Default::default()
-            }],
-            ..Default::default()
-        };
     }
 }

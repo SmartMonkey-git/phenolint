@@ -5,7 +5,8 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 pub(crate) static HPO: Lazy<Arc<FullCsrOntology>> = Lazy::new(|| {
-    init_ontolius("/Users/rouvenreuter/Library/Caches/phenoxtract/hp/2025-09-01_hp.json".into())
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    init_ontolius(path.join("assets").join("hp.toy.json"))
 });
 
 fn init_ontolius(hpo_path: PathBuf) -> Arc<FullCsrOntology> {
@@ -17,6 +18,7 @@ fn init_ontolius(hpo_path: PathBuf) -> Arc<FullCsrOntology> {
     Arc::new(ontolius)
 }
 
+#[allow(dead_code)]
 const TEST_PHENOPACKET: &[u8] = br#"
 {
   "id": "PMID_28239884_Family_1_proband",

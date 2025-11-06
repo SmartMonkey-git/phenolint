@@ -26,8 +26,8 @@ impl LintingViolation {
     pub fn rule_id(&self) -> String {
         self.rule_id.clone()
     }
-    pub fn report(&self) -> Report {
-        self.report.clone()
+    pub fn report(&'_ self) -> Report<'_> {
+        self.report
     }
 }
 
@@ -39,7 +39,7 @@ pub struct LintReportInfo {
 
 impl LintReportInfo {
     pub fn new(violation: LintingViolation, patch: Option<Patch>) -> Self {
-        Self { violation,  patch }
+        Self { violation, patch }
     }
 }
 

@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use serde_json::Value;
 use std::collections::VecDeque;
 use std::fmt::Display;
@@ -32,7 +33,7 @@ impl Pointer {
     /// # Returns
     /// A decoded string of the last path segment.
     pub fn get_tip(&self) -> String {
-        let tip = self.0.split("/").last().unwrap_or_else(|| "");
+        let tip = self.0.split("/").last().unwrap_or("");
         unescape(tip)
     }
 
@@ -107,7 +108,7 @@ impl Pointer {
     }
 
     pub fn segments(&self) -> impl Iterator<Item = String> + '_ {
-        self.0.split('/').skip(1).map(|s| unescape(s))
+        self.0.split('/').skip(1).map(unescape)
     }
 }
 
@@ -178,12 +179,9 @@ impl JsonCursor {
     /// * `Some(Pointer)` if the key is found.
     /// * `None` if no match is found.
     pub fn locate(&mut self, target_key: &str) -> Option<Pointer> {
-        for (pointer, _) in self.iter_with_paths() {
-            if pointer.get_tip() == target_key {
-                return Some(pointer);
-            }
-        }
-        None
+        self.iter_with_paths()
+            .map(|(pointer, _)| pointer)
+            .find(|pointer| pointer.get_tip() == target_key)
     }
 
     /// Finds all occurrences of a given key within the JSON structure.
@@ -245,9 +243,8 @@ impl JsonCursor {
         self
     }
 
-
     /// Checks if the cursor is currently at the root of the JSON value.
-    pub fn is_root(& self) -> bool {
+    pub fn is_root(&self) -> bool {
         self.pointer.is_root()
     }
 
@@ -267,11 +264,8 @@ impl JsonCursor {
                 vec![]
             }
             Some(value) => match value {
-                Value::Array(array) => (0..array.len())
-                    .into_iter()
-                    .map(|index| index.to_string())
-                    .collect(),
-                Value::Object(obj) => obj.keys().into_iter().map(|key| key.to_string()).collect(),
+                Value::Array(array) => (0..array.len()).map(|index| index.to_string()).collect(),
+                Value::Object(obj) => obj.keys().map(|key| key.to_string()).collect(),
                 _ => vec![],
             },
         }
@@ -306,14 +300,15 @@ impl JsonCursor {
         }
 
         std::iter::from_fn(move || {
+            #[allow(clippy::never_loop)]
             while let Some((value, pointer)) = queue.pop_front() {
                 match value {
                     Value::Null => {}
                     Value::Array(list) => {
-                        for i in 0..list.len() {
+                        for (i, val) in list.iter().enumerate() {
                             let mut new_pointer = pointer.clone();
                             new_pointer.down(i);
-                            let position = (&list[i], new_pointer);
+                            let position = (val, new_pointer);
                             queue.push_back(position.clone());
                         }
                     }

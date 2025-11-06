@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, Item, Lit};
+use syn::{Item, Lit, parse_macro_input};
 
 #[proc_macro_attribute]
 pub fn lint_rule(attr: TokenStream, item: TokenStream) -> TokenStream {

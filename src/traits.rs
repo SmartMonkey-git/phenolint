@@ -1,8 +1,12 @@
+use crate::linter_context::LinterContext;
 use crate::linting_report::LintReport;
-use phenopackets::schema::v2::Phenopacket;
 
-pub trait LintRule: RuleCheck + Default {
+pub trait LintRule: RuleCheck + FromContext {
     const RULE_ID: &'static str;
+}
+
+pub trait FromContext {
+    fn from_context(context: &LinterContext) -> Option<Box<dyn RuleCheck>>;
 }
 
 pub trait RuleCheck {

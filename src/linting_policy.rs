@@ -1,6 +1,7 @@
 use crate::config::config_loader::ConfigLoader;
 use crate::config::linter_config::LinterConfig;
 use crate::error::InstantiationError;
+use crate::linter_context::LinterContext;
 use crate::linting_report::LintReport;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::RuleCheck;
@@ -13,6 +14,7 @@ pub struct LintingPolicy {
 }
 
 impl LintingPolicy {
+    #[allow(dead_code)]
     pub(crate) fn new(rules: Vec<Box<dyn RuleCheck>>) -> LintingPolicy {
         LintingPolicy { rules }
     }
@@ -29,7 +31,7 @@ impl LintingPolicy {
     pub fn push_rule(&mut self, rule: Box<dyn RuleCheck>) {
         self.rules.push(rule);
     }
-
+    #[allow(dead_code)]
     pub fn try_from_path<P: AsRef<Path>>(path: P) -> Result<Self, InstantiationError> {
         let config: LinterConfig = ConfigLoader::load(PathBuf::from(path.as_ref()))?;
         Ok(LintingPolicy::from(config))
@@ -50,6 +52,7 @@ where
     fn from(rule_ids: T) -> Self {
         let mut policy = LintingPolicy::default();
         let mut seen_rules = HashSet::new();
+        let linter_context = LinterContext::default();
 
         let rule_ids: HashSet<String> = rule_ids
             .into_iter()
@@ -57,8 +60,11 @@ where
             .collect();
 
         for r in inventory::iter::<RuleRegistration>() {
+            #[allow(clippy::collapsible_if)]
             if rule_ids.contains(r.rule_id) && !seen_rules.contains(&r.rule_id) {
-                policy.push_rule((r.factory)());
+                if let Some(rule) = (r.factory)(&linter_context) {
+                    policy.push_rule(rule);
+                }
             }
             seen_rules.insert(r.rule_id);
         }

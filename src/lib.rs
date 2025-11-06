@@ -9,7 +9,6 @@ mod report;
 pub mod rules;
 pub mod traits;
 
-
+pub mod linter_context;
 #[cfg(test)]
 pub(crate) mod test_utils;
-
