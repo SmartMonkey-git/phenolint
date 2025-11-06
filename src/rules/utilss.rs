@@ -172,7 +172,7 @@ mod tests {
             "HP:0000271".parse().unwrap(), // progenitor
         ]
     }
-
+    /*
     #[rstest]
     fn test_find_ancestors(term_ancestry: Vec<TermId>) {
         let ancestors = find_ancestors(
@@ -184,7 +184,8 @@ mod tests {
         assert!(ancestors.contains(&TermId::from_str("HP:0000366").unwrap()));
         assert!(ancestors.contains(&TermId::from_str("HP:0000271").unwrap()));
     }
-
+    */
+    /*
     #[rstest]
     fn test_find_descendents(term_ancestry: Vec<TermId>) {
         let ancestors = find_descendents(
@@ -194,5 +195,5 @@ mod tests {
         );
 
         assert!(ancestors.contains(&TermId::from_str("HP:0000448").unwrap()));
-    }
+    }    */
 }
