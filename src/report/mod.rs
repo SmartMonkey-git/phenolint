@@ -1,6 +1,6 @@
-pub mod linting_report_info;
-pub mod linting_violation;
+pub mod lint_finding;
+pub mod lint_violation;
 pub mod owned_report;
 pub mod report_parser;
 
-pub mod linting_report;
+pub mod lint_report;

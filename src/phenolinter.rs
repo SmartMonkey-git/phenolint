@@ -5,7 +5,7 @@ use crate::config::linter_config::LinterConfig;
 use crate::error::{InstantiationError, LinterError};
 use crate::linting_policy::LintingPolicy;
 use crate::patcher::Patcher;
-use crate::report::linting_report::LintReport;
+use crate::report::lint_report::LintReport;
 use crate::report::report_parser::ReportParser;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::{Lint, RuleCheck};
@@ -41,7 +41,7 @@ impl Lint<&str> for Phenolinter {
         let mut report = self.policy.apply(phenostr.as_ref());
 
         if !quite {
-            for info in &report.report_info {
+            for info in &report.findings {
                 ReportParser::emit(info.violation().report())
             }
         }

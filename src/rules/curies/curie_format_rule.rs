@@ -1,8 +1,8 @@
 use crate::linter_context::LinterContext;
 use crate::register_rule;
-use crate::report::linting_report::LintReport;
-use crate::report::linting_report_info::LintReportInfo;
-use crate::report::linting_violation::LintingViolation;
+use crate::report::lint_finding::LintFinding;
+use crate::report::lint_report::LintReport;
+use crate::report::lint_violation::LintViolation;
 use crate::report::owned_report::OwnedReport;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::rules::utils::json_cursor::{JsonCursor, Pointer};
@@ -36,7 +36,7 @@ impl RuleCheck for CurieFormatRule {
             if let Some(ont_class) = Self::get_ontology_class_from_value(value)
                 && !regex.is_match(&ont_class.id)
             {
-                report.push_info(LintReportInfo::new(
+                report.push_finding(LintFinding::new(
                     Self::RULE_ID,
                     Self::write_report(phenostr, pointer.clone().down("id")),
                     None,
@@ -145,7 +145,7 @@ mod tests {
             &mut report,
         );
         assert!(!report.violations().is_empty());
-        let report_info = report.report_info.first().unwrap();
+        let report_info = report.findings.first().unwrap();
 
         ReportParser::emit(report_info.violation().report());
         let parsed_report = ReportParser::parse(report_info.violation().report());
