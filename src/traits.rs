@@ -10,7 +10,7 @@ pub trait FromContext {
 }
 
 pub trait RuleCheck {
-    fn check(&self, phenobytes: &[u8], report: &mut LintReport);
+    fn check(&self, phenostr: &str, report: &mut LintReport);
 }
 
 pub(crate) trait Lint<T> {

@@ -34,7 +34,9 @@ impl Lint<PathBuf> for Phenolinter {
 
 impl Lint<&[u8]> for Phenolinter {
     fn lint(&mut self, phenobytes: &[u8], fix: bool) -> LintReport {
-        let mut report = self.policy.apply(phenobytes);
+        // TODO: Understand the conversion here. Why is it lossy, should it be lossy?
+        let phenostr = String::from_utf8_lossy(phenobytes);
+        let mut report = self.policy.apply(phenostr.as_ref());
 
         if fix && report.has_violations() {
             self.transformer.patch().unwrap();

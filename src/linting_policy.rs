@@ -18,7 +18,7 @@ impl LintingPolicy {
     pub(crate) fn new(rules: Vec<Box<dyn RuleCheck>>) -> LintingPolicy {
         LintingPolicy { rules }
     }
-    pub fn apply(&self, phenobytes: &[u8]) -> LintReport {
+    pub fn apply(&self, phenobytes: &str) -> LintReport {
         let mut report = LintReport::default();
 
         for rule in &self.rules {
