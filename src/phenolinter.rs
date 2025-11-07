@@ -55,8 +55,8 @@ impl Lint<&str> for Phenolinter {
 }
 
 impl Lint<PathBuf> for Phenolinter {
-    fn lint(&'_ mut self, path: PathBuf, patch: bool, quite: bool) -> LintReport {
-        let phenobytes = std::fs::read(path).expect("Could not read file");
+    fn lint(&'_ mut self, phenopath: PathBuf, patch: bool, quite: bool) -> LintReport {
+        let phenobytes = std::fs::read(phenopath).expect("Could not read file");
         self.lint(phenobytes.as_slice(), patch, quite)
     }
 }

@@ -1,6 +1,5 @@
 use crate::config::config_loader::ConfigLoader;
 use crate::error::InstantiationError;
-use config::ConfigError;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
