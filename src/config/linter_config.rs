@@ -10,9 +10,9 @@ pub struct LinterConfig {
     pub rule_ids: Vec<String>,
     pub hpo_dir: Option<PathBuf>,
     #[serde(default)]
-    patch: bool,
+    pub patch: bool,
     #[serde(default)]
-    quiet: bool,
+    pub quiet: bool,
 }
 
 impl TryFrom<PathBuf> for LinterConfig {
