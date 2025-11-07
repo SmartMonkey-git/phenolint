@@ -1,3 +1,5 @@
+use crate::config::config_loader::ConfigLoader;
+use config::ConfigError;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -10,4 +12,12 @@ pub struct LinterConfig {
     patch: bool,
     #[serde(default)]
     quiet: bool,
+}
+
+impl TryFrom<PathBuf> for LinterConfig {
+    type Error = ConfigError;
+
+    fn try_from(value: PathBuf) -> Result<Self, Self::Error> {
+        ConfigLoader::load(value)
+    }
 }
