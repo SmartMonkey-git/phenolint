@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 #![allow(unused)]
+use crate::config::LinterConfig;
 use crate::config::config_loader::ConfigLoader;
-use crate::config::linter_config::LinterConfig;
 use crate::diagnostics::{LintReport, ReportParser};
 use crate::error::{InstantiationError, LinterError};
 use crate::linter_policy::LinterPolicy;

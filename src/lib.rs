@@ -9,6 +9,6 @@ pub mod rules;
 pub mod traits;
 
 pub mod linter_context;
-pub(crate) use linter_context::LinterContext;
+pub use linter_context::LinterContext;
 #[cfg(test)]
 pub(crate) mod test_utils;

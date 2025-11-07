@@ -1,5 +1,5 @@
+use crate::diagnostics::LintViolation;
 use crate::diagnostics::finding::LintFinding;
-use crate::diagnostics::violation::LintViolation;
 use crate::enums::Patch;
 
 #[derive(Clone, Debug, Default)]

@@ -1,5 +1,5 @@
+use crate::config::LinterConfig;
 use crate::config::config_loader::ConfigLoader;
-use crate::config::linter_config::LinterConfig;
 use crate::diagnostics::LintReport;
 use crate::error::InstantiationError;
 use crate::linter_context::LinterContext;
