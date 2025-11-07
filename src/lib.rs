@@ -2,7 +2,7 @@ mod config;
 mod diagnostics;
 pub mod enums;
 pub mod error;
-mod linting_policy;
+mod linter_policy;
 mod patcher;
 pub mod phenolinter;
 pub mod rules;

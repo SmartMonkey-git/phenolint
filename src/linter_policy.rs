@@ -9,14 +9,14 @@ use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
 #[derive(Default)]
-pub struct LintingPolicy {
+pub struct LinterPolicy {
     rules: Vec<Box<dyn RuleCheck>>,
 }
 
-impl LintingPolicy {
+impl LinterPolicy {
     #[allow(dead_code)]
-    pub(crate) fn new(rules: Vec<Box<dyn RuleCheck>>) -> LintingPolicy {
-        LintingPolicy { rules }
+    pub(crate) fn new(rules: Vec<Box<dyn RuleCheck>>) -> LinterPolicy {
+        LinterPolicy { rules }
     }
     pub fn apply(&self, phenobytes: &str) -> LintReport {
         let mut report = LintReport::default();
@@ -34,23 +34,23 @@ impl LintingPolicy {
     #[allow(dead_code)]
     pub fn try_from_path<P: AsRef<Path>>(path: P) -> Result<Self, InstantiationError> {
         let config: LinterConfig = ConfigLoader::load(PathBuf::from(path.as_ref()))?;
-        Ok(LintingPolicy::from(config))
+        Ok(LinterPolicy::from(config))
     }
 }
 
-impl From<LinterConfig> for LintingPolicy {
-    fn from(config: LinterConfig) -> LintingPolicy {
-        LintingPolicy::from(config.rule_ids)
+impl From<LinterConfig> for LinterPolicy {
+    fn from(config: LinterConfig) -> LinterPolicy {
+        LinterPolicy::from(config.rule_ids)
     }
 }
 
-impl<T, S> From<T> for LintingPolicy
+impl<T, S> From<T> for LinterPolicy
 where
     T: IntoIterator<Item = S>,
     S: AsRef<str>,
 {
     fn from(rule_ids: T) -> Self {
-        let mut policy = LintingPolicy::default();
+        let mut policy = LinterPolicy::default();
         let mut seen_rules = HashSet::new();
         let linter_context = LinterContext::default();
 

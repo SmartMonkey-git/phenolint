@@ -4,7 +4,7 @@ use crate::config::config_loader::ConfigLoader;
 use crate::config::linter_config::LinterConfig;
 use crate::diagnostics::{LintReport, ReportParser};
 use crate::error::{InstantiationError, LinterError};
-use crate::linting_policy::LintingPolicy;
+use crate::linter_policy::LinterPolicy;
 use crate::patcher::Patcher;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::{Lint, RuleCheck};
@@ -21,12 +21,12 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 struct Phenolinter {
-    policy: LintingPolicy,
+    policy: LinterPolicy,
     patcher: Patcher,
 }
 
 impl Phenolinter {
-    pub fn new(policy: LintingPolicy) -> Phenolinter {
+    pub fn new(policy: LinterPolicy) -> Phenolinter {
         Phenolinter {
             policy,
             patcher: Patcher,
@@ -74,7 +74,7 @@ impl TryFrom<LinterConfig> for Phenolinter {
 
     fn try_from(config: LinterConfig) -> Result<Self, Self::Error> {
         let a = config.rule_ids.as_slice();
-        let policy = LintingPolicy::from(config.rule_ids.as_slice());
+        let policy = LinterPolicy::from(config.rule_ids.as_slice());
         Ok(Phenolinter::new(policy))
     }
 }
