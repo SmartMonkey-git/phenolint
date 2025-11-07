@@ -1,5 +1,6 @@
 use crate::enums::Patch;
 use crate::report::linting_violation::LintingViolation;
+use crate::report::owned_report::OwnedReport;
 
 #[derive(Clone, Debug)]
 pub struct LintReportInfo {
@@ -8,8 +9,11 @@ pub struct LintReportInfo {
 }
 
 impl LintReportInfo {
-    pub fn new(violation: LintingViolation, patch: Option<Patch>) -> Self {
-        Self { violation, patch }
+    pub fn new(rule_id: &str, report: OwnedReport, patch: Option<Patch>) -> Self {
+        Self {
+            violation: LintingViolation::new(rule_id, report),
+            patch,
+        }
     }
 
     pub fn violation(&self) -> &LintingViolation {

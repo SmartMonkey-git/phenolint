@@ -37,10 +37,8 @@ impl RuleCheck for CurieFormatRule {
                 && !regex.is_match(&ont_class.id)
             {
                 report.push_info(LintReportInfo::new(
-                    LintingViolation::new(
-                        Self::RULE_ID,
-                        Self::write_report(phenostr, pointer.clone().down("id")),
-                    ),
+                    Self::RULE_ID,
+                    Self::write_report(phenostr, pointer.clone().down("id")),
                     None,
                 ));
             }
