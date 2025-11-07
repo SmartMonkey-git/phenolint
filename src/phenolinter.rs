@@ -73,7 +73,6 @@ impl TryFrom<LinterConfig> for Phenolinter {
     type Error = InstantiationError;
 
     fn try_from(config: LinterConfig) -> Result<Self, Self::Error> {
-        let a = config.rule_ids.as_slice();
         let policy = LinterPolicy::from(config.rule_ids.as_slice());
         Ok(Phenolinter::new(policy))
     }
