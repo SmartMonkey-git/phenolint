@@ -27,7 +27,7 @@ impl LintReport {
         self.report_info
             .clone()
             .iter()
-            .filter_map(|ri| ri.patch().map_or(None, |p| Some(p.clone())))
+            .filter_map(|lri| lri.patch().cloned())
             .collect()
     }
 
