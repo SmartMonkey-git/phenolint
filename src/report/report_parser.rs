@@ -1,4 +1,4 @@
-use crate::linting_report::OwnedReport;
+use crate::report::owned_report::OwnedReport;
 use annotate_snippets::Renderer;
 use annotate_snippets::renderer::DecorStyle;
 

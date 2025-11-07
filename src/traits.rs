@@ -1,5 +1,5 @@
 use crate::linter_context::LinterContext;
-use crate::linting_report::LintReport;
+use crate::report::linting_report::LintReport;
 
 pub trait LintRule: RuleCheck + FromContext {
     const RULE_ID: &'static str;

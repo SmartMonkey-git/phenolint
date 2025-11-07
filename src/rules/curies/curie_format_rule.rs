@@ -1,6 +1,9 @@
 use crate::linter_context::LinterContext;
-use crate::linting_report::{LintReport, LintReportInfo, LintingViolation, OwnedReport};
 use crate::register_rule;
+use crate::report::linting_report::LintReport;
+use crate::report::linting_report_info::LintReportInfo;
+use crate::report::linting_violation::LintingViolation;
+use crate::report::owned_report::OwnedReport;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::rules::utils::json_cursor::{JsonCursor, Pointer};
 use crate::traits::{FromContext, LintRule, RuleCheck};

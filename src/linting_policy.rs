@@ -2,7 +2,7 @@ use crate::config::config_loader::ConfigLoader;
 use crate::config::linter_config::LinterConfig;
 use crate::error::InstantiationError;
 use crate::linter_context::LinterContext;
-use crate::linting_report::LintReport;
+use crate::report::linting_report::LintReport;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::RuleCheck;
 use std::collections::HashSet;
