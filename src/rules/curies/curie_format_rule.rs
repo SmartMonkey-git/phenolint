@@ -1,9 +1,6 @@
+use crate::diagnostics::{LintFinding, LintReport, OwnedReport};
 use crate::linter_context::LinterContext;
 use crate::register_rule;
-use crate::report::lint_finding::LintFinding;
-use crate::report::lint_report::LintReport;
-use crate::report::lint_violation::LintViolation;
-use crate::report::owned_report::OwnedReport;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::rules::utils::json_cursor::{JsonCursor, Pointer};
 use crate::traits::{FromContext, LintRule, RuleCheck};
@@ -92,7 +89,7 @@ impl CurieFormatRule {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::report::report_parser::ReportParser;
+    use crate::diagnostics::parser::ReportParser;
     use phenopackets::schema::v2::Phenopacket;
     use phenopackets::schema::v2::core::{Diagnosis, Interpretation, OntologyClass};
     use rstest::rstest;

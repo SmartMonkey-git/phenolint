@@ -1,6 +1,6 @@
+use crate::diagnostics::owned_report::OwnedReport;
+use crate::diagnostics::violation::LintViolation;
 use crate::enums::Patch;
-use crate::report::lint_violation::LintViolation;
-use crate::report::owned_report::OwnedReport;
 
 #[derive(Clone, Debug)]
 pub struct LintFinding {

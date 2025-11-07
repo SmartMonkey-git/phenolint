@@ -2,11 +2,10 @@
 #![allow(unused)]
 use crate::config::config_loader::ConfigLoader;
 use crate::config::linter_config::LinterConfig;
+use crate::diagnostics::{LintReport, ReportParser};
 use crate::error::{InstantiationError, LinterError};
 use crate::linting_policy::LintingPolicy;
 use crate::patcher::Patcher;
-use crate::report::lint_report::LintReport;
-use crate::report::report_parser::ReportParser;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::{Lint, RuleCheck};
 use phenopackets::schema::v2::Phenopacket;

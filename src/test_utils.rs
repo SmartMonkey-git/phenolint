@@ -175,7 +175,7 @@ const TEST_PHENOPACKET: &[u8] = br#"
         "url": "https://www.genenames.org",
         "version": "06/01/25",
         "namespacePrefix": "HGNC",
-        "iriPrefix": "https://www.genenames.org/data/gene-symbol-report/#!/hgnc_id/"
+        "iriPrefix": "https://www.genenames.org/data/gene-symbol-diagnostics/#!/hgnc_id/"
       }
     ],
     "phenopacketSchemaVersion": "2.0.2",
