@@ -6,6 +6,7 @@ use crate::error::{InstantiationError, LinterError};
 use crate::linting_policy::LintingPolicy;
 use crate::linting_report::LintReport;
 use crate::patcher::Patcher;
+use crate::report::report_parser::ReportParser;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::{Lint, RuleCheck};
 use phenopackets::schema::v2::Phenopacket;
@@ -32,17 +33,29 @@ impl Lint<PathBuf> for Phenolinter {
     }
 }
 
+impl Lint<&str> for Phenolinter {
+    fn lint(&mut self, phenostr: &str, fix: bool) -> LintReport {
+        // TODO: Understand the conversion here. Why is it lossy, should it be lossy?
+        let mut report = self.policy.apply(phenostr.as_ref());
+
+        for info in &report.report_info {
+            ReportParser::emit(info.violation().report())
+        }
+
+        if fix && report.has_violations() {
+            self.transformer.patch().unwrap();
+            report.fixed_phenopacket = Some(Vec::from(phenostr))
+        }
+
+        report
+    }
+}
+
 impl Lint<&[u8]> for Phenolinter {
     fn lint(&mut self, phenobytes: &[u8], fix: bool) -> LintReport {
         // TODO: Understand the conversion here. Why is it lossy, should it be lossy?
         let phenostr = String::from_utf8_lossy(phenobytes);
-        let mut report = self.policy.apply(phenostr.as_ref());
-
-        if fix && report.has_violations() {
-            self.transformer.patch().unwrap();
-            report.fixed_phenopacket = Some(Vec::from(phenobytes))
-        }
-        report
+        self.lint(phenostr.as_ref(), fix)
     }
 }
 

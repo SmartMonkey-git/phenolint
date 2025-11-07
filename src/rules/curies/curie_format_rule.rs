@@ -91,6 +91,7 @@ impl CurieFormatRule {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::report::report_parser::ReportParser;
     use phenopackets::schema::v2::Phenopacket;
     use phenopackets::schema::v2::core::{Diagnosis, Interpretation, OntologyClass};
     use rstest::rstest;
@@ -121,13 +122,14 @@ mod tests {
 
     #[rstest]
     fn test_invalid_curie_format() {
+        let wrong_curie = "not_a_curie".to_string();
         let mut report = LintReport::new();
         let phenopacket = Phenopacket {
             id: "test-phenopacket".to_string(),
             interpretations: vec![Interpretation {
                 diagnosis: Some(Diagnosis {
                     disease: Some(OntologyClass {
-                        id: "not_a_curie".to_string(),
+                        id: wrong_curie.clone(),
                         label: "spondylocostal dysostosis".to_string(),
                     }),
                     genomic_interpretations: vec![],
@@ -142,5 +144,10 @@ mod tests {
             &mut report,
         );
         assert!(!report.violations().is_empty());
+        let report_info = report.report_info.first().unwrap();
+
+        ReportParser::emit(report_info.violation().report());
+        let parsed_report = ReportParser::parse(report_info.violation().report());
+        assert!(parsed_report.contains(&wrong_curie))
     }
 }
