@@ -23,48 +23,50 @@ use std::sync::Arc;
 
 struct Phenolinter {
     policy: LintingPolicy,
-    transformer: Patcher,
-}
-
-impl Lint<PathBuf> for Phenolinter {
-    fn lint(&'_ mut self, path: PathBuf, fix: bool) -> LintReport {
-        let phenobytes = std::fs::read(path).expect("Could not read file");
-        self.lint(phenobytes.as_slice(), fix)
-    }
-}
-
-impl Lint<&str> for Phenolinter {
-    fn lint(&mut self, phenostr: &str, fix: bool) -> LintReport {
-        // TODO: Understand the conversion here. Why is it lossy, should it be lossy?
-        let mut report = self.policy.apply(phenostr.as_ref());
-
-        for info in &report.report_info {
-            ReportParser::emit(info.violation().report())
-        }
-
-        if fix && report.has_violations() {
-            self.transformer.patch().unwrap();
-            report.fixed_phenopacket = Some(Vec::from(phenostr))
-        }
-
-        report
-    }
-}
-
-impl Lint<&[u8]> for Phenolinter {
-    fn lint(&mut self, phenobytes: &[u8], fix: bool) -> LintReport {
-        // TODO: Understand the conversion here. Why is it lossy, should it be lossy?
-        let phenostr = String::from_utf8_lossy(phenobytes);
-        self.lint(phenostr.as_ref(), fix)
-    }
+    patcher: Patcher,
 }
 
 impl Phenolinter {
     pub fn new(policy: LintingPolicy) -> Phenolinter {
         Phenolinter {
             policy,
-            transformer: Patcher,
+            patcher: Patcher,
         }
+    }
+}
+
+impl Lint<&str> for Phenolinter {
+    fn lint(&mut self, phenostr: &str, patch: bool, quite: bool) -> LintReport {
+        // TODO: Understand the conversion here. Why is it lossy, should it be lossy?
+        let mut report = self.policy.apply(phenostr.as_ref());
+
+        if !quite {
+            for info in &report.report_info {
+                ReportParser::emit(info.violation().report())
+            }
+        }
+
+        if patch && report.has_violations() {
+            let patched = self.patcher.patch().unwrap();
+            report.patched_phenopacket = Some(patched)
+        }
+
+        report
+    }
+}
+
+impl Lint<PathBuf> for Phenolinter {
+    fn lint(&'_ mut self, path: PathBuf, patch: bool, quite: bool) -> LintReport {
+        let phenobytes = std::fs::read(path).expect("Could not read file");
+        self.lint(phenobytes.as_slice(), patch, quite)
+    }
+}
+
+impl Lint<&[u8]> for Phenolinter {
+    fn lint(&mut self, phenobytes: &[u8], patch: bool, quite: bool) -> LintReport {
+        // TODO: Understand the conversion here. Why is it lossy, should it be lossy?
+        let phenostr = String::from_utf8_lossy(phenobytes);
+        self.lint(phenostr.as_ref(), patch, quite)
     }
 }
 

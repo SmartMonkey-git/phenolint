@@ -66,14 +66,14 @@ impl LintReportInfo {
 
 #[derive(Clone, Debug, Default)]
 pub struct LintReport {
-    pub fixed_phenopacket: Option<Vec<u8>>,
+    pub patched_phenopacket: Option<String>,
     pub report_info: Vec<LintReportInfo>,
 }
 
 impl LintReport {
     pub fn new() -> LintReport {
         LintReport {
-            fixed_phenopacket: None,
+            patched_phenopacket: None,
             report_info: Vec::new(),
         }
     }

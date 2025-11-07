@@ -14,5 +14,5 @@ pub trait RuleCheck {
 }
 
 pub(crate) trait Lint<T> {
-    fn lint(&mut self, input: T, fix: bool) -> LintReport;
+    fn lint(&mut self, input: T, patch: bool, quiet: bool) -> LintReport;
 }

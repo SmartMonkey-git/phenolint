@@ -6,4 +6,8 @@ pub struct LinterConfig {
     #[serde(rename = "rules")]
     pub rule_ids: Vec<String>,
     pub hpo_dir: Option<PathBuf>,
+    #[serde(default)]
+    patch: bool,
+    #[serde(default)]
+    quiet: bool,
 }
