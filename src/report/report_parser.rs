@@ -6,6 +6,7 @@ use annotate_snippets::renderer::DecorStyle;
 pub struct ReportParser;
 
 impl ReportParser {
+    #[allow(dead_code)]
     pub fn parse(report: &OwnedReport) -> String {
         let renderer = Renderer::styled().decor_style(DecorStyle::Unicode);
         renderer.render(&[report.report()])
