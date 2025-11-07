@@ -13,14 +13,37 @@ pub(crate) struct Pointer(String);
 ///
 /// Replaces "~" with "~0" and "/" with "~1".
 fn escape(step: &str) -> String {
-    step.replace("~", "~0").replace("/", "~1")
+    if is_escaped(step) {
+        step.to_string()
+    } else {
+        step.replace("~", "~0").replace("/", "~1")
+    }
 }
 
 /// Unescapes a JSON Pointer segment.
 ///
 /// Replaces "~1" with "/" and "~0" with "~".
 fn unescape(step: &str) -> String {
-    step.replace("~1", "/").replace("~0", "~")
+    if is_escaped(step) {
+        step.replace("~1", "/").replace("~0", "~")
+    } else {
+        step.to_string()
+    }
+}
+
+fn is_escaped(step: &str) -> bool {
+    let mut chars = step.chars().peekable();
+    while let Some(c) = chars.next() {
+        if c == '~' {
+            match chars.peek() {
+                Some('0') | Some('1') => {
+                    chars.next(); // consume the next char
+                }
+                _ => return false, // invalid escape
+            }
+        }
+    }
+    true
 }
 
 impl Pointer {
