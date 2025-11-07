@@ -1,22 +1,36 @@
 use crate::enums::Patch;
 use annotate_snippets::renderer::DecorStyle;
-use annotate_snippets::{Renderer, Report};
+use annotate_snippets::{Group, Renderer};
+
+#[derive(Clone, Debug)]
+pub struct OwnedReport {
+    report: Group<'static>,
+}
+
+impl OwnedReport {
+    pub fn new(report: Group<'static>) -> Self {
+        Self { report }
+    }
+    pub fn report(&self) -> Group<'static> {
+        self.report.clone()
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct LintingViolation {
     rule_id: String,
-    report: Report<'static>,
+    report: OwnedReport,
 }
 
 impl PartialEq for LintingViolation {
     fn eq(&self, other: &Self) -> bool {
         let renderer = Renderer::styled().decor_style(DecorStyle::Unicode);
         self.rule_id == other.rule_id
-            && renderer.render(self.report) == renderer.render(other.report)
+            && renderer.render(&[self.report.report()]) == renderer.render(&[other.report.report()])
     }
 }
 impl LintingViolation {
-    pub fn new(rule_id: &str, report: Report<'static>) -> LintingViolation {
+    pub fn new(rule_id: &str, report: OwnedReport) -> LintingViolation {
         Self {
             rule_id: rule_id.to_string(),
             report,
@@ -26,8 +40,8 @@ impl LintingViolation {
     pub fn rule_id(&self) -> String {
         self.rule_id.clone()
     }
-    pub fn report(&'_ self) -> Report<'_> {
-        self.report
+    pub fn report(&self) -> OwnedReport {
+        self.report.clone()
     }
 }
 

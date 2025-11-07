@@ -1,11 +1,10 @@
 use crate::linter_context::LinterContext;
-use crate::linting_report::{LintReport, LintReportInfo, LintingViolation};
+use crate::linting_report::{LintReport, LintReportInfo, LintingViolation, OwnedReport};
 use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::rules::utils::json_cursor::{JsonCursor, Pointer};
 use crate::traits::{FromContext, LintRule, RuleCheck};
-use annotate_snippets::renderer::DecorStyle;
-use annotate_snippets::{AnnotationKind, Level, Renderer, Report, Snippet};
+use annotate_snippets::{AnnotationKind, Level as SnippetLevel, Snippet};
 use json_spanned_value::spanned::Value as SpannedValue;
 use phenolint_macros::lint_rule;
 use phenopackets::schema::v2::core::OntologyClass;
@@ -59,21 +58,21 @@ impl CurieFormatRule {
         }
     }
 
-    fn write_report(phenobytes: &[u8], pointer: &Pointer) -> Report<'static> {
+    fn write_report(phenobytes: &[u8], pointer: &Pointer) -> OwnedReport {
         let json = String::from_utf8(phenobytes.to_vec()).unwrap();
         let value: SpannedValue = json_spanned_value::from_str(&json)
             .unwrap_or_else(|_| panic!("Could not serialize phenopacket"));
+
         let (curie_start, curie_end) = value.pointer(pointer.position()).unwrap().span();
         let (context_span_start, context_span_end) = value
             .pointer(pointer.clone().up().position())
             .unwrap()
             .span();
 
-        let report = &[Level::WARNING
+        let report = SnippetLevel::WARNING
             .primary_title(format!("[{}] CURIE formatted incorrectly", Self::RULE_ID))
             .element(
                 Snippet::source(json)
-                    //.line_start(190 - 2)
                     .annotation(
                         AnnotationKind::Primary
                             .span(curie_start..curie_end)
@@ -84,11 +83,9 @@ impl CurieFormatRule {
                             .span(context_span_start..context_span_end)
                             .label("For this Ontology Class"),
                     ),
-            )];
+            );
 
-        let renderer = Renderer::styled().decor_style(DecorStyle::Unicode);
-        anstream::println!("{}", renderer.render(report));
-        Report::default()
+        OwnedReport::new(report)
     }
 }
 

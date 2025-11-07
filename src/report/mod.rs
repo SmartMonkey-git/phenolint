@@ -1,4 +1,4 @@
-mod annotation_parser_spec;
-mod report_parser;
-mod report_parser_spec;
-mod snippet_parser_spec;
+pub mod annotation_parser_spec;
+pub mod report_parser;
+pub mod report_parser_spec;
+pub mod snippet_parser_spec;

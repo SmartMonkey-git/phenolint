@@ -1,4 +1,4 @@
-use crate::report::annotation_parser_spec::AnnotationParserSpec;
+/*use crate::report::annotation_parser_spec::AnnotationParserSpec;
 use crate::report::report_parser_spec::{Level, ReportParserSpec};
 use annotate_snippets::renderer::DecorStyle;
 use annotate_snippets::{
@@ -62,5 +62,40 @@ impl ReportParser {
         let report = Self::parse(specs, phenobytes);
         let renderer = Renderer::styled().decor_style(DecorStyle::Unicode);
         anstream::println!("{}", renderer.render(report));
+    }
+}
+
+
+EXAMPLE:
+
+        ReportParserSpec::warning()
+            .with_primary_title(format!("[{}] CURIE formatted incorrectly", Self::RULE_ID).as_str())
+            .with_snippets(vec![SnippetParserSpec::new().with_markers(vec![
+                    AnnotationParserSpec::primary()
+                        .with_span(curie_start..curie_end)
+                        .with_label("Expected CURIE with format CURIE:12345"),
+                    AnnotationParserSpec::context()
+                        .with_span(context_span_start..context_span_end)
+                        .with_label("For this Ontology Class"),
+                ])]);
+
+*/
+
+use crate::linting_report::OwnedReport;
+use annotate_snippets::Renderer;
+use annotate_snippets::renderer::DecorStyle;
+
+#[derive(Default)]
+struct ReportParser;
+
+impl ReportParser {
+    pub fn parse(report: OwnedReport) -> String {
+        let renderer = Renderer::styled().decor_style(DecorStyle::Unicode);
+        renderer.render(&[report.report()])
+    }
+
+    pub fn emit(report: OwnedReport) {
+        let renderer = Renderer::styled().decor_style(DecorStyle::Unicode);
+        anstream::println!("{}", renderer.render(&[report.report()]));
     }
 }
