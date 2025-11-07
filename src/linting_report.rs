@@ -85,7 +85,7 @@ impl LintReport {
             .collect()
     }
 
-    pub fn fixes(&self) -> Vec<Patch> {
+    pub fn patches(&self) -> Vec<Patch> {
         self.report_info
             .clone()
             .into_iter()
