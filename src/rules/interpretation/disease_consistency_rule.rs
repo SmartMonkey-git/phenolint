@@ -109,9 +109,6 @@ impl RuleCheck for DiseaseConsistencyRule {
 
 impl DiseaseConsistencyRule {
     fn write_report(phenostr: &str, pointer: &Pointer) -> OwnedReport {
-        use spanned_json_parser::parse;
-        let a = parse(phenostr).unwrap();
-
         let value: SpannedValue = json_spanned_value::from_str(phenostr)
             .unwrap_or_else(|_| panic!("Could not serialize phenopacket"));
 
@@ -153,9 +150,29 @@ impl DiseaseConsistencyRule {
 mod tests {
     use super::*;
 
-    use crate::diagnostics::ReportParser;
+    use crate::test_utils::assert_report_message;
     use phenopackets::schema::v2::Phenopacket;
     use phenopackets::schema::v2::core::{Diagnosis, Disease, Interpretation, OntologyClass};
+    use rstest::rstest;
+
+    fn assert_patch(patch: &Patch, exp_from: &str, exp_to: &str) {
+        match patch {
+            Patch::Duplicate { from, to } => {
+                assert_eq!(
+                    from.position(),
+                    exp_from,
+                    "Patch 'from' should point to interpretation disease"
+                );
+
+                assert_eq!(
+                    to.position(),
+                    exp_to,
+                    "Patch 'to' should point to diseases/1/term"
+                );
+            }
+            _ => panic!("Expected Patch::Duplicate variant"),
+        };
+    }
 
     fn create_ontology_class(id: &str, label: &str) -> OntologyClass {
         OntologyClass {
@@ -187,7 +204,7 @@ mod tests {
         let mut report = LintReport::default();
 
         DiseaseConsistencyRule.check(
-            &serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
             &mut report,
         );
 
@@ -215,7 +232,7 @@ mod tests {
         assert!(report.violations().is_empty());
     }
 
-    #[test]
+    #[rstest]
     fn test_validate_interpretation_disease_mismatch() {
         let disease_term = create_ontology_class("MONDO:0007254", "Breast Cancer");
         let interpretation_term = create_ontology_class("MONDO:0005148", "Diabetes");
@@ -237,15 +254,23 @@ mod tests {
 
         let violations = report.violations();
         assert_eq!(violations.len(), 1);
-        let finding = report.findings.first().unwrap();
 
-        ReportParser::emit(finding.violation().report());
-        let parsed_report = ReportParser::parse(finding.violation().report());
+        let finding = report.findings().first().unwrap();
 
-        /* assert_eq!(
-            &violations[0],
-            &LintViolation::new(DiseaseConsistencyRule::RULE_ID, Report::default())
-        );*/
+        assert_eq!(finding.violation().rule_id(), "INTER001");
+
+        let patch = finding.patch().expect("Expected a patch to be present");
+
+        assert_patch(
+            patch,
+            "/interpretations/0/diagnosis/disease",
+            "/diseases/1/term",
+        );
+        assert_report_message(
+            finding,
+            DiseaseConsistencyRule::RULE_ID,
+            "Disease Inconsistency",
+        )
     }
 
     #[test]
@@ -298,24 +323,30 @@ mod tests {
             ..Default::default()
         };
         let mut report = LintReport::default();
-        // HERE
+
         DiseaseConsistencyRule.check(
             serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
             &mut report,
         );
 
-        let finding = report.findings.first().unwrap();
-
-        ReportParser::emit(finding.violation().report());
-        let parsed_report = ReportParser::parse(finding.violation().report());
+        let finding = report.findings().first().unwrap();
 
         let violations = report.violations();
         assert_eq!(violations.len(), 1);
-        /*
-        assert_eq!(
-            &violations[0],
-            &LintViolation::new(DiseaseConsistencyRule::RULE_ID, Report::default())
-        );*/
+
+        let patch = finding.patch().expect("Expected a patch to be present");
+
+        assert_patch(
+            patch,
+            "/interpretations/1/diagnosis/disease",
+            "/diseases/2/term",
+        );
+
+        assert_report_message(
+            finding,
+            DiseaseConsistencyRule::RULE_ID,
+            "Disease Inconsistency",
+        )
     }
 
     #[test]
@@ -394,17 +425,21 @@ mod tests {
         );
         let violations = report.violations();
 
-        let finding = report.findings.first().unwrap();
-
-        ReportParser::emit(finding.violation().report());
-        let parsed_report = ReportParser::parse(finding.violation().report());
+        let finding = report.findings().first().unwrap();
 
         assert_eq!(violations.len(), 1);
-        /*
-        assert_eq!(
-            &violations[0],
-            &LintViolation::new(DiseaseConsistencyRule::RULE_ID, Report::default())
-        );*/
+        let patch = finding.patch().expect("Expected a patch to be present");
+
+        assert_patch(
+            patch,
+            "/interpretations/0/diagnosis/disease",
+            "/diseases/0/term",
+        );
+        assert_report_message(
+            finding,
+            DiseaseConsistencyRule::RULE_ID,
+            "Disease Inconsistency",
+        )
     }
 
     #[test]
@@ -431,12 +466,21 @@ mod tests {
             &mut report,
         );
 
-        let finding = report.findings.first().unwrap();
+        let finding = report.findings().first().unwrap();
 
-        ReportParser::emit(finding.violation().report());
-        let parsed_report = ReportParser::parse(finding.violation().report());
+        assert_eq!(report.findings().len(), 2);
+        let patch = finding.patch().expect("Expected a patch to be present");
 
-        assert_eq!(report.violations().len(), 2);
+        assert_patch(
+            patch,
+            "/interpretations/0/diagnosis/disease",
+            "/diseases/1/term",
+        );
+        assert_report_message(
+            finding,
+            DiseaseConsistencyRule::RULE_ID,
+            "Disease Inconsistency",
+        )
     }
 
     #[test]

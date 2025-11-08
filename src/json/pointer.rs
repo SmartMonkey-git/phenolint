@@ -1,7 +1,5 @@
 #![allow(dead_code)]
 use crate::json::utils::{escape, is_escaped, unescape};
-use serde_json::Value;
-use std::collections::VecDeque;
 use std::fmt::Display;
 
 /// A struct representing a JSON Pointer (RFC 6901).

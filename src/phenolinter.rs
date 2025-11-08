@@ -45,7 +45,7 @@ impl Lint<&str> for Phenolinter {
         let mut report = self.policy.apply(phenostr.as_ref());
 
         if !quite {
-            for info in &report.findings {
+            for info in report.findings() {
                 ReportParser::emit(info.violation().report())
             }
         }

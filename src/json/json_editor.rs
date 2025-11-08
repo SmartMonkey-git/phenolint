@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::json::error::JsonEditError;
 use crate::json::{JsonCursor, Pointer};
 use serde_json::Value;

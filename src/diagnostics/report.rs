@@ -5,7 +5,7 @@ use crate::enums::Patch;
 #[derive(Clone, Debug, Default)]
 pub struct LintReport {
     pub patched_phenopacket: Option<String>,
-    pub findings: Vec<LintFinding>,
+    findings: Vec<LintFinding>,
 }
 
 impl LintReport {
@@ -16,6 +16,9 @@ impl LintReport {
         }
     }
 
+    pub fn findings(&self) -> &[LintFinding] {
+        &self.findings
+    }
     pub fn violations(&'_ self) -> Vec<&LintViolation> {
         self.findings.iter().map(|i| i.violation()).collect()
     }
