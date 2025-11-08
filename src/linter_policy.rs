@@ -1,10 +1,11 @@
 use crate::config::LinterConfig;
 use crate::config::config_loader::ConfigLoader;
 use crate::diagnostics::LintReport;
-use crate::error::InstantiationError;
+use crate::error::{InstantiationError, RuleInitError};
 use crate::linter_context::LinterContext;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::RuleCheck;
+use log::warn;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
@@ -62,8 +63,18 @@ where
         for r in inventory::iter::<RuleRegistration>() {
             #[allow(clippy::collapsible_if)]
             if rule_ids.contains(r.rule_id) && !seen_rules.contains(&r.rule_id) {
-                if let Some(rule) = (r.factory)(&linter_context) {
-                    policy.push_rule(rule);
+                match (r.factory)(&linter_context) {
+                    Ok(rule) => {
+                        policy.push_rule(rule);
+                    }
+                    Err(err) => match err {
+                        RuleInitError::NeedsHPO => {
+                            warn!(
+                                "Rule '{}' needs the HPO. HPO not found or not configured",
+                                r.rule_id
+                            );
+                        }
+                    },
                 }
             }
             seen_rules.insert(r.rule_id);

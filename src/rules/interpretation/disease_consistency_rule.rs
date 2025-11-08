@@ -1,6 +1,7 @@
 use crate::LinterContext;
 use crate::diagnostics::{LintFinding, LintReport, OwnedReport};
 use crate::enums::Patch;
+use crate::error::RuleInitError;
 use crate::json::{JsonCursor, Pointer};
 use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
@@ -38,8 +39,8 @@ use std::collections::HashSet;
 pub struct DiseaseConsistencyRule;
 
 impl FromContext for DiseaseConsistencyRule {
-    fn from_context(_: &LinterContext) -> Option<Box<dyn RuleCheck>> {
-        Some(Box::new(Self))
+    fn from_context(_: &LinterContext) -> Result<Box<dyn RuleCheck>, RuleInitError> {
+        Ok(Box::new(Self))
     }
 }
 

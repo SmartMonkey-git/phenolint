@@ -1,4 +1,5 @@
 use crate::diagnostics::{LintFinding, LintReport, OwnedReport};
+use crate::error::RuleInitError;
 use crate::json::{JsonCursor, Pointer};
 use crate::linter_context::LinterContext;
 use crate::register_rule;
@@ -16,8 +17,8 @@ use serde_json::Value;
 pub struct CurieFormatRule;
 
 impl FromContext for CurieFormatRule {
-    fn from_context(_: &LinterContext) -> Option<Box<dyn RuleCheck>> {
-        Some(Box::new(CurieFormatRule))
+    fn from_context(_: &LinterContext) -> Result<Box<dyn RuleCheck>, RuleInitError> {
+        Ok(Box::new(CurieFormatRule))
     }
 }
 

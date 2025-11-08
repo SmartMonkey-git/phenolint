@@ -1,5 +1,5 @@
 use crate::diagnostics::report::LintReport;
-use crate::error::LinterError;
+use crate::error::{LinterError, RuleInitError};
 use crate::linter_context::LinterContext;
 
 pub trait LintRule: RuleCheck + FromContext {
@@ -7,7 +7,7 @@ pub trait LintRule: RuleCheck + FromContext {
 }
 
 pub trait FromContext {
-    fn from_context(context: &LinterContext) -> Option<Box<dyn RuleCheck>>;
+    fn from_context(context: &LinterContext) -> Result<Box<dyn RuleCheck>, RuleInitError>;
 }
 
 pub trait RuleCheck {

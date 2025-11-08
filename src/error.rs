@@ -23,3 +23,7 @@ pub enum PatchingError {
     #[error(transparent)]
     JsonEditError(#[from] JsonEditError),
 }
+
+pub enum RuleInitError {
+    NeedsHPO,
+}
