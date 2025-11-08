@@ -5,7 +5,7 @@ use crate::linter_context::LinterContext;
 use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::{FromContext, LintRule, RuleCheck};
-use ariadne::{Label, Report, ReportKind};
+use ariadne::{Color, Config, Fmt, Label, Report, ReportKind};
 use json_spanned_value::spanned::Value as SpannedValue;
 use phenolint_macros::lint_rule;
 use phenopackets::schema::v2::core::OntologyClass;
@@ -62,25 +62,45 @@ impl CurieFormatRule {
             .unwrap_or_else(|_| panic!("Could not serialize phenopacket"));
 
         let (curie_start, curie_end) = value.pointer(pointer.position()).unwrap().span();
+
         let (context_span_start, context_span_end) = value
             .pointer(pointer.clone().up().position())
             .unwrap()
             .span();
+        let mut p = pointer.clone();
+        p.up().up();
+        if let Some(val) = value.pointer(p.position())
+            && val.as_object().is_some()
+        {
+            p.up();
+        };
+
+        let (label_start, label_end) = value.pointer(p.position()).unwrap().span();
 
         // ------
 
-        let report_builder = Report::build(ReportKind::Error, ("stdin", curie_start..curie_end))
-            .with_code(Self::RULE_ID)
-            .with_message(format!("[{}] CURIE formatted incorrectly", Self::RULE_ID))
-            .with_label(
-                Label::new(("stdin", curie_start..curie_end))
-                    .with_message("Expected CURIE with format CURIE:12345")
-                    .with_priority(100),
-            )
-            .with_label(
-                Label::new(("stdout", context_span_start..context_span_end))
-                    .with_message("For this Ontology Class"),
-            );
+        let report_builder = Report::build(
+            ReportKind::Error,
+            ("stdin", context_span_start..context_span_end),
+        )
+        .with_code(Self::RULE_ID)
+        .with_message(format!("[{}] CURIE formatted incorrectly", Self::RULE_ID))
+        .with_label(
+            Label::new(("stdin", curie_start..curie_end))
+                .with_message("Expected CURIE with format CURIE:12345".fg(Color::BrightYellow))
+                .with_color(Color::BrightYellow),
+        )
+        .with_label(
+            Label::new(("stdin", context_span_start..context_span_end))
+                .with_message("For this Ontology Class".fg(Color::Blue))
+                .with_color(Color::Blue),
+        )
+        .with_label(Label::new(("stdin", label_start..label_end)).with_message("In this section"))
+        .with_config(
+            Config::new()
+                .with_compact(false)
+                .with_multiline_arrows(true),
+        );
 
         let report = report_builder.finish();
         OwnedReport::new(report)

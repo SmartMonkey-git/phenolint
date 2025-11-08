@@ -6,7 +6,7 @@ use crate::json::{JsonCursor, Pointer};
 use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::{FromContext, LintRule, RuleCheck};
-use ariadne::{Fmt, Label, Report, ReportKind};
+use ariadne::{Config, Fmt, Label, Report, ReportKind};
 use json_spanned_value::spanned::Value as SpannedValue;
 use phenolint_macros::lint_rule;
 use serde_json::Value;
@@ -122,10 +122,11 @@ impl DiseaseConsistencyRule {
         let secondary_message = "that was not present in diseases section";
 
         let mut report_builder = Report::build(
-            ReportKind::Error,
+            ReportKind::Warning,
             ("stdin", inter_disease_start..inter_disease_end),
         )
         .with_code(Self::RULE_ID)
+        .with_config(Config::new().with_compact(true))
         .with_message(format!("[{}] Disease Inconsistency", Self::RULE_ID));
 
         if let Some(val) = value.pointer("/diseases") {
@@ -140,7 +141,7 @@ impl DiseaseConsistencyRule {
 
         report_builder = report_builder.with_label(
             Label::new(("stdin", inter_disease_start..inter_disease_end))
-                .with_message(format!("{primary_message}"))
+                .with_message(primary_message.to_string())
                 .with_priority(100),
         );
         let report = report_builder.finish();

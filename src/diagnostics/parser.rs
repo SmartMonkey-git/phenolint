@@ -7,7 +7,7 @@ pub struct ReportParser;
 impl ReportParser {
     #[allow(dead_code)]
     pub fn parse(report: &OwnedReport, phenostr: &str) -> String {
-        let cache = sources(vec![("stdin", phenostr.to_string())]);
+        let cache = sources(vec![("", phenostr.to_string())]);
 
         let mut buffer = Vec::new();
         report.report().write(cache, &mut buffer).unwrap();
