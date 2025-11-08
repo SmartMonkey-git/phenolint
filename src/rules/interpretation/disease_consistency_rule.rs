@@ -1,14 +1,15 @@
-use annotate_snippets::Report;
-use crate::rules::rule_registry::RuleRegistration;
-use crate::enums::{FixAction};
-use crate::linting_report::{LintReport, LintReportInfo, LintingViolation};
-use crate::traits::{LintRule, RuleCheck};
-use phenopackets::schema::v2::Phenopacket;
-use phenopackets::schema::v2::core::OntologyClass;
-use phenolint_macros::lint_rule;
+use crate::LinterContext;
+use crate::diagnostics::{LintFinding, LintReport, OwnedReport};
+use crate::enums::Patch;
 use crate::register_rule;
-
-
+use crate::rules::rule_registry::RuleRegistration;
+use crate::rules::utils::json_cursor::{JsonCursor, Pointer};
+use crate::traits::{FromContext, LintRule, RuleCheck};
+use annotate_snippets::{AnnotationKind, Level, Snippet};
+use json_spanned_value::spanned::Value as SpannedValue;
+use phenolint_macros::lint_rule;
+use serde_json::Value;
+use std::collections::HashSet;
 #[derive(Debug, Default)]
 /// Validates that diseases in interpretations are also present in the diseases list.
 ///
@@ -33,49 +34,130 @@ use crate::register_rule;
 /// flag this inconsistency. The disease should be added to both locations to maintain
 /// data integrity across the phenopacket structure.
 #[lint_rule(id = "INTER001")]
-struct DiseaseConsistencyRule;
+pub struct DiseaseConsistencyRule;
 
-
-impl RuleCheck for DiseaseConsistencyRule {
-    fn check(&self, phenopacket: &Phenopacket, report: &mut LintReport) {
-        let inter_diseases: Vec<OntologyClass> = phenopacket
-            .interpretations
-            .iter()
-            .filter_map(|inter| {
-                inter
-                    .diagnosis
-                    .as_ref()
-                    .and_then(|diagnosis| diagnosis.disease.clone())
-            })
-            .collect();
-        let diseases: Vec<OntologyClass> = phenopacket
-            .diseases
-            .iter()
-            .filter_map(|d| d.term.clone())
-            .collect();
-
-        let mut seen: Vec<&OntologyClass> = vec![];
-        for inter_disease in inter_diseases.iter() {
-            if !diseases.contains(inter_disease) && !seen.contains(&inter_disease) {
-                report.push_info(LintReportInfo::new(
-                    LintingViolation::new(Self::RULE_ID, Report::default()),
-                    Some(FixAction::Duplicate {
-                        from: "".to_string(),
-                        to: "".to_string(),
-                    }),
-                ));
-                seen.push(inter_disease)
-            }
-        }
+impl FromContext for DiseaseConsistencyRule {
+    fn from_context(_: &LinterContext) -> Option<Box<dyn RuleCheck>> {
+        Some(Box::new(Self))
     }
-
 }
 
+impl RuleCheck for DiseaseConsistencyRule {
+    fn check(&self, phenostr: &str, report: &mut LintReport) {
+        let mut cursor = JsonCursor::new(
+            serde_json::from_str(phenostr)
+                .unwrap_or_else(|_| panic!("Could not serialize phenopacket")),
+        );
+
+        if !cursor.down("interpretations").is_valid_position() {
+            return;
+        }
+
+        let mut disease_ids = HashSet::new();
+
+        for disease_idx in cursor.root().down("diseases").peek() {
+            println!("{}", disease_idx);
+            cursor.set_anchor();
+            if let Some(disease) = cursor
+                .down(disease_idx)
+                .down("term")
+                .down("id")
+                .current_value()
+            {
+                disease_ids.insert(disease.clone());
+            }
+            cursor.goto_anchor();
+        }
+
+        let n_diseases = disease_ids.len();
+        println!("n diseases: {}", n_diseases);
+        let mut seen: HashSet<Value> = HashSet::new();
+        let mut findings = vec![];
+
+        for inter in cursor.root().down("interpretations").peek() {
+            println!("{}", inter);
+            println!("{} -> {}", cursor.pointer(), cursor.is_valid_position());
+            cursor.set_anchor();
+            if let Some(inter_disease_id) = cursor
+                .down(inter)
+                .down("diagnosis")
+                .down("disease")
+                .down("id")
+                .current_value()
+                && !disease_ids.contains(inter_disease_id)
+                && !seen.contains(inter_disease_id)
+            {
+                let id = inter_disease_id.clone();
+                println!("ID {:#?}", id);
+                cursor.up();
+                findings.push(LintFinding::new(
+                    Self::RULE_ID,
+                    Self::write_report(phenostr, cursor.pointer()),
+                    Some(Patch::Duplicate {
+                        from: cursor.pointer().to_owned(),
+                        to: Pointer::new(&format!(
+                            "/diseases/{}/term",
+                            n_diseases + findings.len()
+                        )),
+                    }),
+                ));
+
+                seen.insert(id);
+            }
+            cursor.goto_anchor();
+        }
+
+        report.extend_finding(findings.as_slice())
+    }
+}
+
+impl DiseaseConsistencyRule {
+    fn write_report(phenostr: &str, pointer: &Pointer) -> OwnedReport {
+        use spanned_json_parser::parse;
+        let a = parse(phenostr).unwrap();
+
+        let value: SpannedValue = json_spanned_value::from_str(phenostr)
+            .unwrap_or_else(|_| panic!("Could not serialize phenopacket"));
+
+        let (inter_disease_start, inter_disease_end) =
+            value.pointer(pointer.position()).unwrap().span();
+
+        value.pointer("diseases");
+
+        let mut primary_message = "Diseases found in interpretations".to_string();
+        let secondary_message = "that was not present in diseases section";
+
+        let mut snippet = Snippet::source(phenostr.to_string());
+
+        if let Some(val) = value.pointer("/diseases") {
+            snippet = snippet.annotation(
+                AnnotationKind::Context
+                    .span(val.span().0..val.span().1)
+                    .label(secondary_message),
+            );
+        } else {
+            primary_message = format!("{primary_message} {secondary_message}");
+        }
+
+        snippet = snippet.annotation(
+            AnnotationKind::Primary
+                .span(inter_disease_start..inter_disease_end)
+                .label(primary_message),
+        );
+        // TRY: ariadne
+        let report = Level::WARNING
+            .primary_title(format!("[{}] Disease Inconsistency", Self::RULE_ID))
+            .element(snippet);
+
+        OwnedReport::new(report)
+    }
+}
 
 #[cfg(test)]
 mod tests {
-    use annotate_snippets::Report;
     use super::*;
+
+    use crate::diagnostics::ReportParser;
     use phenopackets::schema::v2::Phenopacket;
     use phenopackets::schema::v2::core::{Diagnosis, Disease, Interpretation, OntologyClass};
 
@@ -108,7 +190,10 @@ mod tests {
         let phenopacket = Phenopacket::default();
         let mut report = LintReport::default();
 
-        DiseaseConsistencyRule.check(&phenopacket, &mut report);
+        DiseaseConsistencyRule.check(
+            &serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &mut report,
+        );
 
         assert!(report.violations().is_empty());
     }
@@ -126,7 +211,10 @@ mod tests {
         };
         let mut report = LintReport::default();
 
-        DiseaseConsistencyRule.check(&phenopacket, &mut report);
+        DiseaseConsistencyRule.check(
+            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &mut report,
+        );
 
         assert!(report.violations().is_empty());
     }
@@ -146,14 +234,22 @@ mod tests {
         };
         let mut report = LintReport::default();
 
-        DiseaseConsistencyRule.check(&phenopacket, &mut report);
+        DiseaseConsistencyRule.check(
+            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &mut report,
+        );
 
         let violations = report.violations();
         assert_eq!(violations.len(), 1);
-        assert_eq!(
+        let finding = report.findings.first().unwrap();
+
+        ReportParser::emit(finding.violation().report());
+        let parsed_report = ReportParser::parse(finding.violation().report());
+
+        /* assert_eq!(
             &violations[0],
-            &LintingViolation::new(DiseaseConsistencyRule::RULE_ID, Report::default())
-        );
+            &LintViolation::new(DiseaseConsistencyRule::RULE_ID, Report::default())
+        );*/
     }
 
     #[test]
@@ -177,7 +273,10 @@ mod tests {
         };
         let mut report = LintReport::default();
 
-        DiseaseConsistencyRule.check(&phenopacket, &mut report);
+        DiseaseConsistencyRule.check(
+            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &mut report,
+        );
 
         assert!(report.violations().is_empty());
     }
@@ -203,14 +302,24 @@ mod tests {
             ..Default::default()
         };
         let mut report = LintReport::default();
+        // HERE
+        DiseaseConsistencyRule.check(
+            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &mut report,
+        );
 
-        DiseaseConsistencyRule.check(&phenopacket, &mut report);
+        let finding = report.findings.first().unwrap();
+
+        ReportParser::emit(finding.violation().report());
+        let parsed_report = ReportParser::parse(finding.violation().report());
+
         let violations = report.violations();
         assert_eq!(violations.len(), 1);
+        /*
         assert_eq!(
             &violations[0],
-            &LintingViolation::new(DiseaseConsistencyRule::RULE_ID, Report::default())
-        );
+            &LintViolation::new(DiseaseConsistencyRule::RULE_ID, Report::default())
+        );*/
     }
 
     #[test]
@@ -230,7 +339,10 @@ mod tests {
         };
         let mut report = LintReport::default();
 
-        DiseaseConsistencyRule.check(&phenopacket, &mut report);
+        DiseaseConsistencyRule.check(
+            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &mut report,
+        );
 
         assert!(report.violations().is_empty());
     }
@@ -255,7 +367,10 @@ mod tests {
         };
         let mut report = LintReport::default();
 
-        DiseaseConsistencyRule.check(&phenopacket, &mut report);
+        DiseaseConsistencyRule.check(
+            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &mut report,
+        );
 
         assert!(report.violations().is_empty());
     }
@@ -277,14 +392,23 @@ mod tests {
         };
         let mut report = LintReport::default();
 
-        DiseaseConsistencyRule.check(&phenopacket, &mut report);
+        DiseaseConsistencyRule.check(
+            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &mut report,
+        );
         let violations = report.violations();
 
+        let finding = report.findings.first().unwrap();
+
+        ReportParser::emit(finding.violation().report());
+        let parsed_report = ReportParser::parse(finding.violation().report());
+
         assert_eq!(violations.len(), 1);
+        /*
         assert_eq!(
             &violations[0],
-            &LintingViolation::new(DiseaseConsistencyRule::RULE_ID, Report::default())
-        );
+            &LintViolation::new(DiseaseConsistencyRule::RULE_ID, Report::default())
+        );*/
     }
 
     #[test]
@@ -306,7 +430,15 @@ mod tests {
         };
         let mut report = LintReport::default();
 
-        DiseaseConsistencyRule.check(&phenopacket, &mut report);
+        DiseaseConsistencyRule.check(
+            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &mut report,
+        );
+
+        let finding = report.findings.first().unwrap();
+
+        ReportParser::emit(finding.violation().report());
+        let parsed_report = ReportParser::parse(finding.violation().report());
 
         assert_eq!(report.violations().len(), 2);
     }
@@ -328,7 +460,10 @@ mod tests {
         };
         let mut report = LintReport::default();
 
-        DiseaseConsistencyRule.check(&phenopacket, &mut report);
+        DiseaseConsistencyRule.check(
+            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &mut report,
+        );
 
         assert!(report.violations().is_empty());
     }

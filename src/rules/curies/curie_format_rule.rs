@@ -4,7 +4,7 @@ use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::rules::utils::json_cursor::{JsonCursor, Pointer};
 use crate::traits::{FromContext, LintRule, RuleCheck};
-use annotate_snippets::{AnnotationKind, Level as SnippetLevel, Snippet};
+use annotate_snippets::{AnnotationKind, Level, Snippet};
 use json_spanned_value::spanned::Value as SpannedValue;
 use phenolint_macros::lint_rule;
 use phenopackets::schema::v2::core::OntologyClass;
@@ -66,7 +66,7 @@ impl CurieFormatRule {
             .unwrap()
             .span();
 
-        let report = SnippetLevel::WARNING
+        let report = Level::WARNING
             .primary_title(format!("[{}] CURIE formatted incorrectly", Self::RULE_ID))
             .element(
                 Snippet::source(phenostr.to_string())
