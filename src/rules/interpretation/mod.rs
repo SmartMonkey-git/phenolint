@@ -1,1 +1,1 @@
-// mod disease_consistency_rule;
+pub mod disease_consistency_rule;
