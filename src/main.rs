@@ -31,10 +31,12 @@ fn main() {
     let disease1 = create_ontology_class("MONDO:0007254", "Breast Cancer");
     let disease2 = create_ontology_class("MONDO:0005148", "Diabetes");
     let disease3 = create_ontology_class("MONDO:0005015", "Hypertension");
+    let disease4 = create_ontology_class("MONDO_0005016", "Some Disease");
 
     let diseases = vec![
         create_disease(disease1.clone()),
         create_disease(disease2.clone()),
+        create_disease(disease4.clone()),
     ];
     let interpretations = vec![
         create_interpretation(Some(disease1)),

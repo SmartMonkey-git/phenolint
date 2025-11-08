@@ -16,6 +16,9 @@ impl Pointer {
         if !is_escaped(&location) {
             location = escape(&location);
         }
+        if !location.is_empty() && !location.starts_with("/") {
+            location = format!("/{}", location);
+        }
 
         Self(location)
     }
@@ -30,7 +33,7 @@ impl Pointer {
     /// A decoded string of the last path segment.
     pub fn get_tip(&self) -> String {
         let tip = self.0.split("/").last().unwrap_or("");
-        unescape(tip)
+        tip.to_string()
     }
 
     /// Moves the pointer one level up the hierarchy.
@@ -75,6 +78,7 @@ impl Pointer {
         let step = step.to_string();
         let step = escape(&step);
         self.0 = format!("{}/{}", self.0, step);
+
         self
     }
 
@@ -94,7 +98,7 @@ impl Pointer {
     /// # Returns
     /// A mutable reference to `self` (for chaining).
     pub fn root(&mut self) -> &mut Self {
-        self.0 = String::new();
+        self.0 = "".to_owned();
         self
     }
 

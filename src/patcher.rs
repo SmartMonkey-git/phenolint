@@ -80,7 +80,7 @@ impl Patcher {
     }
 
     fn apply(cursor: JsonCursor, patches: Vec<Patch>) -> Result<String, PatchingError> {
-        let mut editor = JsonEditor::new(cursor);
+        let mut editor = JsonEditor::from(cursor);
 
         for patch in patches {
             match patch {
