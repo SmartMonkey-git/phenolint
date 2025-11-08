@@ -1,20 +1,22 @@
+use crate::rules::utils::json_cursor::Pointer;
+
 #[derive(Clone, Debug)]
 pub enum Patch {
     Add {
-        at: String,
+        at: Pointer,
         value: String,
     },
     Remove {
-        at: String,
+        at: Pointer,
     },
     ///TODO: Unfolds to remove and add
     Move {
-        from: String,
-        to: String,
+        from: Pointer,
+        to: Pointer,
     },
     ///TODO: Converts to add
     Duplicate {
-        from: String,
-        to: String,
+        from: Pointer,
+        to: Pointer,
     },
 }

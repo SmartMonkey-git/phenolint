@@ -1,30 +1,65 @@
+use phenolint::diagnostics::{LintReport, ReportParser};
+use phenolint::rules::interpretation::disease_consistency_rule::DiseaseConsistencyRule;
+use phenolint::traits::RuleCheck;
+use phenopackets::schema::v2::Phenopacket;
+use phenopackets::schema::v2::core::{Diagnosis, Disease, Interpretation, OntologyClass};
+
+fn create_ontology_class(id: &str, label: &str) -> OntologyClass {
+    OntologyClass {
+        id: id.to_string(),
+        label: label.to_string(),
+    }
+}
+
+fn create_disease(term: OntologyClass) -> Disease {
+    Disease {
+        term: Some(term),
+        ..Default::default()
+    }
+}
+
+fn create_interpretation(disease: Option<OntologyClass>) -> Interpretation {
+    Interpretation {
+        diagnosis: disease.map(|d| Diagnosis {
+            disease: Some(d),
+            ..Default::default()
+        }),
+        ..Default::default()
+    }
+}
+
 fn main() {
-    use annotate_snippets::{AnnotationKind, Level, Renderer, Snippet, renderer::DecorStyle};
+    let disease1 = create_ontology_class("MONDO:0007254", "Breast Cancer");
+    let disease2 = create_ontology_class("MONDO:0005148", "Diabetes");
+    let disease3 = create_ontology_class("MONDO:0005015", "Hypertension");
 
-    let source = r#"                annotations: vec![SourceAnnotation {
-                label: "expected struct `annotate_snippets::snippet::Slice`, found reference"
-                    ,
-                range: <22, 25>,"#;
+    let diseases = vec![
+        create_disease(disease1.clone()),
+        create_disease(disease2.clone()),
+    ];
+    let interpretations = vec![
+        create_interpretation(Some(disease1)),
+        create_interpretation(Some(disease3.clone())),
+    ];
 
-    let report =
-        &[Level::ERROR
-            .primary_title("expected type, found `22`")
-            .element(
-                Snippet::source(source)
-                    .line_start(26)
-                    .path("examples/footer.rs")
-                    .annotation(AnnotationKind::Primary.span(193..195).label(
-                        "expected struct `annotate_snippets::snippet::Slice`, found reference",
-                    ))
-                    .annotation(
-                        AnnotationKind::Context
-                            .span(34..50)
-                            .label("while parsing this struct"),
-                    ),
-            )];
+    let phenopacket = Phenopacket {
+        diseases,
+        interpretations,
+        ..Default::default()
+    };
+    let mut report = LintReport::default();
+    // HERE
+    DiseaseConsistencyRule.check(
+        serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+        &mut report,
+    );
 
-    let renderer = Renderer::styled().decor_style(DecorStyle::Unicode);
-    anstream::println!("{}", renderer.render(report));
+    let finding = report.findings.first().unwrap();
+
+    ReportParser::emit(finding.violation().report());
+    let parsed_report = ReportParser::parse(finding.violation().report());
+
+    let violations = report.violations();
 }
 #[test]
 fn test_hallo_world() {
