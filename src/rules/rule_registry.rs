@@ -37,7 +37,6 @@ mod tests {
             }
             seen_ids.insert(r.rule_id);
         });
-        println!("{:#?}", seen_ids);
     }
 
     #[rstest]

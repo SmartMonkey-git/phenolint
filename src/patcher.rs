@@ -64,18 +64,16 @@ impl Patcher {
     ///
     /// After sorting: `Add /a/b`, `Add /a/b/c`, `Remove /a`
     fn sort_patches(patches: &mut [Patch]) {
-        patches.sort_by(|p1, p2| {
-            match (p1, p2) {
-                (Patch::Add { .. }, Patch::Remove { .. }) => Ordering::Less, // Add comes first
-                (Patch::Remove { .. }, Patch::Add { .. }) => Ordering::Greater, // Remove comes after
-                (Patch::Add { at: at1, .. }, Patch::Add { at: at2, .. }) => {
-                    at1.segments().count().cmp(&at2.segments().count())
-                }
-                (Patch::Remove { at: at1 }, Patch::Remove { at: at2 }) => {
-                    at1.segments().count().cmp(&at2.segments().count())
-                }
-                _ => Ordering::Equal, // Both same type
+        patches.sort_by(|p1, p2| match (p1, p2) {
+            (Patch::Add { .. }, Patch::Remove { .. }) => Ordering::Less,
+            (Patch::Remove { .. }, Patch::Add { .. }) => Ordering::Greater,
+            (Patch::Add { at: at1, .. }, Patch::Add { at: at2, .. }) => {
+                at1.segments().count().cmp(&at2.segments().count())
             }
+            (Patch::Remove { at: at1 }, Patch::Remove { at: at2 }) => {
+                at1.segments().count().cmp(&at2.segments().count())
+            }
+            _ => Ordering::Equal,
         });
     }
 
