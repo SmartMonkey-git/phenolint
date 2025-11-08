@@ -394,6 +394,23 @@ impl JsonCursor {
         &self.pointer
     }
 
+    /// Finds all locations where a predicate returns true.
+    ///
+    /// # Arguments
+    /// * `predicate` - A function that takes a reference to a `Value` and returns `bool`.
+    ///
+    /// # Returns
+    /// A vector of [`Pointer`]s pointing to all matching values.
+    pub fn filter<F>(&self, predicate: F) -> Vec<Pointer>
+    where
+        F: Fn(&Value) -> bool,
+    {
+        self.iter_with_paths()
+            .filter(|(_, v)| predicate(v))
+            .map(|(ptr, _)| ptr)
+            .collect()
+    }
+
     /// Iterates over all JSON sub-values and their corresponding pointers
     /// starting from the cursor’s current position.
     ///
