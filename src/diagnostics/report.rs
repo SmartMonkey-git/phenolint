@@ -24,8 +24,12 @@ impl LintReport {
         self.findings.iter().filter_map(|lri| lri.patch()).collect()
     }
 
-    pub fn push_finding(&mut self, info: LintFinding) {
-        self.findings.push(info);
+    pub fn push_finding(&mut self, finding: LintFinding) {
+        self.findings.push(finding);
+    }
+
+    pub fn extend_finding(&mut self, findings: &[LintFinding]) {
+        self.findings.extend(findings.iter().cloned());
     }
 
     pub fn has_violations(&self) -> bool {
