@@ -1,8 +1,7 @@
-use phenolint::diagnostics::{LintReport, ReportParser};
-use phenolint::rules::interpretation::disease_consistency_rule::DiseaseConsistencyRule;
-use phenolint::traits::RuleCheck;
+use phenolint::{Lint, Phenolinter};
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{Diagnosis, Disease, Interpretation, OntologyClass};
+use std::path::PathBuf;
 
 fn create_ontology_class(id: &str, label: &str) -> OntologyClass {
     OntologyClass {
@@ -32,10 +31,12 @@ fn main() {
     let disease1 = create_ontology_class("MONDO:0007254", "Breast Cancer");
     let disease2 = create_ontology_class("MONDO:0005148", "Diabetes");
     let disease3 = create_ontology_class("MONDO:0005015", "Hypertension");
+    let disease4 = create_ontology_class("MONDO_0005016", "Some Disease");
 
     let diseases = vec![
         create_disease(disease1.clone()),
         create_disease(disease2.clone()),
+        create_disease(disease4.clone()),
     ];
     let interpretations = vec![
         create_interpretation(Some(disease1)),
@@ -47,21 +48,22 @@ fn main() {
         interpretations,
         ..Default::default()
     };
-    let mut report = LintReport::default();
-    // HERE
-    DiseaseConsistencyRule.check(
-        serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
-        &mut report,
-    );
 
-    let finding = report.findings.first().unwrap();
+    let mut linter = Phenolinter::try_from(PathBuf::from(
+        "/Users/rouvenreuter/Documents/Projects/phenolint/phenolint.toml",
+    ))
+    .unwrap();
+    let phenostr = serde_json::to_string_pretty(&phenopacket).unwrap();
+    let lint_res = linter.lint(phenostr.as_str(), true, false);
 
-    ReportParser::emit(finding.violation().report());
-    let parsed_report = ReportParser::parse(finding.violation().report());
-
-    let violations = report.violations();
-}
-#[test]
-fn test_hallo_world() {
-    main()
+    match lint_res {
+        Ok(report) => {
+            println!("{}", report.patched_phenopacket.unwrap());
+        }
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            println!("Integration test failed!");
+            std::process::exit(1);
+        }
+    }
 }

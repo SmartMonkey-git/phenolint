@@ -8,8 +8,7 @@ pub struct ReportParser;
 impl ReportParser {
     #[allow(dead_code)]
     pub fn parse(report: &OwnedReport) -> String {
-        let renderer = Renderer::styled().decor_style(DecorStyle::Unicode);
-        renderer.render(&[report.report()])
+        report.to_string()
     }
 
     pub fn emit(report: &OwnedReport) {

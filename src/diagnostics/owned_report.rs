@@ -1,4 +1,6 @@
-use annotate_snippets::Group;
+use annotate_snippets::renderer::DecorStyle;
+use annotate_snippets::{Group, Renderer};
+use std::fmt::{Display, Formatter};
 
 #[derive(Clone, Debug)]
 pub struct OwnedReport {
@@ -11,5 +13,13 @@ impl OwnedReport {
     }
     pub fn report(&self) -> Group<'static> {
         self.report.clone()
+    }
+}
+
+impl Display for OwnedReport {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let renderer = Renderer::styled().decor_style(DecorStyle::Unicode);
+        let display_str = renderer.render(&[self.report()]);
+        write!(f, "{}", display_str)
     }
 }

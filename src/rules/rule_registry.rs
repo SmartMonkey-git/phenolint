@@ -1,9 +1,10 @@
+use crate::error::RuleInitError;
 use crate::linter_context::LinterContext;
 use crate::traits::RuleCheck;
 
 pub struct RuleRegistration {
     pub rule_id: &'static str,
-    pub factory: fn(context: &LinterContext) -> Option<Box<dyn RuleCheck>>,
+    pub factory: fn(context: &LinterContext) -> Result<Box<dyn RuleCheck>, RuleInitError>,
 }
 
 inventory::collect!(RuleRegistration);
@@ -37,7 +38,6 @@ mod tests {
             }
             seen_ids.insert(r.rule_id);
         });
-        println!("{:#?}", seen_ids);
     }
 
     #[rstest]

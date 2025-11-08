@@ -1,8 +1,12 @@
+use crate::json::error::JsonEditError;
 use config::ConfigError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum LinterError {}
+pub enum LinterError {
+    #[error(transparent)]
+    PatchingError(#[from] PatchingError),
+}
 
 #[derive(Error, Debug)]
 pub enum InstantiationError {
@@ -13,7 +17,13 @@ pub enum InstantiationError {
 }
 
 #[derive(Error, Debug)]
-pub enum FixingError {
-    #[error("TODO")]
-    SomeError,
+pub enum PatchingError {
+    #[error(transparent)]
+    SerdeError(#[from] serde_json::Error),
+    #[error(transparent)]
+    JsonEditError(#[from] JsonEditError),
+}
+
+pub enum RuleInitError {
+    NeedsHPO,
 }

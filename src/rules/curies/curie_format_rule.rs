@@ -1,8 +1,9 @@
 use crate::diagnostics::{LintFinding, LintReport, OwnedReport};
+use crate::error::RuleInitError;
+use crate::json::{JsonCursor, Pointer};
 use crate::linter_context::LinterContext;
 use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
-use crate::rules::utils::json_cursor::{JsonCursor, Pointer};
 use crate::traits::{FromContext, LintRule, RuleCheck};
 use annotate_snippets::{AnnotationKind, Level, Snippet};
 use json_spanned_value::spanned::Value as SpannedValue;
@@ -16,8 +17,8 @@ use serde_json::Value;
 pub struct CurieFormatRule;
 
 impl FromContext for CurieFormatRule {
-    fn from_context(_: &LinterContext) -> Option<Box<dyn RuleCheck>> {
-        Some(Box::new(CurieFormatRule))
+    fn from_context(_: &LinterContext) -> Result<Box<dyn RuleCheck>, RuleInitError> {
+        Ok(Box::new(CurieFormatRule))
     }
 }
 
@@ -89,7 +90,7 @@ impl CurieFormatRule {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::diagnostics::parser::ReportParser;
+    use crate::test_utils::assert_report_message;
     use phenopackets::schema::v2::Phenopacket;
     use phenopackets::schema::v2::core::{Diagnosis, Interpretation, OntologyClass};
     use rstest::rstest;
@@ -142,10 +143,8 @@ mod tests {
             &mut report,
         );
         assert!(!report.violations().is_empty());
-        let report_info = report.findings.first().unwrap();
+        let findings = report.findings().first().unwrap();
 
-        ReportParser::emit(report_info.violation().report());
-        let parsed_report = ReportParser::parse(report_info.violation().report());
-        assert!(parsed_report.contains(&wrong_curie))
+        assert_report_message(findings, CurieFormatRule::RULE_ID, "Expected CURIE");
     }
 }
