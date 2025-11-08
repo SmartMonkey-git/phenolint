@@ -1,8 +1,8 @@
 use crate::diagnostics::{LintFinding, LintReport, OwnedReport};
+use crate::json::{JsonCursor, Pointer};
 use crate::linter_context::LinterContext;
 use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
-use crate::rules::utils::json_cursor::{JsonCursor, Pointer};
 use crate::traits::{FromContext, LintRule, RuleCheck};
 use annotate_snippets::{AnnotationKind, Level, Snippet};
 use json_spanned_value::spanned::Value as SpannedValue;

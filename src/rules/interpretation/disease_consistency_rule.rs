@@ -1,15 +1,16 @@
 use crate::LinterContext;
 use crate::diagnostics::{LintFinding, LintReport, OwnedReport};
 use crate::enums::Patch;
+use crate::json::{JsonCursor, Pointer};
 use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
-use crate::rules::utils::json_cursor::{JsonCursor, Pointer};
 use crate::traits::{FromContext, LintRule, RuleCheck};
 use annotate_snippets::{AnnotationKind, Level, Snippet};
 use json_spanned_value::spanned::Value as SpannedValue;
 use phenolint_macros::lint_rule;
 use serde_json::Value;
 use std::collections::HashSet;
+
 #[derive(Debug, Default)]
 /// Validates that diseases in interpretations are also present in the diseases list.
 ///

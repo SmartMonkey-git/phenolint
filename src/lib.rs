@@ -10,5 +10,6 @@ pub mod traits;
 
 pub mod linter_context;
 pub use linter_context::LinterContext;
+mod json;
 #[cfg(test)]
 pub(crate) mod test_utils;
