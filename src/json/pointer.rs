@@ -7,7 +7,7 @@ use std::fmt::Display;
 /// A struct representing a JSON Pointer (RFC 6901).
 ///
 /// This internally stores the pointer as an escaped string (e.g., "/a/~1b").
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Pointer(String);
 
 impl Pointer {

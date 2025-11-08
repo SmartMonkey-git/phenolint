@@ -1,6 +1,6 @@
-use crate::rules::utils::json_cursor::Pointer;
+use crate::json::Pointer;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Patch {
     Add {
         at: Pointer,

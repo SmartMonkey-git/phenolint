@@ -13,6 +13,6 @@ pub trait RuleCheck {
     fn check(&self, phenostr: &str, report: &mut LintReport);
 }
 
-pub(crate) trait Lint<T> {
+pub trait Lint<T> {
     fn lint(&mut self, input: T, patch: bool, quiet: bool) -> LintReport;
 }

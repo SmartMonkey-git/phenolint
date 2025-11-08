@@ -57,7 +57,6 @@ impl RuleCheck for DiseaseConsistencyRule {
         let mut disease_ids = HashSet::new();
 
         for disease_idx in cursor.root().down("diseases").peek() {
-            println!("{}", disease_idx);
             cursor.set_anchor();
             if let Some(disease) = cursor
                 .down(disease_idx)
@@ -71,13 +70,10 @@ impl RuleCheck for DiseaseConsistencyRule {
         }
 
         let n_diseases = disease_ids.len();
-        println!("n diseases: {}", n_diseases);
         let mut seen: HashSet<Value> = HashSet::new();
         let mut findings = vec![];
 
         for inter in cursor.root().down("interpretations").peek() {
-            println!("{}", inter);
-            println!("{} -> {}", cursor.pointer(), cursor.is_valid_position());
             cursor.set_anchor();
             if let Some(inter_disease_id) = cursor
                 .down(inter)
@@ -89,7 +85,6 @@ impl RuleCheck for DiseaseConsistencyRule {
                 && !seen.contains(inter_disease_id)
             {
                 let id = inter_disease_id.clone();
-                println!("ID {:#?}", id);
                 cursor.up();
                 findings.push(LintFinding::new(
                     Self::RULE_ID,

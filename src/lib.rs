@@ -5,8 +5,10 @@ pub mod error;
 pub mod linter_policy;
 pub mod patcher;
 pub mod phenolinter;
+pub use phenolinter::Phenolinter;
 pub mod rules;
 pub mod traits;
+pub use traits::*;
 
 pub mod linter_context;
 pub use linter_context::LinterContext;

@@ -20,7 +20,7 @@ use std::rc::Rc;
 use std::str::FromStr;
 use std::sync::Arc;
 
-struct Phenolinter {
+pub struct Phenolinter {
     policy: LinterPolicy,
     patcher: Patcher,
 }
@@ -46,7 +46,7 @@ impl Lint<&str> for Phenolinter {
         }
 
         if patch && report.has_violations() {
-            let patched = self.patcher.patch().unwrap();
+            let patched = self.patcher.patch(phenostr, report.patches()).unwrap();
             report.patched_phenopacket = Some(patched)
         }
 

@@ -14,7 +14,7 @@ use std::collections::VecDeque;
 /// as you move around in a nested JSON document.
 #[derive(Debug, Clone)]
 pub(crate) struct JsonCursor {
-    value: Value,
+    json: Value,
     pointer: Pointer,
     anchor: Option<Pointer>,
 }
@@ -29,10 +29,26 @@ impl JsonCursor {
     /// A new `JsonCursor` with an empty pointer (root position).
     pub fn new(value: Value) -> JsonCursor {
         Self {
-            value,
+            json: value,
             pointer: Pointer::new(""),
             anchor: None,
         }
+    }
+
+    pub(super) fn json_mut(&mut self) -> &mut Value {
+        &mut self.json
+    }
+
+    /// Returns a reference to the cursor's internal pointer.
+    ///
+    /// # Returns
+    /// A reference to the [`Pointer`] representing the cursor's current position.
+    pub fn pointer(&self) -> &Pointer {
+        &self.pointer
+    }
+
+    pub fn json(&self) -> &Value {
+        &self.json
     }
 
     /// Moves the cursor directly to a new location represented by a [`Pointer`].
@@ -171,7 +187,7 @@ impl JsonCursor {
     /// * `Some(&Value)` if the pointer resolves to a valid location.
     /// * `None` if the pointer path does not exist.
     pub fn current_value(&self) -> Option<&Value> {
-        self.value.pointer(self.pointer.position())
+        self.json.pointer(self.pointer.position())
     }
 
     /// Checks whether the cursor is currently pointing to a valid position
@@ -237,14 +253,6 @@ impl JsonCursor {
         }
     }
 
-    /// Returns a reference to the cursor's internal pointer.
-    ///
-    /// # Returns
-    /// A reference to the [`Pointer`] representing the cursor's current position.
-    pub fn pointer(&self) -> &Pointer {
-        &self.pointer
-    }
-
     /// Finds all locations where a predicate returns true.
     ///
     /// # Arguments
@@ -272,7 +280,7 @@ impl JsonCursor {
     /// An iterator over `(&Value, Pointer)` pairs.
     pub fn iter_with_paths(&self) -> impl Iterator<Item = (Pointer, &Value)> {
         let mut queue = VecDeque::new();
-        if let Some(current_value) = self.value.pointer(self.pointer.position()) {
+        if let Some(current_value) = self.json.pointer(self.pointer.position()) {
             queue.push_back((current_value, self.pointer.clone()));
         }
 

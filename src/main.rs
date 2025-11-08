@@ -1,8 +1,10 @@
 use phenolint::diagnostics::{LintReport, ReportParser};
 use phenolint::rules::interpretation::disease_consistency_rule::DiseaseConsistencyRule;
 use phenolint::traits::RuleCheck;
+use phenolint::{Lint, Phenolinter};
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{Diagnosis, Disease, Interpretation, OntologyClass};
+use std::path::PathBuf;
 
 fn create_ontology_class(id: &str, label: &str) -> OntologyClass {
     OntologyClass {
@@ -47,19 +49,13 @@ fn main() {
         interpretations,
         ..Default::default()
     };
-    let mut report = LintReport::default();
-    // HERE
-    DiseaseConsistencyRule.check(
-        serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
-        &mut report,
-    );
 
-    let finding = report.findings.first().unwrap();
-
-    ReportParser::emit(finding.violation().report());
-    let parsed_report = ReportParser::parse(finding.violation().report());
-
-    let violations = report.violations();
+    let mut linter = Phenolinter::try_from(PathBuf::from(
+        "/Users/rouvenreuter/Documents/Projects/phenolint/phenolint.toml",
+    ))
+    .unwrap();
+    let phenostr = serde_json::to_string_pretty(&phenopacket).unwrap();
+    let report = linter.lint(phenostr.as_str(), true, false);
 }
 #[test]
 fn test_hallo_world() {
