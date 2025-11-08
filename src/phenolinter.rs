@@ -35,7 +35,12 @@ impl Phenolinter {
 }
 
 impl Lint<&str> for Phenolinter {
-    fn lint(&mut self, phenostr: &str, patch: bool, quite: bool) -> LintReport {
+    fn lint(
+        &mut self,
+        phenostr: &str,
+        patch: bool,
+        quite: bool,
+    ) -> Result<LintReport, LinterError> {
         // TODO: Understand the conversion here. Why is it lossy, should it be lossy?
         let mut report = self.policy.apply(phenostr.as_ref());
 
@@ -46,23 +51,33 @@ impl Lint<&str> for Phenolinter {
         }
 
         if patch && report.has_violations() {
-            let patched = self.patcher.patch(phenostr, report.patches()).unwrap();
+            let patched = self.patcher.patch(phenostr, report.patches())?;
             report.patched_phenopacket = Some(patched)
         }
 
-        report
+        Ok(report)
     }
 }
 
 impl Lint<PathBuf> for Phenolinter {
-    fn lint(&'_ mut self, phenopath: PathBuf, patch: bool, quite: bool) -> LintReport {
+    fn lint(
+        &'_ mut self,
+        phenopath: PathBuf,
+        patch: bool,
+        quite: bool,
+    ) -> Result<LintReport, LinterError> {
         let phenobytes = std::fs::read(phenopath).expect("Could not read file");
         self.lint(phenobytes.as_slice(), patch, quite)
     }
 }
 
 impl Lint<&[u8]> for Phenolinter {
-    fn lint(&mut self, phenobytes: &[u8], patch: bool, quite: bool) -> LintReport {
+    fn lint(
+        &mut self,
+        phenobytes: &[u8],
+        patch: bool,
+        quite: bool,
+    ) -> Result<LintReport, LinterError> {
         // TODO: Understand the conversion here. Why is it lossy, should it be lossy?
         let phenostr = String::from_utf8_lossy(phenobytes);
         self.lint(phenostr.as_ref(), patch, quite)

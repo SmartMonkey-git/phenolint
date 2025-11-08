@@ -11,4 +11,6 @@ pub enum JsonEditError {
     ExpectedArrayOrObject(Pointer),
     #[error("Array index out of bounce '{0}' is not valid")]
     ArrayIndexOutOfBounce(Pointer),
+    #[error(transparent)]
+    ExportError(#[from] serde_json::error::Error),
 }

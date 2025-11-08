@@ -1,6 +1,3 @@
-use phenolint::diagnostics::{LintReport, ReportParser};
-use phenolint::rules::interpretation::disease_consistency_rule::DiseaseConsistencyRule;
-use phenolint::traits::RuleCheck;
 use phenolint::{Lint, Phenolinter};
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{Diagnosis, Disease, Interpretation, OntologyClass};
@@ -55,7 +52,18 @@ fn main() {
     ))
     .unwrap();
     let phenostr = serde_json::to_string_pretty(&phenopacket).unwrap();
-    let report = linter.lint(phenostr.as_str(), true, false);
+    let lint_res = linter.lint(phenostr.as_str(), true, false);
+
+    match lint_res {
+        Ok(report) => {
+            println!("{}", report.patched_phenopacket.unwrap());
+        }
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            println!("Integration test failed!");
+            std::process::exit(1);
+        }
+    }
 }
 #[test]
 fn test_hallo_world() {

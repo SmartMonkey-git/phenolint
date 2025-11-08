@@ -12,6 +12,10 @@ impl JsonEditor {
         Self { cursor }
     }
 
+    pub fn export(&self) -> Result<String, JsonEditError> {
+        Ok(serde_json::to_string_pretty(self.json())?)
+    }
+
     // 1. Get mutable reference to current value
     /// Returns a mutable reference to the JSON value at the cursor's current position.
     ///
@@ -76,9 +80,16 @@ impl JsonEditor {
             _ => None,
         }
     }
-
-    pub fn push(&mut self, value: Value) -> Result<&mut Self, JsonEditError> {
+    pub fn push(&mut self, value: Value, construct_path: bool) -> Result<&mut Self, JsonEditError> {
         let current_ptr = self.pointer().position().to_string();
+
+        // Try to get the current location
+        let current = self.json_mut().pointer_mut(&current_ptr);
+
+        if current.is_none() && construct_path {
+            // Path doesn't exist, construct it
+            self.construct_path_to(&current_ptr)?;
+        }
 
         let current = self
             .json_mut()
@@ -100,6 +111,78 @@ impl JsonEditor {
                 &current_ptr,
             ))),
         }
+    }
+
+    fn construct_path_to(&mut self, target_ptr: &str) -> Result<(), JsonEditError> {
+        let pointer = Pointer::new(target_ptr);
+        let segments: Vec<String> = pointer.segments().collect();
+
+        let mut current_path = String::new();
+
+        for (idx, segment) in segments.iter().enumerate() {
+            let parent_path = current_path.clone();
+            current_path = if current_path.is_empty() {
+                format!("/{}", segment)
+            } else {
+                format!("{}/{}", current_path, segment)
+            };
+
+            // Check if this segment already exists
+            if self.json().pointer(&current_path).is_some() {
+                continue;
+            }
+
+            // Determine what to create based on the segment
+            let new_value = if segments
+                .get(idx + 1) // Check if parent segment exists
+                .unwrap_or(&"".to_string()) // if not make it unparsable
+                .parse::<usize>()
+                .is_ok()
+            {
+                // Segment is a number, create an array
+                Value::Array(vec![])
+            } else {
+                // Segment is a string, create an object
+                Value::Object(serde_json::Map::new())
+            };
+
+            // Insert into parent
+            if parent_path.is_empty() {
+                // We're at root, replace it
+                *self.json_mut() = new_value;
+            } else {
+                let parent = self
+                    .json_mut()
+                    .pointer_mut(&parent_path)
+                    .ok_or(JsonEditError::InvalidPosition(Pointer::new(&parent_path)))?;
+
+                match parent {
+                    Value::Object(obj) => {
+                        obj.insert(segment.to_string(), new_value);
+                    }
+                    Value::Array(arr) => {
+                        if let Ok(idx) = segment.parse::<usize>() {
+                            // Extend array if needed
+                            while arr.len() <= idx {
+                                arr.push(Value::Null);
+                            }
+                            arr[idx] = new_value;
+                        } else {
+                            return Err(JsonEditError::ArrayIndexOutOfBounce(Pointer::new(
+                                &parent_path,
+                            )));
+                        }
+                    }
+                    _ => {
+                        return Err(JsonEditError::ExpectedArrayOrObject(Pointer::new(
+                            &parent_path,
+                        )));
+                    }
+                }
+            }
+        }
+
+        Ok(())
     }
 
     /// Inserts a value into an array at the cursor's current position.

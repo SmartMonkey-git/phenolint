@@ -86,7 +86,7 @@ impl Patcher {
             match patch {
                 Patch::Add { at, value } => {
                     editor.point_to(&at);
-                    editor.push(json!(value))?;
+                    editor.push(json!(value), true)?;
                 }
                 Patch::Remove { at } => {
                     editor.point_to(&at);
@@ -95,6 +95,6 @@ impl Patcher {
                 _ => {}
             };
         }
-        Ok("".to_string())
+        Ok(editor.export()?)
     }
 }
