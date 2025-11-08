@@ -2,7 +2,7 @@ use crate::diagnostics::LintViolation;
 use crate::diagnostics::finding::LintFinding;
 use crate::enums::Patch;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Debug, Default)]
 pub struct LintReport {
     pub patched_phenopacket: Option<String>,
     findings: Vec<LintFinding>,
@@ -31,8 +31,8 @@ impl LintReport {
         self.findings.push(finding);
     }
 
-    pub fn extend_finding(&mut self, findings: &[LintFinding]) {
-        self.findings.extend(findings.iter().cloned());
+    pub fn extend_finding(&mut self, findings: Vec<LintFinding>) {
+        self.findings.extend(findings);
     }
 
     pub fn has_violations(&self) -> bool {

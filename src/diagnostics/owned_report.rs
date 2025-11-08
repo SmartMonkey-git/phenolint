@@ -1,25 +1,20 @@
-use annotate_snippets::renderer::DecorStyle;
-use annotate_snippets::{Group, Renderer};
-use std::fmt::{Display, Formatter};
+use ariadne::Report;
+use std::ops::Range;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct OwnedReport {
-    report: Group<'static>,
+    report: Report<'static, (&'static str, Range<usize>)>,
 }
 
 impl OwnedReport {
-    pub fn new(report: Group<'static>) -> Self {
+    pub fn new(report: Report<'static, (&'static str, Range<usize>)>) -> Self {
         Self { report }
     }
-    pub fn report(&self) -> Group<'static> {
-        self.report.clone()
+    pub fn report(&self) -> &Report<'static, (&'static str, Range<usize>)> {
+        &self.report
     }
-}
 
-impl Display for OwnedReport {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let renderer = Renderer::styled().decor_style(DecorStyle::Unicode);
-        let display_str = renderer.render(&[self.report()]);
-        write!(f, "{}", display_str)
+    pub fn into_inner(self) -> Report<'static, (&'static str, Range<usize>)> {
+        self.report
     }
 }

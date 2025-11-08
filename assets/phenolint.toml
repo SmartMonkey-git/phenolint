@@ -1,0 +1,9 @@
+rules = [
+    "INTER001",
+    "CURIE001"
+]
+
+# hpo_dir = "/path/to/hpo/directory"
+
+patch = true
+quiet = false

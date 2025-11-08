@@ -6,6 +6,7 @@ use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::{FromContext, LintRule, RuleCheck};
 use annotate_snippets::{AnnotationKind, Level, Snippet};
+use ariadne::{Label, Report, ReportKind};
 use json_spanned_value::spanned::Value as SpannedValue;
 use phenolint_macros::lint_rule;
 use phenopackets::schema::v2::core::OntologyClass;
@@ -82,7 +83,23 @@ impl CurieFormatRule {
                             .label("For this Ontology Class"),
                     ),
             );
+        // ------
 
+        let mut report_builder =
+            Report::build(ReportKind::Error, ("stdin", curie_start..curie_end))
+                .with_code(Self::RULE_ID)
+                .with_message(format!("[{}] CURIE formatted incorrectly", Self::RULE_ID))
+                .with_label(
+                    Label::new(("stdin", curie_start..curie_end))
+                        .with_message("Expected CURIE with format CURIE:12345")
+                        .with_priority(100),
+                )
+                .with_label(
+                    Label::new(("stdout", context_span_start..context_span_end))
+                        .with_message("For this Ontology Class"),
+                );
+
+        let report = report_builder.finish();
         OwnedReport::new(report)
     }
 }
@@ -145,6 +162,11 @@ mod tests {
         assert!(!report.violations().is_empty());
         let findings = report.findings().first().unwrap();
 
-        assert_report_message(findings, CurieFormatRule::RULE_ID, "Expected CURIE");
+        assert_report_message(
+            findings,
+            CurieFormatRule::RULE_ID,
+            "Expected CURIE",
+            &serde_json::to_string_pretty(&phenopacket).unwrap(),
+        );
     }
 }

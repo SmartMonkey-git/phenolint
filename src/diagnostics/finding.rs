@@ -2,7 +2,7 @@ use crate::diagnostics::owned_report::OwnedReport;
 use crate::diagnostics::violation::LintViolation;
 use crate::enums::Patch;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct LintFinding {
     violation: LintViolation,
     patch: Option<Patch>,

@@ -7,6 +7,7 @@ use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::{FromContext, LintRule, RuleCheck};
 use annotate_snippets::{AnnotationKind, Level, Snippet};
+use ariadne::{Fmt, Label, Report, ReportKind};
 use json_spanned_value::spanned::Value as SpannedValue;
 use phenolint_macros::lint_rule;
 use serde_json::Value;
@@ -104,7 +105,7 @@ impl RuleCheck for DiseaseConsistencyRule {
             cursor.goto_anchor();
         }
 
-        report.extend_finding(findings.as_slice())
+        report.extend_finding(findings)
     }
 }
 
@@ -121,28 +122,31 @@ impl DiseaseConsistencyRule {
         let mut primary_message = "Diseases found in interpretations".to_string();
         let secondary_message = "that was not present in diseases section";
 
-        let mut snippet = Snippet::source(phenostr.to_string());
+        // ----
+
+        let mut report_builder = Report::build(
+            ReportKind::Error,
+            ("stdin", inter_disease_start..inter_disease_end),
+        )
+        .with_code(Self::RULE_ID)
+        .with_message(format!("[{}] Disease Inconsistency", Self::RULE_ID));
 
         if let Some(val) = value.pointer("/diseases") {
-            snippet = snippet.annotation(
-                AnnotationKind::Context
-                    .span(val.span().0..val.span().1)
-                    .label(secondary_message),
+            report_builder = report_builder.with_label(
+                Label::new(("stdin", val.span().0..val.span().1))
+                    .with_message(format!("{secondary_message}"))
+                    .with_priority(100),
             );
         } else {
             primary_message = format!("{primary_message} {secondary_message}");
         }
 
-        snippet = snippet.annotation(
-            AnnotationKind::Primary
-                .span(inter_disease_start..inter_disease_end)
-                .label(primary_message),
+        report_builder = report_builder.with_label(
+            Label::new(("stdin", inter_disease_start..inter_disease_end))
+                .with_message(format!("{primary_message}"))
+                .with_priority(100),
         );
-        // TRY: ariadne
-        let report = Level::WARNING
-            .primary_title(format!("[{}] Disease Inconsistency", Self::RULE_ID))
-            .element(snippet);
-
+        let report = report_builder.finish();
         OwnedReport::new(report)
     }
 }
@@ -255,11 +259,9 @@ mod tests {
 
         let violations = report.violations();
         assert_eq!(violations.len(), 1);
-
         let finding = report.findings().first().unwrap();
 
         assert_eq!(finding.violation().rule_id(), "INTER001");
-
         let patch = finding.patch().expect("Expected a patch to be present");
 
         assert_patch(
@@ -271,6 +273,7 @@ mod tests {
             finding,
             DiseaseConsistencyRule::RULE_ID,
             "Disease Inconsistency",
+            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
         )
     }
 
@@ -347,6 +350,7 @@ mod tests {
             finding,
             DiseaseConsistencyRule::RULE_ID,
             "Disease Inconsistency",
+            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
         )
     }
 
@@ -440,6 +444,7 @@ mod tests {
             finding,
             DiseaseConsistencyRule::RULE_ID,
             "Disease Inconsistency",
+            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
         )
     }
 
@@ -481,6 +486,7 @@ mod tests {
             finding,
             DiseaseConsistencyRule::RULE_ID,
             "Disease Inconsistency",
+            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
         )
     }
 

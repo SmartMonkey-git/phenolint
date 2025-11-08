@@ -18,9 +18,7 @@ config = "0.15.18"
 thiserror = "2.0.17"
 inventory = "0.3.21"
 phenolint-macros = { path = "./phenolint_marcos" }
-anstream = "0.6.21"
-annotate-snippets = "0.12.8"
-# Try: ariadne instead of annotate-snippets
+ariadne = "0.6.0"
 once_cell = "1.21.3"
 spanned_json_parser = "0.2.0"
 log = "0.4.28"

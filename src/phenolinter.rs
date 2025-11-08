@@ -46,7 +46,7 @@ impl Lint<&str> for Phenolinter {
 
         if !quite {
             for info in report.findings() {
-                ReportParser::emit(info.violation().report())
+                ReportParser::emit(info.violation().report(), phenostr);
             }
         }
 
@@ -135,7 +135,7 @@ rules = ["CURIE001", "PF006", "INTER001"]
     #[rstest]
     fn test_try_from() {
         let tmp_dir = tempfile::tempdir().expect("Failed to create temporary directory");
-        let file_path = tmp_dir.path().join("phenolint.toml");
+        let file_path = tmp_dir.path().join("../assets/phenolint.toml");
         let mut file = File::create(&file_path).unwrap();
         file.write_all(TOML_CONFIG).unwrap();
 
