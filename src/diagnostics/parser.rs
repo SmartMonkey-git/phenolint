@@ -1,8 +1,5 @@
 use crate::diagnostics::owned_report::OwnedReport;
-use annotate_snippets::Renderer;
-use annotate_snippets::renderer::DecorStyle;
 use ariadne::sources;
-use std::fs;
 
 #[derive(Default)]
 pub struct ReportParser;

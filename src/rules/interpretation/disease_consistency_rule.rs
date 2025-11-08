@@ -6,7 +6,6 @@ use crate::json::{JsonCursor, Pointer};
 use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::{FromContext, LintRule, RuleCheck};
-use annotate_snippets::{AnnotationKind, Level, Snippet};
 use ariadne::{Fmt, Label, Report, ReportKind};
 use json_spanned_value::spanned::Value as SpannedValue;
 use phenolint_macros::lint_rule;
@@ -121,8 +120,6 @@ impl DiseaseConsistencyRule {
 
         let mut primary_message = "Diseases found in interpretations".to_string();
         let secondary_message = "that was not present in diseases section";
-
-        // ----
 
         let mut report_builder = Report::build(
             ReportKind::Error,
