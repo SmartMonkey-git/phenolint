@@ -7,7 +7,7 @@ use std::fmt::Display;
 ///
 /// This internally stores the pointer as an escaped string (e.g., "/a/~1b").
 #[derive(Debug, Clone)]
-pub(crate) struct Pointer(String);
+pub struct Pointer(String);
 
 /// Escapes a string segment for use in a JSON Pointer.
 ///
@@ -47,6 +47,15 @@ fn is_escaped(step: &str) -> bool {
 }
 
 impl Pointer {
+    pub fn new(location: &str) -> Self {
+        let mut location = location.to_string();
+        if !is_escaped(&location) {
+            location = escape(&location);
+        }
+
+        Self(location)
+    }
+
     /// Returns the final segment (tip) of the pointer path.
     ///
     /// For example, if the pointer represents `"/user/name"`,
@@ -125,7 +134,10 @@ impl Pointer {
         self
     }
 
-    /// Checks if the pointer is at the root (i.e., is an empty string).
+    /// Checks if the cursor is currently at the root of the JSON value.
+    ///
+    /// # Returns
+    /// `true` if the cursor is at the root position, `false` otherwise.
     pub fn is_root(&self) -> bool {
         self.0.is_empty()
     }
@@ -149,9 +161,11 @@ impl Display for Pointer {
 ///
 /// This is useful for iterative traversal, targeted lookups, or maintaining state
 /// as you move around in a nested JSON document.
+#[derive(Debug, Clone)]
 pub(crate) struct JsonCursor {
     value: Value,
     pointer: Pointer,
+    anchor: Option<Pointer>,
 }
 
 impl JsonCursor {
@@ -166,6 +180,7 @@ impl JsonCursor {
         Self {
             value,
             pointer: Pointer(String::new()),
+            anchor: None,
         }
     }
 
@@ -175,10 +190,13 @@ impl JsonCursor {
     ///
     /// # Arguments
     /// * `ptr` - The new pointer.
-    pub fn point_to(&mut self, ptr: Pointer) {
+    pub fn point_to(&mut self, ptr: Pointer) -> &mut Self {
         self.pointer = ptr;
+        self
     }
 
+    /// Searches for the first occurrence of a key within the JSON tree
+    /// and sets the pointer to that location
     pub fn jump_to(&mut self, target_key: &str) -> &mut Self {
         match self.locate(target_key) {
             None => self,
@@ -287,7 +305,9 @@ impl JsonCursor {
                 vec![]
             }
             Some(value) => match value {
-                Value::Array(array) => (0..array.len()).map(|index| index.to_string()).collect(),
+                Value::Array(array) => (0..array.len() + 1)
+                    .map(|index| index.to_string())
+                    .collect(),
                 Value::Object(obj) => obj.keys().map(|key| key.to_string()).collect(),
                 _ => vec![],
             },
@@ -303,7 +323,73 @@ impl JsonCursor {
         self.value.pointer(self.pointer.position())
     }
 
-    /// Returns a reference to the cursor’s internal pointer.
+    /// Checks whether the cursor is currently pointing to a valid position
+    /// in the JSON tree.
+    ///
+    /// # Returns
+    /// `true` if the current pointer resolves to an existing value, `false` otherwise.
+    pub fn is_valid_position(&self) -> bool {
+        self.current_value().is_some()
+    }
+
+    /// Sets an anchor at the cursor's current position.
+    ///
+    /// The anchor can be used to mark a specific location in the JSON tree
+    /// and return to it later using [`goto_anchor`](Self::goto_anchor).
+    ///
+    /// # Returns
+    /// A mutable reference to the cursor (for chaining).
+    pub fn set_anchor(&mut self) -> &mut Self {
+        self.anchor = Some(self.pointer.clone());
+        self
+    }
+
+    /// Clears the current anchor, if any.
+    ///
+    /// # Returns
+    /// A mutable reference to the cursor (for chaining).
+    pub fn clear_anchor(&mut self) -> &mut Self {
+        self.anchor = None;
+        self
+    }
+
+    /// Sets an anchor at a specific pointer location.
+    ///
+    /// # Arguments
+    /// * `anchor` - A string representation of the pointer path to anchor at.
+    ///
+    /// # Returns
+    /// A mutable reference to the cursor (for chaining).
+    pub fn set_anchor_at(&mut self, anchor: &str) -> &mut Self {
+        self.anchor = Some(Pointer::new(anchor));
+        self
+    }
+
+    /// Moves the cursor to the previously set anchor position.
+    ///
+    /// If an anchor was set using [`set_anchor`](Self::set_anchor) or
+    /// [`set_anchor_at`](Self::set_anchor_at), this method moves the cursor
+    /// to that location and clears the anchor.
+    ///
+    /// # Returns
+    /// A mutable reference to the cursor (for chaining).
+    ///
+    /// # Note
+    /// If no anchor was set, the cursor position remains unchanged.
+    pub fn goto_anchor(&mut self) -> &mut Self {
+        match self.anchor.take() {
+            None => self,
+            Some(anchor) => {
+                self.pointer = anchor;
+                self
+            }
+        }
+    }
+
+    /// Returns a reference to the cursor's internal pointer.
+    ///
+    /// # Returns
+    /// A reference to the [`Pointer`] representing the cursor's current position.
     pub fn pointer(&self) -> &Pointer {
         &self.pointer
     }
