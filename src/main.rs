@@ -50,7 +50,7 @@ fn main() {
     };
 
     let mut linter = Phenolinter::try_from(PathBuf::from(
-        "/Users/rouvenreuter/Documents/Projects/phenolint/phenolint.toml",
+        "/Users/rouvenreuter/Documents/Projects/phenolint/assets/phenolint.toml",
     ))
     .unwrap();
     let phenostr = serde_json::to_string_pretty(&phenopacket).unwrap();

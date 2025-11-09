@@ -1,15 +1,15 @@
-use crate::diagnostics::owned_report::OwnedReport;
+use crate::diagnostics::specs::ReportSpecs;
 use crate::diagnostics::violation::LintViolation;
 use crate::enums::Patch;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct LintFinding {
     violation: LintViolation,
     patch: Option<Patch>,
 }
 
 impl LintFinding {
-    pub fn new(rule_id: &str, report: OwnedReport, patch: Option<Patch>) -> Self {
+    pub fn new(rule_id: &str, report: ReportSpecs, patch: Option<Patch>) -> Self {
         Self {
             violation: LintViolation::new(rule_id, report),
             patch,

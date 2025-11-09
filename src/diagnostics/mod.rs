@@ -1,7 +1,7 @@
 pub mod finding;
 pub use finding::LintFinding;
-pub mod owned_report;
-pub use owned_report::OwnedReport;
+pub mod specs;
+pub use specs::ReportSpecs;
 pub mod parser;
 pub use parser::ReportParser;
 pub mod violation;

@@ -1,11 +1,12 @@
-use crate::diagnostics::{LintFinding, LintReport, OwnedReport};
+use crate::diagnostics::specs::{DiagnosticSpec, LabelSpecs};
+use crate::diagnostics::{LintFinding, LintReport, ReportSpecs};
 use crate::error::RuleInitError;
 use crate::json::{JsonCursor, Pointer};
 use crate::linter_context::LinterContext;
 use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::{FromContext, LintRule, RuleCheck};
-use annotate_snippets::{AnnotationKind, Level, Snippet};
+use codespan_reporting::diagnostic::{LabelStyle, Severity};
 use json_spanned_value::spanned::Value as SpannedValue;
 use phenolint_macros::lint_rule;
 use phenopackets::schema::v2::core::OntologyClass;
@@ -57,33 +58,53 @@ impl CurieFormatRule {
         }
     }
 
-    fn write_report(phenostr: &str, pointer: &Pointer) -> OwnedReport {
+    fn write_report(phenostr: &str, pointer: &Pointer) -> ReportSpecs {
         let value: SpannedValue = json_spanned_value::from_str(phenostr)
             .unwrap_or_else(|_| panic!("Could not serialize phenopacket"));
 
         let (curie_start, curie_end) = value.pointer(pointer.position()).unwrap().span();
+
         let (context_span_start, context_span_end) = value
             .pointer(pointer.clone().up().position())
             .unwrap()
             .span();
 
-        let report = Level::WARNING
-            .primary_title(format!("[{}] CURIE formatted incorrectly", Self::RULE_ID))
-            .element(
-                Snippet::source(phenostr.to_string())
-                    .annotation(
-                        AnnotationKind::Primary
-                            .span(curie_start..curie_end)
-                            .label("Expected CURIE with format CURIE:12345"),
-                    )
-                    .annotation(
-                        AnnotationKind::Context
-                            .span(context_span_start..context_span_end)
-                            .label("For this Ontology Class"),
-                    ),
-            );
+        let mut p = pointer.clone();
+        p.up().up();
+        if let Some(val) = value.pointer(p.position())
+            && val.as_object().is_some()
+        {
+            p.up();
+        };
+        let (label_start, label_end) = value.pointer(p.position()).unwrap().span();
 
-        OwnedReport::new(report)
+        let labels = vec![
+            LabelSpecs {
+                style: LabelStyle::Primary,
+                range: curie_start..curie_end,
+                message: "Expected CURIE with format CURIE:12345".to_string(),
+            },
+            LabelSpecs {
+                style: LabelStyle::Secondary,
+                range: context_span_start..context_span_end,
+                message: "For this Ontology Class".to_string(),
+            },
+            LabelSpecs {
+                style: LabelStyle::Secondary,
+                range: label_start..label_end,
+                message: "In this section".to_string(),
+            },
+        ];
+
+        let diagnostic_spec = DiagnosticSpec {
+            severity: Severity::Error,
+            code: Some(Self::RULE_ID.to_string()),
+            message: "CURIE formatted incorrectly".to_string(),
+            labels,
+            notes: Vec::new(),
+        };
+
+        ReportSpecs::new(diagnostic_spec)
     }
 }
 
@@ -145,6 +166,11 @@ mod tests {
         assert!(!report.violations().is_empty());
         let findings = report.findings().first().unwrap();
 
-        assert_report_message(findings, CurieFormatRule::RULE_ID, "Expected CURIE");
+        assert_report_message(
+            findings,
+            CurieFormatRule::RULE_ID,
+            "Expected CURIE",
+            &serde_json::to_string_pretty(&phenopacket).unwrap(),
+        );
     }
 }

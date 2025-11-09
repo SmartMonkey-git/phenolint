@@ -1,4 +1,4 @@
-use crate::diagnostics::LintFinding;
+use crate::diagnostics::{LintFinding, ReportParser};
 use once_cell::sync::Lazy;
 use ontolius::io::OntologyLoaderBuilder;
 use ontolius::ontology::csr::FullCsrOntology;
@@ -19,16 +19,27 @@ fn init_ontolius(hpo_path: PathBuf) -> Arc<FullCsrOntology> {
     Arc::new(ontolius)
 }
 
-pub(crate) fn assert_report_message(finding: &LintFinding, rule_id: &str, message_snippet: &str) {
+pub(crate) fn assert_report_message(
+    finding: &LintFinding,
+    rule_id: &str,
+    message_snippet: &str,
+    phenostr: &str,
+) {
     let owned_report = finding.violation().report();
     assert!(
-        owned_report.to_string().contains(rule_id),
+        ReportParser::parse(owned_report, phenostr).contains(rule_id),
         "Report should mention the rule ID"
     );
     assert!(
-        owned_report.to_string().contains(message_snippet),
+        ReportParser::parse(owned_report, phenostr).contains(message_snippet),
         "Report should mention {message_snippet}"
     );
+}
+
+pub fn test_config() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("assets")
+        .join("phenolint.toml")
 }
 
 #[allow(dead_code)]

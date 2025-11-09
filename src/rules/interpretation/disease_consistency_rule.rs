@@ -1,12 +1,13 @@
 use crate::LinterContext;
-use crate::diagnostics::{LintFinding, LintReport, OwnedReport};
+use crate::diagnostics::specs::{DiagnosticSpec, LabelSpecs};
+use crate::diagnostics::{LintFinding, LintReport, ReportSpecs};
 use crate::enums::Patch;
 use crate::error::RuleInitError;
 use crate::json::{JsonCursor, Pointer};
 use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::{FromContext, LintRule, RuleCheck};
-use annotate_snippets::{AnnotationKind, Level, Snippet};
+use codespan_reporting::diagnostic::{LabelStyle, Severity};
 use json_spanned_value::spanned::Value as SpannedValue;
 use phenolint_macros::lint_rule;
 use serde_json::Value;
@@ -104,46 +105,48 @@ impl RuleCheck for DiseaseConsistencyRule {
             cursor.goto_anchor();
         }
 
-        report.extend_finding(findings.as_slice())
+        report.extend_finding(findings)
     }
 }
 
 impl DiseaseConsistencyRule {
-    fn write_report(phenostr: &str, pointer: &Pointer) -> OwnedReport {
+    fn write_report(phenostr: &str, pointer: &Pointer) -> ReportSpecs {
         let value: SpannedValue = json_spanned_value::from_str(phenostr)
             .unwrap_or_else(|_| panic!("Could not serialize phenopacket"));
 
         let (inter_disease_start, inter_disease_end) =
             value.pointer(pointer.position()).unwrap().span();
 
-        value.pointer("diseases");
-
         let mut primary_message = "Diseases found in interpretations".to_string();
         let secondary_message = "that was not present in diseases section";
 
-        let mut snippet = Snippet::source(phenostr.to_string());
+        let mut labels = Vec::new();
 
         if let Some(val) = value.pointer("/diseases") {
-            snippet = snippet.annotation(
-                AnnotationKind::Context
-                    .span(val.span().0..val.span().1)
-                    .label(secondary_message),
-            );
+            labels.push(LabelSpecs {
+                style: LabelStyle::Secondary,
+                range: val.span().0..val.span().1,
+                message: secondary_message.to_string(),
+            });
         } else {
             primary_message = format!("{primary_message} {secondary_message}");
         }
 
-        snippet = snippet.annotation(
-            AnnotationKind::Primary
-                .span(inter_disease_start..inter_disease_end)
-                .label(primary_message),
-        );
-        // TRY: ariadne
-        let report = Level::WARNING
-            .primary_title(format!("[{}] Disease Inconsistency", Self::RULE_ID))
-            .element(snippet);
+        labels.push(LabelSpecs {
+            style: LabelStyle::Primary,
+            range: inter_disease_start..inter_disease_end,
+            message: primary_message,
+        });
 
-        OwnedReport::new(report)
+        let diagnostic_spec = DiagnosticSpec {
+            severity: Severity::Warning,
+            code: Some(Self::RULE_ID.to_string()),
+            message: "Disease Inconsistency".to_string(),
+            labels,
+            notes: Vec::new(),
+        };
+
+        ReportSpecs::new(diagnostic_spec)
     }
 }
 
@@ -255,11 +258,9 @@ mod tests {
 
         let violations = report.violations();
         assert_eq!(violations.len(), 1);
-
         let finding = report.findings().first().unwrap();
 
         assert_eq!(finding.violation().rule_id(), "INTER001");
-
         let patch = finding.patch().expect("Expected a patch to be present");
 
         assert_patch(
@@ -271,6 +272,7 @@ mod tests {
             finding,
             DiseaseConsistencyRule::RULE_ID,
             "Disease Inconsistency",
+            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
         )
     }
 
@@ -347,6 +349,7 @@ mod tests {
             finding,
             DiseaseConsistencyRule::RULE_ID,
             "Disease Inconsistency",
+            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
         )
     }
 
@@ -440,6 +443,7 @@ mod tests {
             finding,
             DiseaseConsistencyRule::RULE_ID,
             "Disease Inconsistency",
+            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
         )
     }
 
@@ -481,6 +485,7 @@ mod tests {
             finding,
             DiseaseConsistencyRule::RULE_ID,
             "Disease Inconsistency",
+            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
         )
     }
 
