@@ -8,10 +8,6 @@ pub struct LinterConfig {
     #[serde(rename = "rules")]
     pub rule_ids: Vec<String>,
     pub hpo_dir: Option<PathBuf>,
-    #[serde(default)]
-    pub patch: bool,
-    #[serde(default)]
-    pub quiet: bool,
 }
 
 impl TryFrom<PathBuf> for LinterConfig {

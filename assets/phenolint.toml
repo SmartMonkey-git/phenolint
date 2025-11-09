@@ -4,6 +4,3 @@ rules = [
 ]
 
 # hpo_dir = "/path/to/hpo/directory"
-
-patch = true
-quiet = false
