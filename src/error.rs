@@ -3,6 +3,13 @@ use crate::json::error::JsonEditError;
 use config::ConfigError;
 use thiserror::Error;
 
+/// A result type that combines a lint report with an optional error.
+///
+/// This struct provides a flexible way to handle linting operations that may
+/// produce both partial results (in the form of a `LintReport`) and errors.
+/// Unlike the standard `Result` type, `LintResult` allows carrying both a
+/// report and an error simultaneously, which is useful when you want to
+/// return diagnostic information even in the presence of errors.
 pub struct LintResult {
     pub report: LintReport,
     pub error: Option<LinterError>,
