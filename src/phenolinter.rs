@@ -8,6 +8,7 @@ use crate::linter_policy::LinterPolicy;
 use crate::patcher::Patcher;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::{Lint, RuleCheck};
+use log::warn;
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::PhenotypicFeature;
 use phenopackets::schema::v2::core::time_element::Element;
@@ -41,12 +42,16 @@ impl Lint<&str> for Phenolinter {
         patch: bool,
         quite: bool,
     ) -> Result<LintReport, LinterError> {
-        // TODO: Understand the conversion here. Why is it lossy, should it be lossy?
         let mut report = self.policy.apply(phenostr.as_ref());
 
         if !quite {
             for info in report.findings() {
-                ReportParser::emit(info.violation().report(), phenostr /* usize */);
+                if let Err(err) = ReportParser::emit(info.violation().report(), phenostr) {
+                    warn!(
+                        "Unable to parse and emit report for: '{}'",
+                        info.violation().rule_id()
+                    );
+                };
             }
         }
 
@@ -66,7 +71,7 @@ impl Lint<PathBuf> for Phenolinter {
         patch: bool,
         quite: bool,
     ) -> Result<LintReport, LinterError> {
-        let phenobytes = std::fs::read(phenopath).expect("Could not read file");
+        let phenobytes = std::fs::read(phenopath)?;
         self.lint(phenobytes.as_slice(), patch, quite)
     }
 }
@@ -78,9 +83,11 @@ impl Lint<&[u8]> for Phenolinter {
         patch: bool,
         quite: bool,
     ) -> Result<LintReport, LinterError> {
-        // TODO: Understand the conversion here. Why is it lossy, should it be lossy?
-        let phenostr = String::from_utf8_lossy(phenobytes);
-        self.lint(phenostr.as_ref(), patch, quite)
+        self.lint(
+            serde_json::to_string_pretty(phenobytes)?.as_str(),
+            patch,
+            quite,
+        )
     }
 }
 
