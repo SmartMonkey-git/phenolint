@@ -1,4 +1,4 @@
-use crate::json::utils::{escape, is_escaped, unescape};
+use crate::json::utils::{escape, unescape};
 use std::fmt::Display;
 
 /// A struct representing a JSON Pointer (RFC 6901).
@@ -10,10 +10,10 @@ pub struct Pointer(String);
 impl Pointer {
     pub fn new(location: &str) -> Self {
         let mut location = location.to_string();
-        if !is_escaped(&location) {
-            location = escape(&location);
-        }
-        if !location.is_empty() && !location.starts_with("/") {
+
+        location = escape(&location);
+
+        if !location.is_empty() && !location.starts_with("/") && !location.starts_with("~1") {
             location = format!("/{}", location);
         }
 
@@ -121,8 +121,8 @@ impl Display for Pointer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pretty_assertions::assert_eq;
     use rstest::rstest;
-
     #[rstest]
     fn test_new_empty() {
         let ptr = Pointer::new("");
@@ -146,7 +146,7 @@ mod tests {
     fn test_new_escapes_special_chars() {
         let ptr = Pointer::new("/foo/a~b/c/d");
         // Should escape ~ to ~0 and / to ~1
-        assert_eq!(ptr.position(), "/foo/a~0b/c/d");
+        assert_eq!(ptr.position(), "~1foo~1a~0b~1c~1d");
     }
 
     #[rstest]
