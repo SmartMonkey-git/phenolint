@@ -3,6 +3,8 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum JsonEditError {
+    #[error("'{0}' is not implemented yet")]
+    NotImplemented(String),
     #[error("Position '{0}' is not valid")]
     InvalidPosition(Pointer),
     #[error("Editor tried to insert at root")]
