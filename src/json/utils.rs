@@ -26,9 +26,9 @@ pub(crate) fn is_escaped(step: &str) -> bool {
         if c == '~' {
             match chars.peek() {
                 Some('0') | Some('1') => {
-                    chars.next(); // consume the next char
+                    chars.next();
                 }
-                _ => return false, // invalid escape
+                _ => return false,
             }
         }
     }
