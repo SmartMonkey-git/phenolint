@@ -1,4 +1,5 @@
-use crate::diagnostics::{LintFinding, LintReport, OwnedReport};
+use crate::diagnostics::specs::{DiagnosticSpec, LabelSpecs};
+use crate::diagnostics::{LintFinding, LintReport, ReportSpecs};
 use crate::error::RuleInitError;
 use crate::json::{JsonCursor, Pointer};
 use crate::linter_context::LinterContext;
@@ -6,6 +7,7 @@ use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::{FromContext, LintRule, RuleCheck};
 use ariadne::{Color, Config, Fmt, Label, Report, ReportKind};
+use codespan_reporting::diagnostic::{LabelStyle, Severity};
 use json_spanned_value::spanned::Value as SpannedValue;
 use phenolint_macros::lint_rule;
 use phenopackets::schema::v2::core::OntologyClass;
@@ -57,16 +59,22 @@ impl CurieFormatRule {
         }
     }
 
-    fn write_report(phenostr: &str, pointer: &Pointer) -> OwnedReport {
+    fn write_report(phenostr: &str, pointer: &Pointer) -> ReportSpecs {
         let value: SpannedValue = json_spanned_value::from_str(phenostr)
             .unwrap_or_else(|_| panic!("Could not serialize phenopacket"));
 
+        let rule_id = "RULE_002"; // Replace with actual Self::RULE_ID
+
+        // Get the CURIE span (the actual malformed CURIE)
         let (curie_start, curie_end) = value.pointer(pointer.position()).unwrap().span();
 
+        // Get the context span (parent of CURIE - the ontology class)
         let (context_span_start, context_span_end) = value
             .pointer(pointer.clone().up().position())
             .unwrap()
             .span();
+
+        // Navigate up to find the containing section
         let mut p = pointer.clone();
         p.up().up();
         if let Some(val) = value.pointer(p.position())
@@ -74,36 +82,36 @@ impl CurieFormatRule {
         {
             p.up();
         };
-
         let (label_start, label_end) = value.pointer(p.position()).unwrap().span();
 
-        // ------
+        // Build labels in order: primary first, then secondaries
+        let labels = vec![
+            LabelSpecs {
+                style: LabelStyle::Primary,
+                range: curie_start..curie_end,
+                message: "Expected CURIE with format CURIE:12345".to_string(),
+            },
+            LabelSpecs {
+                style: LabelStyle::Secondary,
+                range: context_span_start..context_span_end,
+                message: "For this Ontology Class".to_string(),
+            },
+            LabelSpecs {
+                style: LabelStyle::Secondary,
+                range: label_start..label_end,
+                message: "In this section".to_string(),
+            },
+        ];
 
-        let report_builder = Report::build(
-            ReportKind::Error,
-            ("stdin", context_span_start..context_span_end),
-        )
-        .with_code(Self::RULE_ID)
-        .with_message(format!("[{}] CURIE formatted incorrectly", Self::RULE_ID))
-        .with_label(
-            Label::new(("stdin", curie_start..curie_end))
-                .with_message("Expected CURIE with format CURIE:12345".fg(Color::BrightYellow))
-                .with_color(Color::BrightYellow),
-        )
-        .with_label(
-            Label::new(("stdin", context_span_start..context_span_end))
-                .with_message("For this Ontology Class".fg(Color::Blue))
-                .with_color(Color::Blue),
-        )
-        .with_label(Label::new(("stdin", label_start..label_end)).with_message("In this section"))
-        .with_config(
-            Config::new()
-                .with_compact(false)
-                .with_multiline_arrows(true),
-        );
+        let diagnostic_spec = DiagnosticSpec {
+            severity: Severity::Error,
+            code: Some(rule_id.to_string()),
+            message: "CURIE formatted incorrectly".to_string(),
+            labels,
+            notes: Vec::new(),
+        };
 
-        let report = report_builder.finish();
-        OwnedReport::new(report)
+        ReportSpecs::new(diagnostic_spec)
     }
 }
 

@@ -1,9 +1,9 @@
-use crate::diagnostics::owned_report::OwnedReport;
+use crate::diagnostics::specs::ReportSpecs;
 
 #[derive(Debug)]
 pub struct LintViolation {
     rule_id: String,
-    report: OwnedReport,
+    report: ReportSpecs,
 }
 
 /*impl PartialEq for LintViolation {
@@ -12,7 +12,7 @@ pub struct LintViolation {
     }
 }*/
 impl LintViolation {
-    pub fn new(rule_id: &str, report: OwnedReport) -> LintViolation {
+    pub fn new(rule_id: &str, report: ReportSpecs) -> LintViolation {
         Self {
             rule_id: rule_id.to_string(),
             report,
@@ -22,7 +22,7 @@ impl LintViolation {
     pub fn rule_id(&self) -> &str {
         &self.rule_id
     }
-    pub fn report(&self) -> &OwnedReport {
+    pub fn report(&self) -> &ReportSpecs {
         &self.report
     }
 }

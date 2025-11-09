@@ -46,7 +46,7 @@ impl Lint<&str> for Phenolinter {
 
         if !quite {
             for info in report.findings() {
-                ReportParser::emit(info.violation().report(), phenostr);
+                ReportParser::emit(info.violation().report(), phenostr /* usize */);
             }
         }
 
