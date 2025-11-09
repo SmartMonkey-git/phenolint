@@ -54,7 +54,7 @@ impl Lint<&str> for Phenolinter {
             match self.patcher.patch(phenostr, report.patches()) {
                 Ok(patched) => report.patched_phenopacket = Some(patched),
                 Err(err) => {
-                    return LintResult::new(report, Some(LinterError::PatchingError(err)));
+                    return LintResult::partial(report, Some(LinterError::PatchingError(err)));
                 }
             }
         }

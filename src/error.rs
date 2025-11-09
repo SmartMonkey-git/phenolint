@@ -16,15 +16,15 @@ pub struct LintResult {
 }
 
 impl LintResult {
-    pub fn new(report: LintReport, error: Option<LinterError>) -> Self {
+    pub fn partial(report: LintReport, error: Option<LinterError>) -> Self {
         Self { report, error }
     }
 
     pub fn ok(report: LintReport) -> Self {
-        Self::new(report, None)
+        Self::partial(report, None)
     }
     pub fn err(error: LinterError) -> Self {
-        Self::new(LintReport::default(), Some(error))
+        Self::partial(LintReport::default(), Some(error))
     }
 
     pub fn report(&self) -> &LintReport {
