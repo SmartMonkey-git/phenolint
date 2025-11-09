@@ -69,7 +69,7 @@ impl Lint<PathBuf> for Phenolinter {
 
         match phenobytes {
             Ok(phenobytes) => self.lint(phenobytes.as_slice(), patch, quite),
-            Err(err) => LintResult::new(LintReport::default(), Some(LinterError::IoError(err))),
+            Err(err) => LintResult::err(LinterError::IoError(err)),
         }
     }
 }
@@ -80,7 +80,7 @@ impl Lint<&[u8]> for Phenolinter {
 
         match parse_res {
             Ok(phenostr) => self.lint(phenostr.as_str(), patch, quite),
-            Err(err) => LintResult::new(LintReport::default(), Some(LinterError::JsonError(err))),
+            Err(err) => LintResult::err(LinterError::JsonError(err)),
         }
     }
 }
