@@ -1,5 +1,5 @@
 use crate::diagnostics::report::LintReport;
-use crate::error::{LinterError, RuleInitError};
+use crate::error::{LintResult, RuleInitError};
 use crate::linter_context::LinterContext;
 
 pub trait LintRule: RuleCheck + FromContext {
@@ -15,5 +15,5 @@ pub trait RuleCheck {
 }
 
 pub trait Lint<T> {
-    fn lint(&mut self, input: T, patch: bool, quiet: bool) -> Result<LintReport, LinterError>;
+    fn lint(&mut self, input: T, patch: bool, quiet: bool) -> LintResult;
 }

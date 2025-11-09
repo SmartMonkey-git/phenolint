@@ -1,11 +1,23 @@
+use crate::diagnostics::LintReport;
 use crate::json::error::JsonEditError;
 use config::ConfigError;
 use thiserror::Error;
 
+pub struct LintResult {
+    pub report: LintReport,
+    pub error: Option<LinterError>,
+}
+
+impl LintResult {
+    pub fn new(report: LintReport, error: Option<LinterError>) -> Self {
+        Self { report, error }
+    }
+}
+
 #[derive(Error, Debug)]
 pub enum LinterError {
-    #[error(transparent)]
-    PatchingError(#[from] PatchingError),
+    #[error("Can't patch Phenopacket {0}")]
+    PatchingError(PatchingError),
     #[error(transparent)]
     IoError(#[from] std::io::Error),
     #[error(transparent)]
