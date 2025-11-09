@@ -6,7 +6,6 @@ use crate::linter_context::LinterContext;
 use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::{FromContext, LintRule, RuleCheck};
-use ariadne::{Color, Config, Fmt, Label, Report, ReportKind};
 use codespan_reporting::diagnostic::{LabelStyle, Severity};
 use json_spanned_value::spanned::Value as SpannedValue;
 use phenolint_macros::lint_rule;
@@ -63,18 +62,13 @@ impl CurieFormatRule {
         let value: SpannedValue = json_spanned_value::from_str(phenostr)
             .unwrap_or_else(|_| panic!("Could not serialize phenopacket"));
 
-        let rule_id = "RULE_002"; // Replace with actual Self::RULE_ID
-
-        // Get the CURIE span (the actual malformed CURIE)
         let (curie_start, curie_end) = value.pointer(pointer.position()).unwrap().span();
 
-        // Get the context span (parent of CURIE - the ontology class)
         let (context_span_start, context_span_end) = value
             .pointer(pointer.clone().up().position())
             .unwrap()
             .span();
 
-        // Navigate up to find the containing section
         let mut p = pointer.clone();
         p.up().up();
         if let Some(val) = value.pointer(p.position())
@@ -84,7 +78,6 @@ impl CurieFormatRule {
         };
         let (label_start, label_end) = value.pointer(p.position()).unwrap().span();
 
-        // Build labels in order: primary first, then secondaries
         let labels = vec![
             LabelSpecs {
                 style: LabelStyle::Primary,
@@ -105,7 +98,7 @@ impl CurieFormatRule {
 
         let diagnostic_spec = DiagnosticSpec {
             severity: Severity::Error,
-            code: Some(rule_id.to_string()),
+            code: Some(Self::RULE_ID.to_string()),
             message: "CURIE formatted incorrectly".to_string(),
             labels,
             notes: Vec::new(),

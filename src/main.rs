@@ -58,7 +58,7 @@ fn main() {
 
     match lint_res {
         Ok(report) => {
-            //println!("{}", report.patched_phenopacket.unwrap());
+            println!("{}", report.patched_phenopacket.unwrap());
         }
         Err(e) => {
             eprintln!("Error: {}", e);

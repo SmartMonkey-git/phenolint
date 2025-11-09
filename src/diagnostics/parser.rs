@@ -13,7 +13,7 @@ impl ReportParser {
         let mut files = SimpleFiles::new();
         let file_id = files.add(1, phenostr);
 
-        let codespan_diagnostic = Self::inner_parse(report, phenostr, file_id);
+        let codespan_diagnostic = Self::inner_parse(report, file_id);
 
         let config = term::Config::default();
 
@@ -25,7 +25,7 @@ impl ReportParser {
         let mut files = SimpleFiles::new();
         let file_id = files.add(1, phenostr);
 
-        let codespan_diagnostic = Self::inner_parse(report, phenostr, file_id);
+        let codespan_diagnostic = Self::inner_parse(report, file_id);
 
         let writer = StandardStream::stderr(ColorChoice::Always);
         let config = term::Config::default();
@@ -35,7 +35,7 @@ impl ReportParser {
             .unwrap();
     }
 
-    pub fn inner_parse(report: &ReportSpecs, phenostr: &str, file_id: usize) -> Diagnostic<usize> {
+    pub fn inner_parse(report: &ReportSpecs, file_id: usize) -> Diagnostic<usize> {
         let spec = report.diagnostics();
 
         let mut diagnostic = match spec.severity {
