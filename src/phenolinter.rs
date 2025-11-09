@@ -59,7 +59,7 @@ impl Lint<&str> for Phenolinter {
             }
         }
 
-        LintResult::new(report, None)
+        LintResult::ok(report)
     }
 }
 

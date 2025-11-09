@@ -27,6 +27,10 @@ impl LintResult {
         Self::new(LintReport::default(), Some(error))
     }
 
+    pub fn report(&self) -> &LintReport {
+        &self.report
+    }
+
     pub fn into_result(self) -> Result<LintReport, LinterError> {
         match self.error {
             Some(err) => Err(err),
