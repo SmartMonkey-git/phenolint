@@ -3,7 +3,7 @@
 use crate::config::LinterConfig;
 use crate::config::config_loader::ConfigLoader;
 use crate::diagnostics::{LintReport, ReportParser};
-use crate::error::{InstantiationError, LinterError};
+use crate::error::{InstantiationError, LintResult, LinterError, PatchingError};
 use crate::linter_policy::LinterPolicy;
 use crate::patcher::Patcher;
 use crate::rules::rule_registry::RuleRegistration;
@@ -36,12 +36,7 @@ impl Phenolinter {
 }
 
 impl Lint<&str> for Phenolinter {
-    fn lint(
-        &mut self,
-        phenostr: &str,
-        patch: bool,
-        quite: bool,
-    ) -> Result<LintReport, LinterError> {
+    fn lint(&mut self, phenostr: &str, patch: bool, quite: bool) -> LintResult {
         let mut report = self.policy.apply(phenostr.as_ref());
 
         if !quite {
@@ -56,38 +51,37 @@ impl Lint<&str> for Phenolinter {
         }
 
         if patch && report.has_violations() {
-            let patched = self.patcher.patch(phenostr, report.patches())?;
-            report.patched_phenopacket = Some(patched)
+            match self.patcher.patch(phenostr, report.patches()) {
+                Ok(patched) => report.patched_phenopacket = Some(patched),
+                Err(err) => {
+                    return LintResult::partial(report, Some(LinterError::PatchingError(err)));
+                }
+            }
         }
 
-        Ok(report)
+        LintResult::ok(report)
     }
 }
 
 impl Lint<PathBuf> for Phenolinter {
-    fn lint(
-        &'_ mut self,
-        phenopath: PathBuf,
-        patch: bool,
-        quite: bool,
-    ) -> Result<LintReport, LinterError> {
-        let phenobytes = std::fs::read(phenopath)?;
-        self.lint(phenobytes.as_slice(), patch, quite)
+    fn lint(&'_ mut self, phenopath: PathBuf, patch: bool, quite: bool) -> LintResult {
+        let phenobytes = std::fs::read(phenopath);
+
+        match phenobytes {
+            Ok(phenobytes) => self.lint(phenobytes.as_slice(), patch, quite),
+            Err(err) => LintResult::err(LinterError::IoError(err)),
+        }
     }
 }
 
 impl Lint<&[u8]> for Phenolinter {
-    fn lint(
-        &mut self,
-        phenobytes: &[u8],
-        patch: bool,
-        quite: bool,
-    ) -> Result<LintReport, LinterError> {
-        self.lint(
-            serde_json::to_string_pretty(phenobytes)?.as_str(),
-            patch,
-            quite,
-        )
+    fn lint(&mut self, phenobytes: &[u8], patch: bool, quite: bool) -> LintResult {
+        let parse_res = serde_json::to_string_pretty(phenobytes);
+
+        match parse_res {
+            Ok(phenostr) => self.lint(phenostr.as_str(), patch, quite),
+            Err(err) => LintResult::err(LinterError::JsonError(err)),
+        }
     }
 }
 

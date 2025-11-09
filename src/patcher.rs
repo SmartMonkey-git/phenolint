@@ -15,6 +15,39 @@ impl Patcher {
         Self::apply(cursor, patches)
     }
 
+    /// Resolves high-level patch operations into primitive operations.
+    ///
+    /// This function transforms complex patch operations (`Move` and `Duplicate`) into
+    /// their constituent primitive operations (`Add` and `Remove`). After resolution,
+    /// patches are sorted to ensure correct application order.
+    ///
+    /// # Patch Resolution Rules
+    ///
+    /// - **`Move`**: Expanded into an `Add` operation (inserting the value at the target)
+    ///   followed by a `Remove` operation (deleting from the source).
+    /// - **`Duplicate`**: Expanded into a single `Add` operation (copying the value to
+    ///   the target location).
+    /// - **Other patches** (`Add`, `Remove`): Passed through unchanged.
+    ///
+    /// # Arguments
+    ///
+    /// * `patches` - A vector of patch references to resolve
+    /// * `cursor` - A mutable JSON cursor used to navigate and read values from the
+    ///   source document during resolution
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(Vec<Patch>)` containing the resolved and sorted patches, or
+    /// `Err(PatchingError)` if resolution fails (e.g., if a source path doesn't exist).
+    ///
+    /// # Example
+    ///
+    /// Given a `Move` patch from `/user/name` to `/person/fullName`:
+    /// 1. The value at `/user/name` is read via the cursor
+    /// 2. Two patches are created:
+    ///    - `Add { at: "/person/fullName", value: <read_value> }`
+    ///    - `Remove { at: "/user/name" }`
+    /// 3. All patches are sorted for safe application order
     fn resolve_patches(
         patches: Vec<&Patch>,
         cursor: &mut JsonCursor,
@@ -92,6 +125,7 @@ impl Patcher {
                 }
                 _ => {}
             };
+            editor.root();
         }
         Ok(editor.export()?)
     }
