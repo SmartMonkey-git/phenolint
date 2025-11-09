@@ -80,16 +80,19 @@ impl JsonEditor {
 
         let current_ptr = self.pointer().position().to_string();
 
-        let current = self.json_mut().pointer_mut(&current_ptr);
-
-        if current.is_none() && construct_path {
-            self.construct_path_to(&current_ptr)?;
-        }
-
-        let current = self
-            .json_mut()
-            .pointer_mut(&current_ptr)
-            .ok_or(JsonEditError::InvalidPosition(Pointer::new(&current_ptr)))?;
+        let current = match self.json_mut().pointer_mut(&current_ptr) {
+            None => {
+                if construct_path {
+                    self.construct_path_to(&current_ptr)?;
+                    self.json_mut()
+                        .pointer_mut(&current_ptr)
+                        .ok_or(JsonEditError::InvalidPosition(Pointer::new(&current_ptr)))?
+                } else {
+                    return Err(JsonEditError::InvalidPosition(Pointer::new(&current_ptr)));
+                }
+            }
+            Some(val) => val,
+        };
 
         match current {
             Value::Array(arr) => {
@@ -141,7 +144,9 @@ impl JsonEditor {
             };
 
             if parent_path.is_empty() {
-                *self.json_mut() = new_value;
+                if let Value::Object(root) = self.json_mut() {
+                    root.insert(segment.clone(), new_value);
+                }
             } else {
                 let parent = self
                     .json_mut()
@@ -378,6 +383,44 @@ mod tests {
     fn test_push_to_obj_with_path_construction(test_json: Value) {
         let mut editor = JsonEditor::new(test_json);
         let new_path = "profile/some/new/path";
+        let zip_code_key = "zip_code";
+        let authenticated_key = "authenticated";
+        let zip_value = 12345;
+        let auth_value = true;
+
+        let new_value = json!({zip_code_key: zip_value, authenticated_key: auth_value});
+
+        editor.point_to(&Pointer::new(new_path));
+        editor.push(new_value, true).unwrap();
+        assert!(editor.peek().contains(&zip_code_key.to_string()));
+        assert!(editor.peek().contains(&authenticated_key.to_string()));
+        assert_eq!(
+            editor
+                .down(zip_code_key)
+                .current_value()
+                .unwrap()
+                .as_number()
+                .unwrap()
+                .as_i64()
+                .unwrap(),
+            zip_value,
+        );
+        assert_eq!(
+            editor
+                .up()
+                .down(authenticated_key)
+                .current_value()
+                .unwrap()
+                .as_bool()
+                .unwrap(),
+            auth_value,
+        );
+    }
+
+    #[rstest]
+    fn test_push_to_obj_absent_path(test_json: Value) {
+        let mut editor = JsonEditor::new(test_json);
+        let new_path = "/stuff/other";
         let zip_code_key = "zip_code";
         let authenticated_key = "authenticated";
         let zip_value = 12345;
