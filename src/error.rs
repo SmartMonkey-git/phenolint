@@ -12,6 +12,13 @@ impl LintResult {
     pub fn new(report: LintReport, error: Option<LinterError>) -> Self {
         Self { report, error }
     }
+
+    pub fn into_result(self) -> Result<LintReport, LinterError> {
+        match self.error {
+            Some(err) => Err(err),
+            None => Ok(self.report),
+        }
+    }
 }
 
 #[derive(Error, Debug)]

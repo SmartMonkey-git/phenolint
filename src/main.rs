@@ -56,7 +56,7 @@ fn main() {
     let phenostr = serde_json::to_string_pretty(&phenopacket).unwrap();
     let lint_res = linter.lint(phenostr.as_str(), true, false);
 
-    match lint_res {
+    match lint_res.into_result() {
         Ok(report) => {
             println!("{}", report.patched_phenopacket.unwrap());
         }
