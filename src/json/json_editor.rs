@@ -9,9 +9,9 @@ pub(crate) struct JsonEditor {
 }
 
 impl JsonEditor {
-    pub fn new(cursor: Value) -> Self {
+    pub fn new(json: &str) -> Self {
         Self {
-            cursor: JsonCursor::new(cursor),
+            cursor: JsonCursor::new(json),
         }
     }
 
@@ -245,8 +245,8 @@ mod tests {
     use serde_json::json;
 
     #[fixture]
-    fn test_json() -> Value {
-        json!({
+    fn test_json() -> String {
+        let json = json!({
             "id": 101,
             "name": "Alice Johnson",
             "email": "alice.johnson@example.com",
@@ -261,7 +261,8 @@ mod tests {
                 }
             },
             "is_active": true,
-        })
+        });
+        serde_json::to_string_pretty(&json).unwrap()
     }
 
     #[rstest]
@@ -270,12 +271,12 @@ mod tests {
     #[case(Value::String("guest".to_string()), Pointer::new("/roles/0"), Value::String("guest".to_string()))]
     #[case(Value::String("good".to_string()), Pointer::new("profile/preferences"), Value::String("good".to_string()))]
     fn test_set_value(
-        test_json: Value,
+        test_json: String,
         #[case] new_value: Value,
         #[case] pointer: Pointer,
         #[case] expected_val: Value,
     ) {
-        let mut editor = JsonEditor::new(test_json);
+        let mut editor = JsonEditor::new(&test_json);
 
         editor.point_to(&pointer);
         editor.set_value(new_value).unwrap();
@@ -283,8 +284,8 @@ mod tests {
     }
 
     #[rstest]
-    fn test_delete_from_obj(test_json: Value) {
-        let mut editor = JsonEditor::new(test_json);
+    fn test_delete_from_obj(test_json: String) {
+        let mut editor = JsonEditor::new(&test_json);
         let to_delete = "profile";
 
         editor.down(to_delete);
@@ -295,9 +296,14 @@ mod tests {
     }
 
     #[rstest]
-    fn test_delete_from_array(test_json: Value) {
-        let n_entries = test_json.get("roles").unwrap().as_array().unwrap().len();
-        let other_entry = test_json
+    fn test_delete_from_array(test_json: String) {
+        let n_entries = json!(test_json)
+            .get("roles")
+            .unwrap()
+            .as_array()
+            .unwrap()
+            .len();
+        let other_entry = json!(test_json)
             .get("roles")
             .unwrap()
             .as_array()
@@ -307,7 +313,7 @@ mod tests {
             .as_str()
             .unwrap()
             .to_string();
-        let mut editor = JsonEditor::new(test_json);
+        let mut editor = JsonEditor::new(&test_json);
         let to_delete = "roles/0";
 
         editor.down(to_delete);
@@ -320,8 +326,8 @@ mod tests {
     }
 
     #[rstest]
-    fn test_push_to_root(test_json: Value) {
-        let mut editor = JsonEditor::new(test_json);
+    fn test_push_to_root(test_json: String) {
+        let mut editor = JsonEditor::new(&test_json);
 
         let zip_code_key = "zip_code";
         let authenticated_key = "authenticated";
@@ -356,8 +362,8 @@ mod tests {
     }
 
     #[rstest]
-    fn test_push_to_obj(test_json: Value) {
-        let mut editor = JsonEditor::new(test_json);
+    fn test_push_to_obj(test_json: String) {
+        let mut editor = JsonEditor::new(&test_json);
 
         let zip_code_key = "zip_code";
         let authenticated_key = "authenticated";
@@ -394,8 +400,8 @@ mod tests {
     }
 
     #[rstest]
-    fn test_push_to_obj_with_path_construction(test_json: Value) {
-        let mut editor = JsonEditor::new(test_json);
+    fn test_push_to_obj_with_path_construction(test_json: String) {
+        let mut editor = JsonEditor::new(&test_json);
         let new_path = "profile/some/new/path";
         let zip_code_key = "zip_code";
         let authenticated_key = "authenticated";
@@ -432,8 +438,8 @@ mod tests {
     }
 
     #[rstest]
-    fn test_push_to_obj_absent_path(test_json: Value) {
-        let mut editor = JsonEditor::new(test_json);
+    fn test_push_to_obj_absent_path(test_json: String) {
+        let mut editor = JsonEditor::new(&test_json);
         let new_path = "/stuff/other";
         let zip_code_key = "zip_code";
         let authenticated_key = "authenticated";

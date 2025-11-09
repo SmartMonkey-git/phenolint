@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 use crate::json::pointer::Pointer;
 use crate::json::utils::escape;
+use json_spanned_value::spanned::Value as SpannedValue;
 use serde_json::Value;
 use std::collections::VecDeque;
 
@@ -12,9 +13,10 @@ use std::collections::VecDeque;
 ///
 /// This is useful for iterative traversal, targeted lookups, or maintaining state
 /// as you move around in a nested JSON document.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub(crate) struct JsonCursor {
     json: Value,
+    spans: SpannedValue,
     pointer: Pointer,
     anchor: Option<Pointer>,
 }
@@ -23,13 +25,14 @@ impl JsonCursor {
     /// Creates a new cursor positioned at the root of the provided JSON value.
     ///
     /// # Arguments
-    /// * `value` - The JSON value to navigate.
+    /// * `json` - The JSON value to navigate.
     ///
     /// # Returns
     /// A new `JsonCursor` with an empty pointer (root position).
-    pub fn new(value: Value) -> JsonCursor {
+    pub fn new(json: &str) -> JsonCursor {
         Self {
-            json: value,
+            json: serde_json::from_reader(json.as_bytes()).expect("Should have valid JSON"),
+            spans: json_spanned_value::from_str(json).expect("Should have valid JSON"),
             pointer: Pointer::new(""),
             anchor: None,
         }
@@ -199,6 +202,12 @@ impl JsonCursor {
         self.current_value().is_some()
     }
 
+    pub fn span(&self) -> Option<(usize, usize)> {
+        match self.spans.pointer(self.pointer.position()) {
+            None => None,
+            Some(span) => Some(span.span()),
+        }
+    }
     /// Sets an anchor at the cursor's current position.
     ///
     /// The anchor can be used to mark a specific location in the JSON tree
@@ -277,7 +286,7 @@ impl JsonCursor {
     /// its full [`Pointer`] path.
     ///
     /// # Returns
-    /// An iterator over `(&Value, Pointer)` pairs.
+    /// An iterator over `(Pointer, &Value)` pairs.
     pub fn iter_with_paths(&self) -> impl Iterator<Item = (Pointer, &Value)> {
         let mut queue = VecDeque::new();
         if let Some(current_value) = self.json.pointer(self.pointer.position()) {
@@ -322,8 +331,8 @@ mod tests {
     use rstest::rstest;
     use serde_json::json;
 
-    fn make_sample_json() -> Value {
-        json!({
+    fn make_sample_json() -> String {
+        let json = json!({
             "user": {
                 "name": "Alice",
                 "age": 30,
@@ -338,20 +347,22 @@ mod tests {
             ],
             "active": true,
             "score": 99.5
-        })
+        });
+
+        serde_json::to_string_pretty(&make_sample_json()).unwrap()
     }
 
     #[rstest]
     fn test_new_starts_at_root() {
         let value = make_sample_json();
-        let cursor = JsonCursor::new(value);
+        let cursor = JsonCursor::new(&value);
         assert_eq!(cursor.pointer().position(), "");
         assert!(cursor.current_value().is_some());
     }
 
     #[rstest]
     fn test_jump_replaces_pointer() {
-        let mut cursor = JsonCursor::new(make_sample_json());
+        let mut cursor = JsonCursor::new(&make_sample_json());
         let new_ptr = Pointer::new("/user/name");
         cursor.point_to(&new_ptr);
         assert_eq!(cursor.pointer().position(), new_ptr.position());
@@ -360,7 +371,7 @@ mod tests {
 
     #[rstest]
     fn test_step_and_up_navigation() {
-        let mut cursor = JsonCursor::new(make_sample_json());
+        let mut cursor = JsonCursor::new(&make_sample_json());
 
         cursor.down("user").down("address").down("city");
         assert_eq!(cursor.pointer().position(), "/user/address/city");
@@ -375,14 +386,14 @@ mod tests {
 
     #[rstest]
     fn test_find_position_finds_first_key() {
-        let mut cursor = JsonCursor::new(make_sample_json());
+        let mut cursor = JsonCursor::new(&make_sample_json());
         let ptr = cursor.locate("city").expect("city should exist");
         assert_eq!(ptr.position(), "/user/address/city");
     }
 
     #[rstest]
     fn test_find_positions_finds_all_matches() {
-        let mut cursor = JsonCursor::new(make_sample_json());
+        let mut cursor = JsonCursor::new(&make_sample_json());
         let positions = cursor.locate_all("name");
         let paths: Vec<_> = positions.iter().map(|p| p.position()).collect();
 
@@ -395,7 +406,7 @@ mod tests {
     #[rstest]
     fn test_iter_with_paths_yields_all_nodes() {
         let json = make_sample_json();
-        let cursor = JsonCursor::new(json);
+        let cursor = JsonCursor::new(&make_sample_json());
         let all: Vec<_> = cursor.iter_with_paths().collect();
 
         assert_eq!(all.first().unwrap().0.position(), "");
@@ -409,7 +420,7 @@ mod tests {
     #[rstest]
     fn test_current_value_returns_none_for_invalid_pointer() {
         let value = make_sample_json();
-        let mut cursor = JsonCursor::new(value);
+        let mut cursor = JsonCursor::new(&make_sample_json());
         cursor.point_to(&Pointer::new("/nonexistent/path"));
         assert_eq!(cursor.current_value(), None);
     }
@@ -420,7 +431,7 @@ mod tests {
             "a": {"b": {"c": 1}},
             "arr": [10, {"d": 2}]
         });
-        let cursor = JsonCursor::new(json);
+        let cursor = JsonCursor::new(&make_sample_json());
         let collected: Vec<String> = cursor
             .iter_with_paths()
             .map(|(p, _)| p.position().to_string())

@@ -12,6 +12,7 @@ use json_spanned_value::spanned::Value as SpannedValue;
 use phenolint_macros::lint_rule;
 use serde_json::Value;
 use std::collections::HashSet;
+use std::ops::Range;
 
 #[derive(Debug, Default)]
 /// Validates that diseases in interpretations are also present in the diseases list.
@@ -47,10 +48,7 @@ impl FromContext for DiseaseConsistencyRule {
 
 impl RuleCheck for DiseaseConsistencyRule {
     fn check(&self, phenostr: &str, report: &mut LintReport) {
-        let mut cursor = JsonCursor::new(
-            serde_json::from_str(phenostr)
-                .unwrap_or_else(|_| panic!("Could not serialize phenopacket")),
-        );
+        let mut cursor = JsonCursor::new(phenostr);
 
         if !cursor.down("interpretations").is_valid_position() {
             return;
@@ -90,7 +88,7 @@ impl RuleCheck for DiseaseConsistencyRule {
                 cursor.up();
                 findings.push(LintFinding::new(
                     Self::RULE_ID,
-                    Self::write_report(phenostr, cursor.pointer()),
+                    Self::write_report(&mut cursor),
                     Some(Patch::Duplicate {
                         from: cursor.pointer().to_owned(),
                         to: Pointer::new(&format!(
@@ -110,22 +108,24 @@ impl RuleCheck for DiseaseConsistencyRule {
 }
 
 impl DiseaseConsistencyRule {
-    fn write_report(phenostr: &str, pointer: &Pointer) -> ReportSpecs {
-        let value: SpannedValue = json_spanned_value::from_str(phenostr)
-            .unwrap_or_else(|_| panic!("Could not serialize phenopacket"));
-
-        let (inter_disease_start, inter_disease_end) =
-            value.pointer(pointer.position()).unwrap().span();
+    fn write_report(cursor: &mut JsonCursor) -> ReportSpecs {
+        cursor.set_anchor();
+        let (inter_disease_start, inter_disease_end) = cursor.span().expect("Should have a span");
 
         let mut primary_message = "Diseases found in interpretations".to_string();
         let secondary_message = "that was not present in diseases section";
 
         let mut labels = Vec::new();
 
-        if let Some(val) = value.pointer("/diseases") {
+        if let Some(val) = cursor
+            .root()
+            .point_to(&Pointer::new("/diseases"))
+            .current_value()
+        {
+            let (start, end) = cursor.span().expect("Should have a span");
             labels.push(LabelSpecs {
                 style: LabelStyle::Secondary,
-                range: val.span().0..val.span().1,
+                range: start..end,
                 message: secondary_message.to_string(),
             });
         } else {
@@ -145,7 +145,7 @@ impl DiseaseConsistencyRule {
             labels,
             notes: Vec::new(),
         };
-
+        cursor.goto_anchor();
         ReportSpecs::new(diagnostic_spec)
     }
 }
