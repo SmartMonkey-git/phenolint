@@ -1,6 +1,6 @@
 use codespan_reporting::diagnostic::{LabelStyle, Severity};
 use std::ops::Range;
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct LabelSpecs {
     pub style: LabelStyle,
     pub range: Range<usize>,
@@ -21,7 +21,7 @@ impl LabelSpecs {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct DiagnosticSpec {
     pub severity: Severity,
     pub code: Option<String>,
@@ -52,7 +52,7 @@ impl DiagnosticSpec {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ReportSpecs {
     diagnostic_spec: DiagnosticSpec,
 }
@@ -71,28 +71,3 @@ impl ReportSpecs {
         self.diagnostic_spec
     }
 }
-/*
-fn a() {
-    let diagnostic = Diagnostic::error()
-        .with_message("`case` clauses have incompatible types")
-        .with_code("E0308")
-        .with_labels(vec![
-            Label::primary(file_id, 328..331).with_message("expected `String`, found `Nat`"),
-            Label::secondary(file_id, 211..331)
-                .with_message("`case` clauses have incompatible types"),
-            Label::secondary(file_id, 258..268)
-                .with_message("this is found to be of type `String`"),
-            Label::secondary(file_id, 284..290)
-                .with_message("this is found to be of type `String`"),
-            Label::secondary(file_id, 306..312)
-                .with_message("this is found to be of type `String`"),
-            Label::secondary(file_id, 186..192).with_message("expected type `String` found here"),
-        ])
-        .with_notes(vec![unindent::unindent(
-            "
-            expected type `String`
-                found type `Nat`
-        ",
-        )]);
-}
-*/

@@ -112,6 +112,7 @@ impl TryFrom<&PathBuf> for Phenolinter {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_utils::test_config;
     use ontolius::TermId;
     use rstest::*;
     use std::fs::File;
@@ -135,11 +136,8 @@ rules = ["CURIE001", "PF006", "INTER001"]
     #[rstest]
     fn test_try_from() {
         let tmp_dir = tempfile::tempdir().expect("Failed to create temporary directory");
-        let file_path = tmp_dir.path().join("../assets/phenolint.toml");
-        let mut file = File::create(&file_path).unwrap();
-        file.write_all(TOML_CONFIG).unwrap();
+        let file_path = tmp_dir.path().join(test_config());
 
         let linter = Phenolinter::try_from(file_path).expect("Failed to parse phenolint file");
-        //assert_eq!(linter.policy.rules.len(), 3);
     }
 }

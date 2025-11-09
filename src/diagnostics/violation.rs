@@ -1,16 +1,11 @@
 use crate::diagnostics::specs::ReportSpecs;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct LintViolation {
     rule_id: String,
     report: ReportSpecs,
 }
 
-/*impl PartialEq for LintViolation {
-    fn eq(&self, other: &Self) -> bool {
-        self.rule_id == other.rule_id
-    }
-}*/
 impl LintViolation {
     pub fn new(rule_id: &str, report: ReportSpecs) -> LintViolation {
         Self {

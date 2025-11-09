@@ -36,6 +36,12 @@ pub(crate) fn assert_report_message(
     );
 }
 
+pub fn test_config() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("assets")
+        .join("phenolint.toml")
+}
+
 #[allow(dead_code)]
 const TEST_PHENOPACKET: &[u8] = br#"
 {
