@@ -1,3 +1,4 @@
+use crate::diagnostics::error::ReportParseError;
 use crate::diagnostics::specs::ReportSpecs;
 use codespan_reporting::diagnostic::{Diagnostic, Label, LabelStyle, Severity};
 use codespan_reporting::files::SimpleFiles;
@@ -9,7 +10,7 @@ pub struct ReportParser;
 
 impl ReportParser {
     #[allow(dead_code)]
-    pub fn parse(report: &ReportSpecs, phenostr: &str) -> String {
+    pub fn parse(report: &ReportSpecs, phenostr: &str) -> Result<String, ReportParseError> {
         let mut files = SimpleFiles::new();
         let file_id = files.add(1, phenostr);
 
@@ -17,11 +18,11 @@ impl ReportParser {
 
         let config = term::Config::default();
 
-        //TODO: Change interface to return Result
-        term::emit_into_string(&config, &files, &codespan_diagnostic).unwrap()
+        term::emit_into_string(&config, &files, &codespan_diagnostic)
+            .map_err(ReportParseError::StringParsing)
     }
 
-    pub fn emit(report: &ReportSpecs, phenostr: &str) {
+    pub fn emit(report: &ReportSpecs, phenostr: &str) -> Result<(), ReportParseError> {
         let mut files = SimpleFiles::new();
         let file_id = files.add(1, phenostr);
 
@@ -30,9 +31,8 @@ impl ReportParser {
         let writer = StandardStream::stderr(ColorChoice::Always);
         let config = term::Config::default();
 
-        //TODO: Change interface to return Result
         term::emit_to_write_style(&mut writer.lock(), &config, &files, &codespan_diagnostic)
-            .unwrap();
+            .map_err(ReportParseError::Emit)
     }
 
     pub fn inner_parse(report: &ReportSpecs, file_id: usize) -> Diagnostic<usize> {

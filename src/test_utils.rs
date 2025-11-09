@@ -27,11 +27,15 @@ pub(crate) fn assert_report_message(
 ) {
     let owned_report = finding.violation().report();
     assert!(
-        ReportParser::parse(owned_report, phenostr).contains(rule_id),
+        ReportParser::parse(owned_report, phenostr)
+            .unwrap()
+            .contains(rule_id),
         "Report should mention the rule ID"
     );
     assert!(
-        ReportParser::parse(owned_report, phenostr).contains(message_snippet),
+        ReportParser::parse(owned_report, phenostr)
+            .unwrap()
+            .contains(message_snippet),
         "Report should mention {message_snippet}"
     );
 }

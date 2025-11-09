@@ -6,6 +6,10 @@ use thiserror::Error;
 pub enum LinterError {
     #[error(transparent)]
     PatchingError(#[from] PatchingError),
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
+    #[error(transparent)]
+    JsonError(#[from] serde_json::Error),
 }
 
 #[derive(Error, Debug)]
