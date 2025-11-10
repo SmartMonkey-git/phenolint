@@ -8,7 +8,6 @@ use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::{FromContext, LintRule, RuleCheck};
 use codespan_reporting::diagnostic::{LabelStyle, Severity};
-use json_spanned_value::spanned::Value as SpannedValue;
 use phenolint_macros::lint_rule;
 use serde_json::Value;
 use std::collections::HashSet;
@@ -47,10 +46,7 @@ impl FromContext for DiseaseConsistencyRule {
 
 impl RuleCheck for DiseaseConsistencyRule {
     fn check(&self, phenostr: &str, report: &mut LintReport) {
-        let mut cursor = JsonCursor::new(
-            serde_json::from_str(phenostr)
-                .unwrap_or_else(|_| panic!("Could not serialize phenopacket")),
-        );
+        let mut cursor = JsonCursor::new(phenostr).expect("Phenopacket is not a valid json");
 
         if !cursor.down("interpretations").is_valid_position() {
             return;
@@ -76,7 +72,8 @@ impl RuleCheck for DiseaseConsistencyRule {
         let mut findings = vec![];
 
         for inter in cursor.root().down("interpretations").peek() {
-            cursor.set_anchor();
+            let anchor = cursor.pointer().clone();
+
             if let Some(inter_disease_id) = cursor
                 .down(inter)
                 .down("diagnosis")
@@ -90,7 +87,7 @@ impl RuleCheck for DiseaseConsistencyRule {
                 cursor.up();
                 findings.push(LintFinding::new(
                     Self::RULE_ID,
-                    Self::write_report(phenostr, cursor.pointer()),
+                    Self::write_report(&mut cursor),
                     Some(Patch::Duplicate {
                         from: cursor.pointer().to_owned(),
                         to: Pointer::new(&format!(
@@ -102,7 +99,7 @@ impl RuleCheck for DiseaseConsistencyRule {
 
                 seen.insert(id);
             }
-            cursor.goto_anchor();
+            cursor.point_to(&anchor);
         }
 
         report.extend_finding(findings)
@@ -110,22 +107,25 @@ impl RuleCheck for DiseaseConsistencyRule {
 }
 
 impl DiseaseConsistencyRule {
-    fn write_report(phenostr: &str, pointer: &Pointer) -> ReportSpecs {
-        let value: SpannedValue = json_spanned_value::from_str(phenostr)
-            .unwrap_or_else(|_| panic!("Could not serialize phenopacket"));
-
-        let (inter_disease_start, inter_disease_end) =
-            value.pointer(pointer.position()).unwrap().span();
+    fn write_report(cursor: &mut JsonCursor) -> ReportSpecs {
+        cursor.set_anchor();
+        let (inter_disease_start, inter_disease_end) = cursor.span().expect("Should have a span");
 
         let mut primary_message = "Diseases found in interpretations".to_string();
         let secondary_message = "that was not present in diseases section";
 
         let mut labels = Vec::new();
 
-        if let Some(val) = value.pointer("/diseases") {
+        if cursor
+            .root()
+            .point_to(&Pointer::new("/diseases"))
+            .current_value()
+            .is_some()
+        {
+            let (start, end) = cursor.span().expect("Should have a span");
             labels.push(LabelSpecs {
                 style: LabelStyle::Secondary,
-                range: val.span().0..val.span().1,
+                range: start..end,
                 message: secondary_message.to_string(),
             });
         } else {
@@ -145,7 +145,7 @@ impl DiseaseConsistencyRule {
             labels,
             notes: Vec::new(),
         };
-
+        cursor.goto_anchor();
         ReportSpecs::new(diagnostic_spec)
     }
 }

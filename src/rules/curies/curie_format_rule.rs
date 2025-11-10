@@ -1,13 +1,12 @@
 use crate::diagnostics::specs::{DiagnosticSpec, LabelSpecs};
 use crate::diagnostics::{LintFinding, LintReport, ReportSpecs};
 use crate::error::RuleInitError;
-use crate::json::{JsonCursor, Pointer};
+use crate::json::JsonCursor;
 use crate::linter_context::LinterContext;
 use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::{FromContext, LintRule, RuleCheck};
 use codespan_reporting::diagnostic::{LabelStyle, Severity};
-use json_spanned_value::spanned::Value as SpannedValue;
 use phenolint_macros::lint_rule;
 use phenopackets::schema::v2::core::OntologyClass;
 use regex::Regex;
@@ -26,18 +25,18 @@ impl FromContext for CurieFormatRule {
 impl RuleCheck for CurieFormatRule {
     fn check(&self, phenostr: &str, report: &mut LintReport) {
         let regex = Regex::new("^[A-Z][A-Z0-9_]+:[A-Za-z0-9_]+$").unwrap();
-        let cursor = JsonCursor::new(
-            serde_json::from_str(phenostr)
-                .unwrap_or_else(|_| panic!("Could not serialize phenopacket")),
-        );
+        let cursor = JsonCursor::new(phenostr).expect("Phenopacket is not a valid json");
 
         for (pointer, value) in cursor.iter_with_paths() {
             if let Some(ont_class) = Self::get_ontology_class_from_value(value)
                 && !regex.is_match(&ont_class.id)
             {
+                let mut temp_cursor =
+                    JsonCursor::new(phenostr).expect("Phenopacket is not a valid json");
                 report.push_finding(LintFinding::new(
                     Self::RULE_ID,
-                    Self::write_report(phenostr, pointer.clone().down("id")),
+                    //TODO: no clone here
+                    Self::write_report(temp_cursor.point_to(&pointer)),
                     None,
                 ));
             }
@@ -58,25 +57,20 @@ impl CurieFormatRule {
         }
     }
 
-    fn write_report(phenostr: &str, pointer: &Pointer) -> ReportSpecs {
-        let value: SpannedValue = json_spanned_value::from_str(phenostr)
-            .unwrap_or_else(|_| panic!("Could not serialize phenopacket"));
+    fn write_report(cursor: &mut JsonCursor) -> ReportSpecs {
+        cursor.set_anchor();
+        let (curie_start, curie_end) = cursor.span().expect("Should have found span");
 
-        let (curie_start, curie_end) = value.pointer(pointer.position()).unwrap().span();
-
-        let (context_span_start, context_span_end) = value
-            .pointer(pointer.clone().up().position())
-            .unwrap()
-            .span();
-
-        let mut p = pointer.clone();
-        p.up().up();
-        if let Some(val) = value.pointer(p.position())
+        let (context_span_start, context_span_end) =
+            cursor.up().span().expect("Should have found span");
+        println!("{}..{}", context_span_start, context_span_end);
+        cursor.up().up();
+        if let Some(val) = cursor.current_value()
             && val.as_object().is_some()
         {
-            p.up();
+            cursor.up();
         };
-        let (label_start, label_end) = value.pointer(p.position()).unwrap().span();
+        let (label_start, label_end) = cursor.span().expect("Should have found span");
 
         let labels = vec![
             LabelSpecs {

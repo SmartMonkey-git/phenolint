@@ -55,6 +55,8 @@ pub enum InstantiationError {
     IO(std::io::Error),
     #[error(transparent)]
     Config(#[from] ConfigError),
+    #[error(transparent)]
+    JsonError(#[from] serde_json::Error),
 }
 
 #[derive(Error, Debug)]
@@ -63,6 +65,8 @@ pub enum PatchingError {
     SerdeError(#[from] serde_json::Error),
     #[error(transparent)]
     JsonEditError(#[from] JsonEditError),
+    #[error(transparent)]
+    InitError(#[from] InstantiationError),
 }
 
 pub enum RuleInitError {
