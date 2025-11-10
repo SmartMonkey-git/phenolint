@@ -19,7 +19,7 @@ pub(crate) struct JsonCursor {
     json: Value,
     spans: SpannedValue,
     pointer: Pointer,
-    anchor: Option<Pointer>,
+    anchor: Vec<Pointer>,
 }
 
 impl JsonCursor {
@@ -36,7 +36,7 @@ impl JsonCursor {
             json: serde_json::from_reader(json.as_bytes())?,
             spans: json_spanned_value::from_str(json)?,
             pointer: Pointer::new(""),
-            anchor: None,
+            anchor: vec![],
         })
     }
 
@@ -212,12 +212,12 @@ impl JsonCursor {
     /// Sets an anchor at the cursor's current position.
     ///
     /// The anchor can be used to mark a specific location in the JSON tree
-    /// and return to it later using [`goto_anchor`](Self::goto_anchor).
+    /// and return to it later using [`goto_anchor`](Self::pop_anchor).
     ///
     /// # Returns
     /// A mutable reference to the cursor (for chaining).
-    pub fn set_anchor(&mut self) -> &mut Self {
-        self.anchor = Some(self.pointer.clone());
+    pub fn push_anchor(&mut self) -> &mut Self {
+        self.anchor.push(self.pointer.clone());
         self
     }
 
@@ -226,7 +226,16 @@ impl JsonCursor {
     /// # Returns
     /// A mutable reference to the cursor (for chaining).
     pub fn clear_anchor(&mut self) -> &mut Self {
-        self.anchor = None;
+        self.anchor.pop();
+        self
+    }
+
+    /// Clears the current anchor, if any.
+    ///
+    /// # Returns
+    /// A mutable reference to the cursor (for chaining).
+    pub fn empty_anchor_stack(&mut self) -> &mut Self {
+        self.anchor = vec![];
         self
     }
 
@@ -237,15 +246,15 @@ impl JsonCursor {
     ///
     /// # Returns
     /// A mutable reference to the cursor (for chaining).
-    pub fn set_anchor_at(&mut self, anchor: &str) -> &mut Self {
-        self.anchor = Some(Pointer::new(anchor));
+    pub fn push_anchor_at(&mut self, anchor: &str) -> &mut Self {
+        self.anchor.push(Pointer::new(anchor));
         self
     }
 
     /// Moves the cursor to the previously set anchor position.
     ///
-    /// If an anchor was set using [`set_anchor`](Self::set_anchor) or
-    /// [`set_anchor_at`](Self::set_anchor_at), this method moves the cursor
+    /// If an anchor was set using [`set_anchor`](Self::push_anchor) or
+    /// [`set_anchor_at`](Self::push_anchor_at), this method moves the cursor
     /// to that location and clears the anchor.
     ///
     /// # Returns
@@ -253,8 +262,8 @@ impl JsonCursor {
     ///
     /// # Note
     /// If no anchor was set, the cursor position remains unchanged.
-    pub fn goto_anchor(&mut self) -> &mut Self {
-        match self.anchor.take() {
+    pub fn pop_anchor(&mut self) -> &mut Self {
+        match self.anchor.pop() {
             None => self,
             Some(anchor) => {
                 self.pointer = anchor;

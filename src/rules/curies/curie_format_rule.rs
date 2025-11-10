@@ -58,7 +58,7 @@ impl CurieFormatRule {
     }
 
     fn write_report(cursor: &mut JsonCursor) -> ReportSpecs {
-        cursor.set_anchor();
+        cursor.push_anchor();
         let (curie_start, curie_end) = cursor.down("id").span().expect("Should have found span");
         cursor.up();
 
