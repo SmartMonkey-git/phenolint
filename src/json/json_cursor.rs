@@ -30,6 +30,7 @@ impl JsonCursor {
     /// # Returns
     /// A new `JsonCursor` with an empty pointer (root position).
     pub fn new(json: &str) -> JsonCursor {
+        // TODO: Find crate that allows for single deserialization of the json and get the spans. Or get json_spanned_value to work.
         Self {
             json: serde_json::from_reader(json.as_bytes()).expect("Should have valid JSON"),
             spans: json_spanned_value::from_str(json).expect("Should have valid JSON"),
@@ -203,10 +204,9 @@ impl JsonCursor {
     }
 
     pub fn span(&self) -> Option<(usize, usize)> {
-        match self.spans.pointer(self.pointer.position()) {
-            None => None,
-            Some(span) => Some(span.span()),
-        }
+        self.spans
+            .pointer(self.pointer.position())
+            .map(|span| span.span())
     }
     /// Sets an anchor at the cursor's current position.
     ///
@@ -349,7 +349,7 @@ mod tests {
             "score": 99.5
         });
 
-        serde_json::to_string_pretty(&make_sample_json()).unwrap()
+        serde_json::to_string_pretty(&json).unwrap()
     }
 
     #[rstest]
@@ -405,7 +405,6 @@ mod tests {
 
     #[rstest]
     fn test_iter_with_paths_yields_all_nodes() {
-        let json = make_sample_json();
         let cursor = JsonCursor::new(&make_sample_json());
         let all: Vec<_> = cursor.iter_with_paths().collect();
 
@@ -419,7 +418,6 @@ mod tests {
 
     #[rstest]
     fn test_current_value_returns_none_for_invalid_pointer() {
-        let value = make_sample_json();
         let mut cursor = JsonCursor::new(&make_sample_json());
         cursor.point_to(&Pointer::new("/nonexistent/path"));
         assert_eq!(cursor.current_value(), None);
@@ -427,10 +425,6 @@ mod tests {
 
     #[rstest]
     fn test_complex_iteration_order_stable() {
-        let json = json!({
-            "a": {"b": {"c": 1}},
-            "arr": [10, {"d": 2}]
-        });
         let cursor = JsonCursor::new(&make_sample_json());
         let collected: Vec<String> = cursor
             .iter_with_paths()

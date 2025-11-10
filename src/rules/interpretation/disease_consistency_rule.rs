@@ -8,11 +8,9 @@ use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::{FromContext, LintRule, RuleCheck};
 use codespan_reporting::diagnostic::{LabelStyle, Severity};
-use json_spanned_value::spanned::Value as SpannedValue;
 use phenolint_macros::lint_rule;
 use serde_json::Value;
 use std::collections::HashSet;
-use std::ops::Range;
 
 #[derive(Debug, Default)]
 /// Validates that diseases in interpretations are also present in the diseases list.
@@ -117,10 +115,11 @@ impl DiseaseConsistencyRule {
 
         let mut labels = Vec::new();
 
-        if let Some(val) = cursor
+        if cursor
             .root()
             .point_to(&Pointer::new("/diseases"))
             .current_value()
+            .is_some()
         {
             let (start, end) = cursor.span().expect("Should have a span");
             labels.push(LabelSpecs {

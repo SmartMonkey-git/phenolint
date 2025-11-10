@@ -1,13 +1,12 @@
 use crate::diagnostics::specs::{DiagnosticSpec, LabelSpecs};
 use crate::diagnostics::{LintFinding, LintReport, ReportSpecs};
 use crate::error::RuleInitError;
-use crate::json::{JsonCursor, Pointer};
+use crate::json::JsonCursor;
 use crate::linter_context::LinterContext;
 use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::{FromContext, LintRule, RuleCheck};
 use codespan_reporting::diagnostic::{LabelStyle, Severity};
-use json_spanned_value::spanned::Value as SpannedValue;
 use phenolint_macros::lint_rule;
 use phenopackets::schema::v2::core::OntologyClass;
 use regex::Regex;
