@@ -297,13 +297,15 @@ mod tests {
 
     #[rstest]
     fn test_delete_from_array(test_json: String) {
-        let n_entries = json!(test_json)
+        let n_entries = serde_json::from_str::<Value>(test_json.as_str())
+            .unwrap()
             .get("roles")
             .unwrap()
             .as_array()
             .unwrap()
             .len();
-        let other_entry = json!(test_json)
+        let other_entry = serde_json::from_str::<Value>(test_json.as_str())
+            .unwrap()
             .get("roles")
             .unwrap()
             .as_array()
@@ -314,8 +316,8 @@ mod tests {
             .unwrap()
             .to_string();
         let mut editor = JsonEditor::new(&test_json).unwrap();
-        let to_delete = "roles/0";
 
+        let to_delete = "roles/0";
         editor.down(to_delete);
         assert!(editor.delete().is_some());
         assert_eq!(

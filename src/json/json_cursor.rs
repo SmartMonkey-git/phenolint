@@ -426,7 +426,11 @@ mod tests {
 
     #[rstest]
     fn test_complex_iteration_order_stable() {
-        let cursor = JsonCursor::new(&make_sample_json()).unwrap();
+        let json = json!({
+            "a": {"b": {"c": 1}},
+            "arr": [10, {"d": 2}]
+        });
+        let cursor = JsonCursor::new(&serde_json::to_string_pretty(&json).unwrap()).unwrap();
         let collected: Vec<String> = cursor
             .iter_with_paths()
             .map(|(p, _)| p.position().to_string())

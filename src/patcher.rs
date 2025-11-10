@@ -9,7 +9,7 @@ pub struct Patcher;
 
 impl Patcher {
     pub fn patch(&self, phenostr: &str, patches: Vec<&Patch>) -> Result<String, PatchingError> {
-        let mut cursor = JsonCursor::new(phenostr).unwrap();
+        let mut cursor = JsonCursor::new(phenostr)?;
 
         let patches = Self::resolve_patches(patches, &mut cursor)?;
         Self::apply(cursor, patches)

@@ -65,6 +65,8 @@ pub enum PatchingError {
     SerdeError(#[from] serde_json::Error),
     #[error(transparent)]
     JsonEditError(#[from] JsonEditError),
+    #[error(transparent)]
+    InitError(#[from] InstantiationError),
 }
 
 pub enum RuleInitError {

@@ -72,7 +72,8 @@ impl RuleCheck for DiseaseConsistencyRule {
         let mut findings = vec![];
 
         for inter in cursor.root().down("interpretations").peek() {
-            cursor.set_anchor();
+            let anchor = cursor.pointer().clone();
+
             if let Some(inter_disease_id) = cursor
                 .down(inter)
                 .down("diagnosis")
@@ -98,7 +99,7 @@ impl RuleCheck for DiseaseConsistencyRule {
 
                 seen.insert(id);
             }
-            cursor.goto_anchor();
+            cursor.point_to(&anchor);
         }
 
         report.extend_finding(findings)
