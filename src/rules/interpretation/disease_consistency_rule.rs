@@ -55,7 +55,7 @@ impl RuleCheck for DiseaseConsistencyRule {
         let mut disease_ids = HashSet::new();
 
         for disease_idx in cursor.root().down("diseases").peek() {
-            cursor.set_anchor();
+            cursor.push_anchor();
             if let Some(disease) = cursor
                 .down(disease_idx)
                 .down("term")
@@ -64,7 +64,7 @@ impl RuleCheck for DiseaseConsistencyRule {
             {
                 disease_ids.insert(disease.clone());
             }
-            cursor.goto_anchor();
+            cursor.pop_anchor();
         }
 
         let n_diseases = disease_ids.len();
@@ -72,7 +72,7 @@ impl RuleCheck for DiseaseConsistencyRule {
         let mut findings = vec![];
 
         for inter in cursor.root().down("interpretations").peek() {
-            let anchor = cursor.pointer().clone();
+            cursor.push_anchor();
 
             if let Some(inter_disease_id) = cursor
                 .down(inter)
@@ -99,7 +99,7 @@ impl RuleCheck for DiseaseConsistencyRule {
 
                 seen.insert(id);
             }
-            cursor.point_to(&anchor);
+            cursor.pop_anchor();
         }
 
         report.extend_finding(findings)
@@ -108,7 +108,7 @@ impl RuleCheck for DiseaseConsistencyRule {
 
 impl DiseaseConsistencyRule {
     fn write_report(cursor: &mut JsonCursor) -> ReportSpecs {
-        cursor.set_anchor();
+        cursor.push_anchor();
         let (inter_disease_start, inter_disease_end) = cursor.span().expect("Should have a span");
 
         let mut primary_message = "Diseases found in interpretations".to_string();
@@ -145,7 +145,7 @@ impl DiseaseConsistencyRule {
             labels,
             notes: Vec::new(),
         };
-        cursor.goto_anchor();
+        cursor.pop_anchor();
         ReportSpecs::new(diagnostic_spec)
     }
 }
