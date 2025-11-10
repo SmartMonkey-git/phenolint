@@ -46,7 +46,7 @@ impl FromContext for DiseaseConsistencyRule {
 
 impl RuleCheck for DiseaseConsistencyRule {
     fn check(&self, phenostr: &str, report: &mut LintReport) {
-        let mut cursor = JsonCursor::new(phenostr);
+        let mut cursor = JsonCursor::new(phenostr).expect("Phenopacket is not a valid json");
 
         if !cursor.down("interpretations").is_valid_position() {
             return;

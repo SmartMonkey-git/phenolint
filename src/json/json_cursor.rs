@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use crate::error::InstantiationError;
 use crate::json::pointer::Pointer;
 use crate::json::utils::escape;
 use json_spanned_value::spanned::Value as SpannedValue;
@@ -29,14 +30,14 @@ impl JsonCursor {
     ///
     /// # Returns
     /// A new `JsonCursor` with an empty pointer (root position).
-    pub fn new(json: &str) -> JsonCursor {
+    pub fn new(json: &str) -> Result<JsonCursor, InstantiationError> {
         // TODO: Find crate that allows for single deserialization of the json and get the spans. Or get json_spanned_value to work.
-        Self {
-            json: serde_json::from_reader(json.as_bytes()).expect("Should have valid JSON"),
-            spans: json_spanned_value::from_str(json).expect("Should have valid JSON"),
+        Ok(Self {
+            json: serde_json::from_reader(json.as_bytes())?,
+            spans: json_spanned_value::from_str(json)?,
             pointer: Pointer::new(""),
             anchor: None,
-        }
+        })
     }
 
     pub(super) fn json_mut(&mut self) -> &mut Value {
@@ -355,14 +356,14 @@ mod tests {
     #[rstest]
     fn test_new_starts_at_root() {
         let value = make_sample_json();
-        let cursor = JsonCursor::new(&value);
+        let cursor = JsonCursor::new(&value).unwrap();
         assert_eq!(cursor.pointer().position(), "");
         assert!(cursor.current_value().is_some());
     }
 
     #[rstest]
     fn test_jump_replaces_pointer() {
-        let mut cursor = JsonCursor::new(&make_sample_json());
+        let mut cursor = JsonCursor::new(&make_sample_json()).unwrap();
         let new_ptr = Pointer::new("/user/name");
         cursor.point_to(&new_ptr);
         assert_eq!(cursor.pointer().position(), new_ptr.position());
@@ -371,7 +372,7 @@ mod tests {
 
     #[rstest]
     fn test_step_and_up_navigation() {
-        let mut cursor = JsonCursor::new(&make_sample_json());
+        let mut cursor = JsonCursor::new(&make_sample_json()).unwrap();
 
         cursor.down("user").down("address").down("city");
         assert_eq!(cursor.pointer().position(), "/user/address/city");
@@ -386,14 +387,14 @@ mod tests {
 
     #[rstest]
     fn test_find_position_finds_first_key() {
-        let mut cursor = JsonCursor::new(&make_sample_json());
+        let mut cursor = JsonCursor::new(&make_sample_json()).unwrap();
         let ptr = cursor.locate("city").expect("city should exist");
         assert_eq!(ptr.position(), "/user/address/city");
     }
 
     #[rstest]
     fn test_find_positions_finds_all_matches() {
-        let mut cursor = JsonCursor::new(&make_sample_json());
+        let mut cursor = JsonCursor::new(&make_sample_json()).unwrap();
         let positions = cursor.locate_all("name");
         let paths: Vec<_> = positions.iter().map(|p| p.position()).collect();
 
@@ -405,7 +406,7 @@ mod tests {
 
     #[rstest]
     fn test_iter_with_paths_yields_all_nodes() {
-        let cursor = JsonCursor::new(&make_sample_json());
+        let cursor = JsonCursor::new(&make_sample_json()).unwrap();
         let all: Vec<_> = cursor.iter_with_paths().collect();
 
         assert_eq!(all.first().unwrap().0.position(), "");
@@ -418,14 +419,14 @@ mod tests {
 
     #[rstest]
     fn test_current_value_returns_none_for_invalid_pointer() {
-        let mut cursor = JsonCursor::new(&make_sample_json());
+        let mut cursor = JsonCursor::new(&make_sample_json()).unwrap();
         cursor.point_to(&Pointer::new("/nonexistent/path"));
         assert_eq!(cursor.current_value(), None);
     }
 
     #[rstest]
     fn test_complex_iteration_order_stable() {
-        let cursor = JsonCursor::new(&make_sample_json());
+        let cursor = JsonCursor::new(&make_sample_json()).unwrap();
         let collected: Vec<String> = cursor
             .iter_with_paths()
             .map(|(p, _)| p.position().to_string())

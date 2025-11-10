@@ -25,13 +25,14 @@ impl FromContext for CurieFormatRule {
 impl RuleCheck for CurieFormatRule {
     fn check(&self, phenostr: &str, report: &mut LintReport) {
         let regex = Regex::new("^[A-Z][A-Z0-9_]+:[A-Za-z0-9_]+$").unwrap();
-        let cursor = JsonCursor::new(phenostr);
+        let cursor = JsonCursor::new(phenostr).expect("Phenopacket is not a valid json");
 
         for (pointer, value) in cursor.iter_with_paths() {
             if let Some(ont_class) = Self::get_ontology_class_from_value(value)
                 && !regex.is_match(&ont_class.id)
             {
-                let mut temp_cursor = JsonCursor::new(phenostr);
+                let mut temp_cursor =
+                    JsonCursor::new(phenostr).expect("Phenopacket is not a valid json");
                 report.push_finding(LintFinding::new(
                     Self::RULE_ID,
                     //TODO: no clone here

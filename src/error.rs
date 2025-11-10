@@ -55,6 +55,8 @@ pub enum InstantiationError {
     IO(std::io::Error),
     #[error(transparent)]
     Config(#[from] ConfigError),
+    #[error(transparent)]
+    JsonError(#[from] serde_json::Error),
 }
 
 #[derive(Error, Debug)]

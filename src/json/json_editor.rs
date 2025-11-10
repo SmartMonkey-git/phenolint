@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use crate::error::InstantiationError;
 use crate::json::error::JsonEditError;
 use crate::json::{JsonCursor, Pointer};
 use serde_json::Value;
@@ -9,10 +10,9 @@ pub(crate) struct JsonEditor {
 }
 
 impl JsonEditor {
-    pub fn new(json: &str) -> Self {
-        Self {
-            cursor: JsonCursor::new(json),
-        }
+    pub fn new(json: &str) -> Result<Self, InstantiationError> {
+        let cursor = JsonCursor::new(json)?;
+        Ok(Self { cursor })
     }
 
     pub fn export(&self) -> Result<String, JsonEditError> {
@@ -276,7 +276,7 @@ mod tests {
         #[case] pointer: Pointer,
         #[case] expected_val: Value,
     ) {
-        let mut editor = JsonEditor::new(&test_json);
+        let mut editor = JsonEditor::new(&test_json).unwrap();
 
         editor.point_to(&pointer);
         editor.set_value(new_value).unwrap();
@@ -285,7 +285,7 @@ mod tests {
 
     #[rstest]
     fn test_delete_from_obj(test_json: String) {
-        let mut editor = JsonEditor::new(&test_json);
+        let mut editor = JsonEditor::new(&test_json).unwrap();
         let to_delete = "profile";
 
         editor.down(to_delete);
@@ -313,7 +313,7 @@ mod tests {
             .as_str()
             .unwrap()
             .to_string();
-        let mut editor = JsonEditor::new(&test_json);
+        let mut editor = JsonEditor::new(&test_json).unwrap();
         let to_delete = "roles/0";
 
         editor.down(to_delete);
@@ -327,7 +327,7 @@ mod tests {
 
     #[rstest]
     fn test_push_to_root(test_json: String) {
-        let mut editor = JsonEditor::new(&test_json);
+        let mut editor = JsonEditor::new(&test_json).unwrap();
 
         let zip_code_key = "zip_code";
         let authenticated_key = "authenticated";
@@ -363,7 +363,7 @@ mod tests {
 
     #[rstest]
     fn test_push_to_obj(test_json: String) {
-        let mut editor = JsonEditor::new(&test_json);
+        let mut editor = JsonEditor::new(&test_json).unwrap();
 
         let zip_code_key = "zip_code";
         let authenticated_key = "authenticated";
@@ -401,7 +401,7 @@ mod tests {
 
     #[rstest]
     fn test_push_to_obj_with_path_construction(test_json: String) {
-        let mut editor = JsonEditor::new(&test_json);
+        let mut editor = JsonEditor::new(&test_json).unwrap();
         let new_path = "profile/some/new/path";
         let zip_code_key = "zip_code";
         let authenticated_key = "authenticated";
@@ -439,7 +439,7 @@ mod tests {
 
     #[rstest]
     fn test_push_to_obj_absent_path(test_json: String) {
-        let mut editor = JsonEditor::new(&test_json);
+        let mut editor = JsonEditor::new(&test_json).unwrap();
         let new_path = "/stuff/other";
         let zip_code_key = "zip_code";
         let authenticated_key = "authenticated";
