@@ -59,11 +59,12 @@ impl CurieFormatRule {
 
     fn write_report(cursor: &mut JsonCursor) -> ReportSpecs {
         cursor.set_anchor();
-        let (curie_start, curie_end) = cursor.span().expect("Should have found span");
+        let (curie_start, curie_end) = cursor.down("id").span().expect("Should have found span");
+        cursor.up();
 
         let (context_span_start, context_span_end) =
             cursor.up().span().expect("Should have found span");
-        println!("{}..{}", context_span_start, context_span_end);
+
         cursor.up().up();
         if let Some(val) = cursor.current_value()
             && val.as_object().is_some()
@@ -95,7 +96,10 @@ impl CurieFormatRule {
             code: Some(Self::RULE_ID.to_string()),
             message: "CURIE formatted incorrectly".to_string(),
             labels,
-            notes: Vec::new(),
+            notes: vec![
+                "Note: All CURIE IDs need to follow the format: ^[A-Z][A-Z0-9_]+:[A-Za-z0-9_]+$"
+                    .to_string(),
+            ],
         };
 
         ReportSpecs::new(diagnostic_spec)
