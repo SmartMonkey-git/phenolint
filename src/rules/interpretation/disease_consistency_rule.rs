@@ -3,7 +3,7 @@ use crate::diagnostics::specs::{DiagnosticSpec, LabelSpecs};
 use crate::diagnostics::{LintFinding, LintReport, ReportSpecs};
 use crate::enums::Patch;
 use crate::error::RuleInitError;
-use crate::json::{JsonCursor, Pointer};
+use crate::json::{PhenopacketCursor, Pointer};
 use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::{FromContext, LintRule, RuleCheck};
@@ -46,7 +46,8 @@ impl FromContext for DiseaseConsistencyRule {
 
 impl RuleCheck for DiseaseConsistencyRule {
     fn check(&self, phenostr: &str, report: &mut LintReport) {
-        let mut cursor = JsonCursor::new(phenostr).expect("Phenopacket is not a valid json");
+        let mut cursor =
+            PhenopacketCursor::new(&phenostr).expect("Phenopacket is not a valid json");
 
         if !cursor.down("interpretations").is_valid_position() {
             return;
@@ -107,7 +108,7 @@ impl RuleCheck for DiseaseConsistencyRule {
 }
 
 impl DiseaseConsistencyRule {
-    fn write_report(cursor: &mut JsonCursor) -> ReportSpecs {
+    fn write_report(cursor: &mut PhenopacketCursor) -> ReportSpecs {
         cursor.push_anchor();
         let (inter_disease_start, inter_disease_end) = cursor.span().expect("Should have a span");
 
@@ -226,6 +227,8 @@ mod tests {
             interpretations: vec![interpretation],
             ..Default::default()
         };
+
+        PhenopacketCursor::new(&phenopacket);
         let mut report = LintReport::default();
 
         DiseaseConsistencyRule.check(

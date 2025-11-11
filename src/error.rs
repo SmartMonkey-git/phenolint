@@ -52,7 +52,7 @@ pub enum LinterError {
 #[derive(Error, Debug)]
 pub enum InstantiationError {
     #[error(transparent)]
-    IO(std::io::Error),
+    IO(#[from] std::io::Error),
     #[error(transparent)]
     Config(#[from] ConfigError),
     #[error(transparent)]

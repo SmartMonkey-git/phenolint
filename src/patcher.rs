@@ -1,7 +1,7 @@
 use crate::enums::Patch;
 use crate::error::PatchingError;
-use crate::json::JsonEditor;
-use crate::json::json_cursor::JsonCursor;
+use crate::json::PhenopacketEditor;
+use crate::json::phenopacket_cursor::PhenopacketCursor;
 use serde_json::json;
 use std::cmp::Ordering;
 
@@ -9,7 +9,7 @@ pub struct Patcher;
 
 impl Patcher {
     pub fn patch(&self, phenostr: &str, patches: Vec<&Patch>) -> Result<String, PatchingError> {
-        let mut cursor = JsonCursor::new(phenostr)?;
+        let mut cursor = PhenopacketCursor::new(&phenostr)?;
 
         let patches = Self::resolve_patches(patches, &mut cursor)?;
         Self::apply(cursor, patches)
@@ -50,7 +50,7 @@ impl Patcher {
     /// 3. All patches are sorted for safe application order
     fn resolve_patches(
         patches: Vec<&Patch>,
-        cursor: &mut JsonCursor,
+        cursor: &mut PhenopacketCursor,
     ) -> Result<Vec<Patch>, PatchingError> {
         let mut resolved_patches: Vec<Patch> = patches
             .into_iter()
@@ -110,8 +110,8 @@ impl Patcher {
         });
     }
 
-    fn apply(cursor: JsonCursor, patches: Vec<Patch>) -> Result<String, PatchingError> {
-        let mut editor = JsonEditor::from(cursor);
+    fn apply(cursor: PhenopacketCursor, patches: Vec<Patch>) -> Result<String, PatchingError> {
+        let mut editor = PhenopacketEditor::from(cursor);
 
         for patch in patches {
             match patch {

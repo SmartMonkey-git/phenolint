@@ -21,6 +21,7 @@ phenolint-macros = { path = "./phenolint_marcos" }
 once_cell = "1.21.3"
 log = "0.4.28"
 codespan-reporting = "0.13.1"
+prost = "0.13.5"
 
 [dev-dependencies]
 rstest = "0.26.1"

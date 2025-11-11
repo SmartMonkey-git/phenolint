@@ -1,7 +1,7 @@
 use crate::diagnostics::specs::{DiagnosticSpec, LabelSpecs};
 use crate::diagnostics::{LintFinding, LintReport, ReportSpecs};
 use crate::error::RuleInitError;
-use crate::json::JsonCursor;
+use crate::json::PhenopacketCursor;
 use crate::linter_context::LinterContext;
 use crate::register_rule;
 use crate::rules::rule_registry::RuleRegistration;
@@ -25,14 +25,14 @@ impl FromContext for CurieFormatRule {
 impl RuleCheck for CurieFormatRule {
     fn check(&self, phenostr: &str, report: &mut LintReport) {
         let regex = Regex::new("^[A-Z][A-Z0-9_]+:[A-Za-z0-9_]+$").unwrap();
-        let cursor = JsonCursor::new(phenostr).expect("Phenopacket is not a valid json");
+        let cursor = PhenopacketCursor::new(&phenostr).expect("Phenopacket is not a valid json");
 
         for (pointer, value) in cursor.iter_with_paths() {
             if let Some(ont_class) = Self::get_ontology_class_from_value(value)
                 && !regex.is_match(&ont_class.id)
             {
                 let mut temp_cursor =
-                    JsonCursor::new(phenostr).expect("Phenopacket is not a valid json");
+                    PhenopacketCursor::new(&phenostr).expect("Phenopacket is not a valid json");
                 report.push_finding(LintFinding::new(
                     Self::RULE_ID,
                     //TODO: no clone here
@@ -57,7 +57,7 @@ impl CurieFormatRule {
         }
     }
 
-    fn write_report(cursor: &mut JsonCursor) -> ReportSpecs {
+    fn write_report(cursor: &mut PhenopacketCursor) -> ReportSpecs {
         cursor.push_anchor();
         let (curie_start, curie_end) = cursor.down("id").span().expect("Should have found span");
         cursor.up();
@@ -131,10 +131,12 @@ mod tests {
             }],
             ..Default::default()
         };
+
         CurieFormatRule.check(
             serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
             &mut report,
         );
+
         assert!(report.violations().is_empty());
     }
 

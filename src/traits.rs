@@ -1,6 +1,8 @@
 use crate::diagnostics::report::LintReport;
 use crate::error::{LintResult, RuleInitError};
 use crate::linter_context::LinterContext;
+use phenopackets::schema::v2::Phenopacket;
+use std::borrow::Cow;
 
 pub trait LintRule: RuleCheck + FromContext {
     const RULE_ID: &'static str;
@@ -16,4 +18,33 @@ pub trait RuleCheck {
 
 pub trait Lint<T> {
     fn lint(&mut self, input: T, patch: bool, quiet: bool) -> LintResult;
+}
+
+pub trait IntoBytes {
+    fn into_bytes(self) -> Cow<'static, [u8]>;
+}
+
+impl IntoBytes for &str {
+    fn into_bytes(self) -> Cow<'static, [u8]> {
+        Cow::Owned(self.as_bytes().to_vec())
+    }
+}
+
+impl IntoBytes for String {
+    fn into_bytes(self) -> Cow<'static, [u8]> {
+        Cow::Owned(self.into_bytes())
+    }
+}
+
+impl IntoBytes for &[u8] {
+    fn into_bytes(self) -> Cow<'static, [u8]> {
+        Cow::Owned(self.to_vec())
+    }
+}
+
+impl IntoBytes for Phenopacket {
+    fn into_bytes(self) -> Cow<'static, [u8]> {
+        let bytes = serde_json::to_vec(&self).expect("Serializing Phenopacket failed");
+        Cow::Owned(serde_json::from_slice(&bytes).expect("Serializing Phenopacket failed"))
+    }
 }

@@ -1,17 +1,22 @@
 #![allow(dead_code)]
+use crate::IntoBytes;
 use crate::error::InstantiationError;
 use crate::json::error::JsonEditError;
-use crate::json::{JsonCursor, Pointer};
+use crate::json::{PhenopacketCursor, Pointer};
 use serde_json::Value;
 use std::ops::{Deref, DerefMut};
 
-pub(crate) struct JsonEditor {
-    cursor: JsonCursor,
+pub(crate) struct PhenopacketEditor {
+    cursor: PhenopacketCursor,
 }
 
-impl JsonEditor {
-    pub fn new(json: &str) -> Result<Self, InstantiationError> {
-        let cursor = JsonCursor::new(json)?;
+impl PhenopacketEditor {
+    pub fn new<R>(json: &R) -> Result<Self, InstantiationError>
+    where
+        R: IntoBytes,
+        R: Clone,
+    {
+        let cursor = PhenopacketCursor::new(json)?;
         Ok(Self { cursor })
     }
 
@@ -218,21 +223,21 @@ impl JsonEditor {
     }
 }
 
-impl Deref for JsonEditor {
-    type Target = JsonCursor;
+impl Deref for PhenopacketEditor {
+    type Target = PhenopacketCursor;
 
     fn deref(&self) -> &Self::Target {
         &self.cursor
     }
 }
 
-impl From<JsonCursor> for JsonEditor {
-    fn from(cursor: JsonCursor) -> Self {
-        JsonEditor { cursor }
+impl From<PhenopacketCursor> for PhenopacketEditor {
+    fn from(cursor: PhenopacketCursor) -> Self {
+        PhenopacketEditor { cursor }
     }
 }
 
-impl DerefMut for JsonEditor {
+impl DerefMut for PhenopacketEditor {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.cursor
     }
@@ -276,7 +281,7 @@ mod tests {
         #[case] pointer: Pointer,
         #[case] expected_val: Value,
     ) {
-        let mut editor = JsonEditor::new(&test_json).unwrap();
+        let mut editor = PhenopacketEditor::new(&test_json).unwrap();
 
         editor.point_to(&pointer);
         editor.set_value(new_value).unwrap();
@@ -285,7 +290,7 @@ mod tests {
 
     #[rstest]
     fn test_delete_from_obj(test_json: String) {
-        let mut editor = JsonEditor::new(&test_json).unwrap();
+        let mut editor = PhenopacketEditor::new(&test_json).unwrap();
         let to_delete = "profile";
 
         editor.down(to_delete);
@@ -315,7 +320,7 @@ mod tests {
             .as_str()
             .unwrap()
             .to_string();
-        let mut editor = JsonEditor::new(&test_json).unwrap();
+        let mut editor = PhenopacketEditor::new(&test_json).unwrap();
 
         let to_delete = "roles/0";
         editor.down(to_delete);
@@ -329,7 +334,7 @@ mod tests {
 
     #[rstest]
     fn test_push_to_root(test_json: String) {
-        let mut editor = JsonEditor::new(&test_json).unwrap();
+        let mut editor = PhenopacketEditor::new(&test_json).unwrap();
 
         let zip_code_key = "zip_code";
         let authenticated_key = "authenticated";
@@ -365,7 +370,7 @@ mod tests {
 
     #[rstest]
     fn test_push_to_obj(test_json: String) {
-        let mut editor = JsonEditor::new(&test_json).unwrap();
+        let mut editor = PhenopacketEditor::new(&test_json).unwrap();
 
         let zip_code_key = "zip_code";
         let authenticated_key = "authenticated";
@@ -403,7 +408,7 @@ mod tests {
 
     #[rstest]
     fn test_push_to_obj_with_path_construction(test_json: String) {
-        let mut editor = JsonEditor::new(&test_json).unwrap();
+        let mut editor = PhenopacketEditor::new(&test_json).unwrap();
         let new_path = "profile/some/new/path";
         let zip_code_key = "zip_code";
         let authenticated_key = "authenticated";
@@ -441,7 +446,7 @@ mod tests {
 
     #[rstest]
     fn test_push_to_obj_absent_path(test_json: String) {
-        let mut editor = JsonEditor::new(&test_json).unwrap();
+        let mut editor = PhenopacketEditor::new(&test_json).unwrap();
         let new_path = "/stuff/other";
         let zip_code_key = "zip_code";
         let authenticated_key = "authenticated";
