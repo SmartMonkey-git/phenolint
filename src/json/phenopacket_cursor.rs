@@ -8,51 +8,51 @@ use serde_json::Value;
 use std::collections::VecDeque;
 use std::io::{Cursor, Read};
 
-/// A navigational cursor for traversing and manipulating a JSON value tree.
+/// A navigational cursor for traversing and manipulating a Phenopacket (represented as a JSON value tree).
 ///
-/// `JsonCursor` wraps a [`serde_json::Value`] and maintains a [`Pointer`]
+/// `PhenopacketCursor` wraps a [`serde_json::Value`] and maintains a [`Pointer`]
 /// (similar to a JSON Pointer as defined in [RFC 6901](https://datatracker.ietf.org/doc/html/rfc6901))
-/// that tracks the cursor’s current position within the JSON structure.
+/// that tracks the cursor’s current position within the Phenopacket structure.
 ///
 /// This is useful for iterative traversal, targeted lookups, or maintaining state
-/// as you move around in a nested JSON document.
+/// as you move around in a nested Phenopacket document.
 #[derive(Debug)]
 pub(crate) struct PhenopacketCursor {
-    json: Value,
+    phenopacket: Value,
     spans: SpannedValue,
     pointer: Pointer,
     anchor: Vec<Pointer>,
 }
 
 impl PhenopacketCursor {
-    /// Creates a new cursor positioned at the root of the provided JSON value.
+    /// Creates a new cursor positioned at the root of the provided Phenopacket value.
     ///
     /// # Arguments
-    /// * `json` - The JSON value to navigate.
+    /// * `phenopacket` - The Phenopacket (as a JSON value) to navigate.
     ///
     /// # Returns
     /// A new `PhenopacketCursor` with an empty pointer (root position).
-    pub fn new<R>(json: &R) -> Result<PhenopacketCursor, InstantiationError>
+    pub fn new<R>(phenopacket: &R) -> Result<PhenopacketCursor, InstantiationError>
     where
         R: IntoBytes,
         R: Clone,
     {
         // Read the input once into a string
-        let bytes = json.clone().into_bytes();
+        let bytes = phenopacket.clone().into_bytes();
         let mut reader = Cursor::new(bytes);
-        let mut json_string = String::new();
-        reader.read_to_string(&mut json_string)?;
+        let mut phenopacket_string = String::new();
+        reader.read_to_string(&mut phenopacket_string)?;
 
         Ok(Self {
-            json: serde_json::from_str(&json_string)?,
-            spans: json_spanned_value::from_str(&json_string)?,
+            phenopacket: serde_json::from_str(&phenopacket_string)?,
+            spans: json_spanned_value::from_str(&phenopacket_string)?,
             pointer: Pointer::new(""),
             anchor: vec![],
         })
     }
 
-    pub(super) fn json_mut(&mut self) -> &mut Value {
-        &mut self.json
+    pub(super) fn phenopacket_mut(&mut self) -> &mut Value {
+        &mut self.phenopacket
     }
 
     /// Returns a reference to the cursor's internal pointer.
@@ -63,8 +63,8 @@ impl PhenopacketCursor {
         &self.pointer
     }
 
-    pub fn json(&self) -> &Value {
-        &self.json
+    pub fn phenopacket(&self) -> &Value {
+        &self.phenopacket
     }
 
     /// Moves the cursor directly to a new location represented by a [`Pointer`].
@@ -78,7 +78,7 @@ impl PhenopacketCursor {
         self
     }
 
-    /// Searches for the first occurrence of a key within the JSON tree
+    /// Searches for the first occurrence of a key within the Phenopacket tree
     /// and sets the pointer to that location
     pub fn jump_to(&mut self, target_key: &str) -> &mut Self {
         match self.locate(target_key) {
@@ -90,7 +90,7 @@ impl PhenopacketCursor {
         }
     }
 
-    /// Searches for the first occurrence of a key within the JSON tree,
+    /// Searches for the first occurrence of a key within the Phenopacket tree,
     /// returning its corresponding pointer if found.
     ///
     /// This method performs a breadth-first traversal starting from the
@@ -108,7 +108,7 @@ impl PhenopacketCursor {
             .find(|pointer| pointer.get_tip() == target_key)
     }
 
-    /// Finds all occurrences of a given key within the JSON structure.
+    /// Finds all occurrences of a given key within the Phenopacket structure.
     ///
     /// This function performs a breadth-first search starting from the current
     /// position and collects all matching paths.
@@ -129,7 +129,7 @@ impl PhenopacketCursor {
         result
     }
 
-    /// Moves the cursor one step deeper into the JSON tree.
+    /// Moves the cursor one step deeper into the Phenopacket tree.
     ///
     /// This appends a segment to the internal pointer, typically representing
     /// a key (for objects) or index (for arrays).
@@ -144,7 +144,7 @@ impl PhenopacketCursor {
         self
     }
 
-    /// Moves the cursor up one level in the JSON tree.
+    /// Moves the cursor up one level in the Phenopacket tree.
     ///
     /// Removes the last segment from the current pointer.
     ///
@@ -155,10 +155,10 @@ impl PhenopacketCursor {
         self
     }
 
-    /// Moves the cursor back to the root of the JSON value.
+    /// Moves the cursor back to the root of the Phenopacket value.
     ///
     /// This resets the internal pointer to the root position (`""`),
-    /// effectively bringing the cursor to the top-level JSON node.
+    /// effectively bringing the cursor to the top-level Phenopacket node.
     ///
     /// # Returns
     /// A mutable reference to the cursor (for chaining).
@@ -167,7 +167,7 @@ impl PhenopacketCursor {
         self
     }
 
-    /// Checks if the cursor is currently at the root of the JSON value.
+    /// Checks if the cursor is currently at the root of the Phenopacket value.
     pub fn is_root(&self) -> bool {
         self.pointer.is_root()
     }
@@ -197,17 +197,17 @@ impl PhenopacketCursor {
         }
     }
 
-    /// Returns a reference to the JSON value at the cursor's current position.
+    /// Returns a reference to the Phenopacket value at the cursor's current position.
     ///
     /// # Returns
     /// * `Some(&Value)` if the pointer resolves to a valid location.
     /// * `None` if the pointer path does not exist.
     pub fn current_value(&self) -> Option<&Value> {
-        self.json.pointer(self.pointer.position())
+        self.phenopacket.pointer(self.pointer.position())
     }
 
     /// Checks whether the cursor is currently pointing to a valid position
-    /// in the JSON tree.
+    /// in the Phenopacket tree.
     ///
     /// # Returns
     /// `true` if the current pointer resolves to an existing value, `false` otherwise.
@@ -222,7 +222,7 @@ impl PhenopacketCursor {
     }
     /// Sets an anchor at the cursor's current position.
     ///
-    /// The anchor can be used to mark a specific location in the JSON tree
+    /// The anchor can be used to mark a specific location in the Phenopacket tree
     /// and return to it later using [`goto_anchor`](Self::pop_anchor).
     ///
     /// # Returns
@@ -300,7 +300,7 @@ impl PhenopacketCursor {
             .collect()
     }
 
-    /// Iterates over all JSON sub-values and their corresponding pointers
+    /// Iterates over all Phenopacket sub-values and their corresponding pointers
     /// starting from the cursor’s current position.
     ///
     /// This performs a breadth-first traversal, yielding each value along with
@@ -310,7 +310,7 @@ impl PhenopacketCursor {
     /// An iterator over `(Pointer, &Value)` pairs.
     pub fn iter_with_paths(&self) -> impl Iterator<Item = (Pointer, &Value)> {
         let mut queue = VecDeque::new();
-        if let Some(current_value) = self.json.pointer(self.pointer.position()) {
+        if let Some(current_value) = self.phenopacket.pointer(self.pointer.position()) {
             queue.push_back((current_value, self.pointer.clone()));
         }
 
@@ -352,8 +352,8 @@ mod tests {
     use rstest::rstest;
     use serde_json::json;
 
-    fn make_sample_json() -> String {
-        let json = json!({
+    fn make_sample_phenopacket() -> String {
+        let phenopacket_val = json!({
             "user": {
                 "name": "Alice",
                 "age": 30,
@@ -370,12 +370,12 @@ mod tests {
             "score": 99.5
         });
 
-        serde_json::to_string_pretty(&json).unwrap()
+        serde_json::to_string_pretty(&phenopacket_val).unwrap()
     }
 
     #[rstest]
     fn test_new_starts_at_root() {
-        let value = make_sample_json();
+        let value = make_sample_phenopacket();
         let cursor = PhenopacketCursor::new(&value).unwrap();
         assert_eq!(cursor.pointer().position(), "");
         assert!(cursor.current_value().is_some());
@@ -383,7 +383,7 @@ mod tests {
 
     #[rstest]
     fn test_jump_replaces_pointer() {
-        let mut cursor = PhenopacketCursor::new(&make_sample_json()).unwrap();
+        let mut cursor = PhenopacketCursor::new(&make_sample_phenopacket()).unwrap();
         let new_ptr = Pointer::new("/user/name");
         cursor.point_to(&new_ptr);
         assert_eq!(cursor.pointer().position(), new_ptr.position());
@@ -392,7 +392,7 @@ mod tests {
 
     #[rstest]
     fn test_step_and_up_navigation() {
-        let mut cursor = PhenopacketCursor::new(&make_sample_json()).unwrap();
+        let mut cursor = PhenopacketCursor::new(&make_sample_phenopacket()).unwrap();
 
         cursor.down("user").down("address").down("city");
         assert_eq!(cursor.pointer().position(), "/user/address/city");
@@ -407,14 +407,14 @@ mod tests {
 
     #[rstest]
     fn test_find_position_finds_first_key() {
-        let mut cursor = PhenopacketCursor::new(&make_sample_json()).unwrap();
+        let mut cursor = PhenopacketCursor::new(&make_sample_phenopacket()).unwrap();
         let ptr = cursor.locate("city").expect("city should exist");
         assert_eq!(ptr.position(), "/user/address/city");
     }
 
     #[rstest]
     fn test_find_positions_finds_all_matches() {
-        let mut cursor = PhenopacketCursor::new(&make_sample_json()).unwrap();
+        let mut cursor = PhenopacketCursor::new(&make_sample_phenopacket()).unwrap();
         let positions = cursor.locate_all("name");
         let paths: Vec<_> = positions.iter().map(|p| p.position()).collect();
 
@@ -426,7 +426,7 @@ mod tests {
 
     #[rstest]
     fn test_iter_with_paths_yields_all_nodes() {
-        let cursor = PhenopacketCursor::new(&make_sample_json()).unwrap();
+        let cursor = PhenopacketCursor::new(&make_sample_phenopacket()).unwrap();
         let all: Vec<_> = cursor.iter_with_paths().collect();
 
         assert_eq!(all.first().unwrap().0.position(), "");
@@ -439,18 +439,20 @@ mod tests {
 
     #[rstest]
     fn test_current_value_returns_none_for_invalid_pointer() {
-        let mut cursor = PhenopacketCursor::new(&make_sample_json()).unwrap();
+        let mut cursor = PhenopacketCursor::new(&make_sample_phenopacket()).unwrap();
         cursor.point_to(&Pointer::new("/nonexistent/path"));
         assert_eq!(cursor.current_value(), None);
     }
 
     #[rstest]
     fn test_complex_iteration_order_stable() {
-        let json = json!({
+        let phenopacket_val = json!({
             "a": {"b": {"c": 1}},
             "arr": [10, {"d": 2}]
         });
-        let cursor = PhenopacketCursor::new(&serde_json::to_string_pretty(&json).unwrap()).unwrap();
+        let cursor =
+            PhenopacketCursor::new(&serde_json::to_string_pretty(&phenopacket_val).unwrap())
+                .unwrap();
         let collected: Vec<String> = cursor
             .iter_with_paths()
             .map(|(p, _)| p.position().to_string())
