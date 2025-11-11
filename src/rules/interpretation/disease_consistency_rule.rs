@@ -45,10 +45,7 @@ impl FromContext for DiseaseConsistencyRule {
 }
 
 impl RuleCheck for DiseaseConsistencyRule {
-    fn check(&self, phenostr: &str, report: &mut LintReport) {
-        let mut cursor =
-            PhenopacketCursor::new(&phenostr).expect("Phenopacket is not a valid json");
-
+    fn check(&self, cursor: &mut PhenopacketCursor, report: &mut LintReport) {
         if !cursor.down("interpretations").is_valid_position() {
             return;
         }
@@ -88,7 +85,7 @@ impl RuleCheck for DiseaseConsistencyRule {
                 cursor.up();
                 findings.push(LintFinding::new(
                     Self::RULE_ID,
-                    Self::write_report(&mut cursor),
+                    Self::write_report(cursor),
                     Some(Patch::Duplicate {
                         from: cursor.pointer().to_owned(),
                         to: Pointer::new(&format!(
@@ -209,7 +206,7 @@ mod tests {
         let mut report = LintReport::default();
 
         DiseaseConsistencyRule.check(
-            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &mut PhenopacketCursor::new(&phenopacket).unwrap(),
             &mut report,
         );
 
@@ -232,7 +229,7 @@ mod tests {
         let mut report = LintReport::default();
 
         DiseaseConsistencyRule.check(
-            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &mut PhenopacketCursor::new(&phenopacket).unwrap(),
             &mut report,
         );
 
@@ -255,7 +252,7 @@ mod tests {
         let mut report = LintReport::default();
 
         DiseaseConsistencyRule.check(
-            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &mut PhenopacketCursor::new(&phenopacket).unwrap(),
             &mut report,
         );
 
@@ -275,7 +272,7 @@ mod tests {
             finding,
             DiseaseConsistencyRule::RULE_ID,
             "Disease Inconsistency",
-            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &phenopacket,
         )
     }
 
@@ -301,7 +298,7 @@ mod tests {
         let mut report = LintReport::default();
 
         DiseaseConsistencyRule.check(
-            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &mut PhenopacketCursor::new(&phenopacket).unwrap(),
             &mut report,
         );
 
@@ -331,7 +328,7 @@ mod tests {
         let mut report = LintReport::default();
 
         DiseaseConsistencyRule.check(
-            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &mut PhenopacketCursor::new(&phenopacket).unwrap(),
             &mut report,
         );
 
@@ -352,7 +349,7 @@ mod tests {
             finding,
             DiseaseConsistencyRule::RULE_ID,
             "Disease Inconsistency",
-            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &phenopacket,
         )
     }
 
@@ -374,7 +371,7 @@ mod tests {
         let mut report = LintReport::default();
 
         DiseaseConsistencyRule.check(
-            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &mut PhenopacketCursor::new(&phenopacket).unwrap(),
             &mut report,
         );
 
@@ -402,7 +399,7 @@ mod tests {
         let mut report = LintReport::default();
 
         DiseaseConsistencyRule.check(
-            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &mut PhenopacketCursor::new(&phenopacket).unwrap(),
             &mut report,
         );
 
@@ -427,7 +424,7 @@ mod tests {
         let mut report = LintReport::default();
 
         DiseaseConsistencyRule.check(
-            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &mut PhenopacketCursor::new(&phenopacket).unwrap(),
             &mut report,
         );
         let violations = report.violations();
@@ -446,7 +443,7 @@ mod tests {
             finding,
             DiseaseConsistencyRule::RULE_ID,
             "Disease Inconsistency",
-            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &phenopacket,
         )
     }
 
@@ -470,7 +467,7 @@ mod tests {
         let mut report = LintReport::default();
 
         DiseaseConsistencyRule.check(
-            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &mut PhenopacketCursor::new(&phenopacket).unwrap(),
             &mut report,
         );
 
@@ -488,7 +485,7 @@ mod tests {
             finding,
             DiseaseConsistencyRule::RULE_ID,
             "Disease Inconsistency",
-            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &phenopacket,
         )
     }
 
@@ -510,7 +507,7 @@ mod tests {
         let mut report = LintReport::default();
 
         DiseaseConsistencyRule.check(
-            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &mut PhenopacketCursor::new(&phenopacket).unwrap(),
             &mut report,
         );
 

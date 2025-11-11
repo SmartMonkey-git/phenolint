@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 #![allow(unused)]
+use crate::IntoBytes;
 use crate::config::LinterConfig;
 use crate::config::config_loader::ConfigLoader;
 use crate::diagnostics::{LintReport, ReportParser};
@@ -7,7 +8,7 @@ use crate::error::{InstantiationError, LintResult, LinterError, PatchingError};
 use crate::linter_policy::LinterPolicy;
 use crate::patcher::Patcher;
 use crate::rules::rule_registry::RuleRegistration;
-use crate::traits::{Lint, RuleCheck};
+use crate::traits::RuleCheck;
 use log::warn;
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::PhenotypicFeature;
@@ -33,11 +34,14 @@ impl Phenolinter {
             patcher: Patcher,
         }
     }
-}
 
-impl Lint<&str> for Phenolinter {
-    fn lint(&mut self, phenostr: &str, patch: bool, quite: bool) -> LintResult {
-        let mut report = self.policy.apply(phenostr.as_ref());
+    pub fn lint<T: IntoBytes + Clone>(
+        &mut self,
+        phenostr: &T,
+        patch: bool,
+        quite: bool,
+    ) -> LintResult {
+        let mut report = self.policy.apply(phenostr);
 
         if !quite {
             for info in report.findings() {
@@ -60,28 +64,6 @@ impl Lint<&str> for Phenolinter {
         }
 
         LintResult::ok(report)
-    }
-}
-
-impl Lint<PathBuf> for Phenolinter {
-    fn lint(&'_ mut self, phenopath: PathBuf, patch: bool, quite: bool) -> LintResult {
-        let phenobytes = std::fs::read(phenopath);
-
-        match phenobytes {
-            Ok(phenobytes) => self.lint(phenobytes.as_slice(), patch, quite),
-            Err(err) => LintResult::err(LinterError::IoError(err)),
-        }
-    }
-}
-
-impl Lint<&[u8]> for Phenolinter {
-    fn lint(&mut self, phenobytes: &[u8], patch: bool, quite: bool) -> LintResult {
-        let parse_res = serde_json::to_string_pretty(phenobytes);
-
-        match parse_res {
-            Ok(phenostr) => self.lint(phenostr.as_str(), patch, quite),
-            Err(err) => LintResult::err(LinterError::JsonError(err)),
-        }
     }
 }
 

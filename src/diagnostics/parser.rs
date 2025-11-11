@@ -1,3 +1,4 @@
+use crate::IntoBytes;
 use crate::diagnostics::error::ReportParseError;
 use crate::diagnostics::specs::ReportSpecs;
 use codespan_reporting::diagnostic::{Diagnostic, Label, LabelStyle, Severity};
@@ -10,9 +11,14 @@ pub struct ReportParser;
 
 impl ReportParser {
     #[allow(dead_code)]
-    pub fn parse(report: &ReportSpecs, phenostr: &str) -> Result<String, ReportParseError> {
+    pub fn parse<T: IntoBytes + Clone>(
+        report: &ReportSpecs,
+        phenostr: &T,
+    ) -> Result<String, ReportParseError> {
         let mut files = SimpleFiles::new();
-        let file_id = files.add(1, phenostr);
+        let cow = phenostr.clone().into_bytes();
+
+        let file_id = files.add(1, String::from_utf8_lossy(cow.as_ref()));
 
         let codespan_diagnostic = Self::inner_parse(report, file_id);
 
@@ -22,9 +28,14 @@ impl ReportParser {
             .map_err(ReportParseError::StringParsing)
     }
 
-    pub fn emit(report: &ReportSpecs, phenostr: &str) -> Result<(), ReportParseError> {
+    pub fn emit<T: IntoBytes + Clone>(
+        report: &ReportSpecs,
+        phenostr: &T,
+    ) -> Result<(), ReportParseError> {
         let mut files = SimpleFiles::new();
-        let file_id = files.add(1, phenostr);
+        let cow = phenostr.clone().into_bytes();
+
+        let file_id = files.add(1, String::from_utf8_lossy(cow.as_ref()));
 
         let codespan_diagnostic = Self::inner_parse(report, file_id);
 

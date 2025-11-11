@@ -1,5 +1,6 @@
 use crate::diagnostics::report::LintReport;
 use crate::error::{LintResult, RuleInitError};
+use crate::json::PhenopacketCursor;
 use crate::linter_context::LinterContext;
 use phenopackets::schema::v2::Phenopacket;
 use std::borrow::Cow;
@@ -13,11 +14,7 @@ pub trait FromContext {
 }
 
 pub trait RuleCheck {
-    fn check(&self, phenostr: &str, report: &mut LintReport);
-}
-
-pub trait Lint<T> {
-    fn lint(&mut self, input: T, patch: bool, quiet: bool) -> LintResult;
+    fn check(&self, phenostr: &mut PhenopacketCursor, report: &mut LintReport);
 }
 
 pub trait IntoBytes {
@@ -46,5 +43,12 @@ impl IntoBytes for Phenopacket {
     fn into_bytes(self) -> Cow<'static, [u8]> {
         let bytes = serde_json::to_vec(&self).expect("Serializing Phenopacket failed");
         Cow::Owned(serde_json::from_slice(&bytes).expect("Serializing Phenopacket failed"))
+    }
+}
+
+impl IntoBytes for serde_json::Value {
+    fn into_bytes(self) -> Cow<'static, [u8]> {
+        let bytes = serde_json::to_vec(&self).expect("Serializing serde_json::Value failed");
+        Cow::Owned(bytes)
     }
 }

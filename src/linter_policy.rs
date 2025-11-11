@@ -1,7 +1,9 @@
+use crate::IntoBytes;
 use crate::config::LinterConfig;
 use crate::config::config_loader::ConfigLoader;
 use crate::diagnostics::LintReport;
 use crate::error::{InstantiationError, RuleInitError};
+use crate::json::PhenopacketCursor;
 use crate::linter_context::LinterContext;
 use crate::rules::rule_registry::RuleRegistration;
 use crate::traits::RuleCheck;
@@ -19,11 +21,12 @@ impl LinterPolicy {
     pub(crate) fn new(rules: Vec<Box<dyn RuleCheck>>) -> LinterPolicy {
         LinterPolicy { rules }
     }
-    pub fn apply(&self, phenobytes: &str) -> LintReport {
+    pub fn apply<T: IntoBytes + Clone>(&self, phenobytes: &T) -> LintReport {
         let mut report = LintReport::default();
-
+        // TODO: Kill expect
+        let mut cursor = PhenopacketCursor::new(phenobytes).expect("");
         for rule in &self.rules {
-            rule.check(phenobytes, &mut report)
+            rule.check(&mut cursor, &mut report)
         }
 
         report

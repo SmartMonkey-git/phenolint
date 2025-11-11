@@ -23,20 +23,18 @@ impl FromContext for CurieFormatRule {
 }
 
 impl RuleCheck for CurieFormatRule {
-    fn check(&self, phenostr: &str, report: &mut LintReport) {
+    fn check(&self, cursor: &mut PhenopacketCursor, report: &mut LintReport) {
         let regex = Regex::new("^[A-Z][A-Z0-9_]+:[A-Za-z0-9_]+$").unwrap();
-        let cursor = PhenopacketCursor::new(&phenostr).expect("Phenopacket is not a valid json");
 
         for (pointer, value) in cursor.iter_with_paths() {
             if let Some(ont_class) = Self::get_ontology_class_from_value(value)
                 && !regex.is_match(&ont_class.id)
             {
-                let mut temp_cursor =
-                    PhenopacketCursor::new(&phenostr).expect("Phenopacket is not a valid json");
+                //let mut temp_cursor = cursor.clone();
                 report.push_finding(LintFinding::new(
                     Self::RULE_ID,
                     //TODO: no clone here
-                    Self::write_report(temp_cursor.point_to(&pointer)),
+                    Self::write_report(cursor.clone().point_to(&pointer)),
                     None,
                 ));
             }
@@ -133,7 +131,7 @@ mod tests {
         };
 
         CurieFormatRule.check(
-            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &mut PhenopacketCursor::new(&phenopacket).unwrap(),
             &mut report,
         );
 
@@ -160,7 +158,7 @@ mod tests {
         };
 
         CurieFormatRule.check(
-            serde_json::to_string_pretty(&phenopacket).unwrap().as_str(),
+            &mut PhenopacketCursor::new(&phenopacket).unwrap(),
             &mut report,
         );
         assert!(!report.violations().is_empty());

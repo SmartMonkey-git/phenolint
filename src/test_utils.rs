@@ -1,3 +1,4 @@
+use crate::IntoBytes;
 use crate::diagnostics::{LintFinding, ReportParser};
 use once_cell::sync::Lazy;
 use ontolius::io::OntologyLoaderBuilder;
@@ -19,11 +20,11 @@ fn init_ontolius(hpo_path: PathBuf) -> Arc<FullCsrOntology> {
     Arc::new(ontolius)
 }
 
-pub(crate) fn assert_report_message(
+pub(crate) fn assert_report_message<T: IntoBytes + Clone>(
     finding: &LintFinding,
     rule_id: &str,
     message_snippet: &str,
-    phenostr: &str,
+    phenostr: &T,
 ) {
     let owned_report = finding.violation().report();
     assert!(

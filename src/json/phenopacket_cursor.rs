@@ -17,11 +17,20 @@ use std::io::{Cursor, Read};
 /// This is useful for iterative traversal, targeted lookups, or maintaining state
 /// as you move around in a nested Phenopacket document.
 #[derive(Debug)]
-pub(crate) struct PhenopacketCursor {
+pub struct PhenopacketCursor {
     phenopacket: Value,
     spans: SpannedValue,
     pointer: Pointer,
     anchor: Vec<Pointer>,
+}
+
+impl Clone for PhenopacketCursor {
+    fn clone(&self) -> Self {
+        let mut cursor = PhenopacketCursor::new(&self.phenopacket).unwrap();
+        cursor.pointer = self.pointer.clone();
+        cursor.anchor = self.anchor.clone();
+        cursor
+    }
 }
 
 impl PhenopacketCursor {

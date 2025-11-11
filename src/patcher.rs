@@ -1,3 +1,4 @@
+use crate::IntoBytes;
 use crate::enums::Patch;
 use crate::error::PatchingError;
 use crate::json::PhenopacketEditor;
@@ -8,8 +9,12 @@ use std::cmp::Ordering;
 pub struct Patcher;
 
 impl Patcher {
-    pub fn patch(&self, phenostr: &str, patches: Vec<&Patch>) -> Result<String, PatchingError> {
-        let mut cursor = PhenopacketCursor::new(&phenostr)?;
+    pub fn patch<T: IntoBytes + Clone>(
+        &self,
+        phenostr: &T,
+        patches: Vec<&Patch>,
+    ) -> Result<String, PatchingError> {
+        let mut cursor = PhenopacketCursor::new(phenostr)?;
 
         let patches = Self::resolve_patches(patches, &mut cursor)?;
         Self::apply(cursor, patches)
@@ -429,7 +434,7 @@ mod patcher_tests {
             value: "value".to_string(),
         }];
 
-        let result = patcher.patch(invalid_json, patches.iter().collect());
+        let result = patcher.patch(&invalid_json, patches.iter().collect());
         assert!(result.is_err());
     }
 

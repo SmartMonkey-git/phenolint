@@ -1,4 +1,4 @@
-use phenolint::{Lint, Phenolinter};
+use phenolint::Phenolinter;
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{Diagnosis, Disease, Interpretation, OntologyClass};
 use std::path::PathBuf;
@@ -54,7 +54,7 @@ fn main() {
     ))
     .unwrap();
     let phenostr = serde_json::to_string_pretty(&phenopacket).unwrap();
-    let lint_res = linter.lint(phenostr.as_str(), true, false);
+    let lint_res = linter.lint(&phenostr, true, false);
 
     match lint_res.into_result() {
         Ok(report) => {
