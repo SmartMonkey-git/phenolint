@@ -2,7 +2,7 @@ use crate::json::Pointer;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum JsonEditError {
+pub enum EditError {
     #[error("'{0}' is not implemented yet")]
     NotImplemented(String),
     #[error("Position '{0}' is not valid")]

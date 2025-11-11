@@ -1,5 +1,5 @@
 use crate::diagnostics::LintReport;
-use crate::json::error::JsonEditError;
+use crate::json::error::EditError;
 use config::ConfigError;
 use thiserror::Error;
 
@@ -64,7 +64,7 @@ pub enum PatchingError {
     #[error(transparent)]
     SerdeError(#[from] serde_json::Error),
     #[error(transparent)]
-    JsonEditError(#[from] JsonEditError),
+    JsonEditError(#[from] EditError),
     #[error(transparent)]
     InitError(#[from] InstantiationError),
 }

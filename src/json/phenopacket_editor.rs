@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use crate::IntoBytes;
 use crate::error::InstantiationError;
-use crate::json::error::JsonEditError;
+use crate::json::error::EditError;
 use crate::json::{PhenopacketCursor, Pointer};
 use serde_json::Value;
 use std::ops::{Deref, DerefMut};
@@ -11,17 +11,17 @@ pub(crate) struct PhenopacketEditor {
 }
 
 impl PhenopacketEditor {
-    pub fn new<R>(json: &R) -> Result<Self, InstantiationError>
+    pub fn new<R>(phenopacket: &R) -> Result<Self, InstantiationError>
     where
         R: IntoBytes,
         R: Clone,
     {
-        let cursor = PhenopacketCursor::new(json)?;
+        let cursor = PhenopacketCursor::new(phenopacket)?;
         Ok(Self { cursor })
     }
 
-    pub fn export(&self) -> Result<String, JsonEditError> {
-        Ok(serde_json::to_string_pretty(self.json())?)
+    pub fn export(&self) -> Result<String, EditError> {
+        Ok(serde_json::to_string_pretty(self.phenopacket())?)
     }
 
     /// Replaces the value at the cursor's current position with a new value.
@@ -32,7 +32,7 @@ impl PhenopacketEditor {
     /// # Returns
     /// * `Ok(())` if the replacement was successful.
     /// * `Err(())` if the current pointer doesn't point to a valid location.
-    pub fn set_value(&mut self, new_value: Value) -> Result<(), JsonEditError> {
+    pub fn set_value(&mut self, new_value: Value) -> Result<(), EditError> {
         let parsed = match &new_value {
             Value::String(s) => Self::parse_string(s).unwrap_or(new_value),
             _ => new_value,
@@ -42,7 +42,7 @@ impl PhenopacketEditor {
             *target = parsed;
             Ok(())
         } else {
-            Err(JsonEditError::InvalidPosition(self.pointer().clone()))
+            Err(EditError::InvalidPosition(self.pointer().clone()))
         }
     }
 
@@ -58,7 +58,7 @@ impl PhenopacketEditor {
         let key = self.pointer().get_tip();
         self.up();
         let to_del = self.pointer().position().to_string();
-        let parent = self.json_mut().pointer_mut(&to_del)?;
+        let parent = self.phenopacket_mut().pointer_mut(&to_del)?;
 
         match parent {
             Value::Object(map) => map.remove(&key),
@@ -77,7 +77,7 @@ impl PhenopacketEditor {
         }
     }
 
-    pub fn push(&mut self, value: Value, construct_path: bool) -> Result<&mut Self, JsonEditError> {
+    pub fn push(&mut self, value: Value, construct_path: bool) -> Result<&mut Self, EditError> {
         let parsed = match &value {
             Value::String(s) => Self::parse_string(s).unwrap_or(value),
             _ => value,
@@ -85,16 +85,16 @@ impl PhenopacketEditor {
 
         let push_ptr = self.pointer().clone();
 
-        let current = match self.json_mut().pointer_mut(push_ptr.position()) {
+        let current = match self.phenopacket_mut().pointer_mut(push_ptr.position()) {
             None => {
                 let push_position = push_ptr.position().to_string();
                 if construct_path {
                     self.construct_path_to(&push_position)?;
-                    self.json_mut()
+                    self.phenopacket_mut()
                         .pointer_mut(&push_position)
-                        .ok_or(JsonEditError::InvalidPosition(Pointer::new(&push_position)))?
+                        .ok_or(EditError::InvalidPosition(Pointer::new(&push_position)))?
                 } else {
-                    return Err(JsonEditError::InvalidPosition(Pointer::new(&push_position)));
+                    return Err(EditError::InvalidPosition(Pointer::new(&push_position)));
                 }
             }
             Some(val) => val,
@@ -108,7 +108,7 @@ impl PhenopacketEditor {
             Value::Object(obj) => {
                 match parsed {
                     Value::Array(_) => {
-                        return Err(JsonEditError::NotImplemented(
+                        return Err(EditError::NotImplemented(
                             "Inserting new values into arrays".to_string(),
                         ));
                     }
@@ -118,7 +118,9 @@ impl PhenopacketEditor {
                         });
                     }
                     _ => {
-                        if let Some(target) = self.json_mut().pointer_mut(push_ptr.position()) {
+                        if let Some(target) =
+                            self.phenopacket_mut().pointer_mut(push_ptr.position())
+                        {
                             *target = parsed;
                         }
                     }
@@ -133,7 +135,7 @@ impl PhenopacketEditor {
         }
     }
 
-    fn construct_path_to(&mut self, target_ptr: &str) -> Result<(), JsonEditError> {
+    fn construct_path_to(&mut self, target_ptr: &str) -> Result<(), EditError> {
         let pointer = Pointer::new(target_ptr);
         let segments: Vec<String> = pointer.segments().collect();
 
@@ -147,7 +149,7 @@ impl PhenopacketEditor {
                 format!("{}/{}", current_path, segment)
             };
 
-            if self.json().pointer(&current_path).is_some() {
+            if self.phenopacket().pointer(&current_path).is_some() {
                 continue;
             }
 
@@ -163,14 +165,14 @@ impl PhenopacketEditor {
             };
 
             if parent_path.is_empty() {
-                if let Value::Object(root) = self.json_mut() {
+                if let Value::Object(root) = self.phenopacket_mut() {
                     root.insert(segment.clone(), new_value);
                 }
             } else {
                 let parent = self
-                    .json_mut()
+                    .phenopacket_mut()
                     .pointer_mut(&parent_path)
-                    .ok_or(JsonEditError::InvalidPosition(Pointer::new(&parent_path)))?;
+                    .ok_or(EditError::InvalidPosition(Pointer::new(&parent_path)))?;
 
                 match parent {
                     Value::Object(obj) => {
@@ -183,15 +185,13 @@ impl PhenopacketEditor {
                             }
                             arr[idx] = new_value;
                         } else {
-                            return Err(JsonEditError::ArrayIndexOutOfBounce(Pointer::new(
+                            return Err(EditError::ArrayIndexOutOfBounce(Pointer::new(
                                 &parent_path,
                             )));
                         }
                     }
                     _ => {
-                        return Err(JsonEditError::ExpectedArrayOrObject(Pointer::new(
-                            &parent_path,
-                        )));
+                        return Err(EditError::ExpectedArrayOrObject(Pointer::new(&parent_path)));
                     }
                 }
             }
@@ -200,14 +200,14 @@ impl PhenopacketEditor {
         Ok(())
     }
 
-    /// Returns a mutable reference to the JSON value at the cursor's current position.
+    /// Returns a mutable reference to the Phenopacket value at the cursor's current position.
     ///
     /// # Returns
     /// * `Some(&mut Value)` if the pointer resolves to a valid location.
     /// * `None` if the pointer path does not exist.
     fn current_value_mut(&mut self) -> Option<&mut Value> {
         let position = self.pointer().position().to_string();
-        self.cursor.json_mut().pointer_mut(&position)
+        self.cursor.phenopacket_mut().pointer_mut(&position)
     }
 
     fn parse_value(value: &Value) -> Option<Value> {
@@ -246,12 +246,13 @@ impl DerefMut for PhenopacketEditor {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::json::Pointer;
     use rstest::{fixture, rstest};
     use serde_json::json;
 
     #[fixture]
-    fn test_json() -> String {
-        let json = json!({
+    fn test_phenopacket() -> String {
+        let phenopacket_val = json!({
             "id": 101,
             "name": "Alice Johnson",
             "email": "alice.johnson@example.com",
@@ -267,7 +268,7 @@ mod tests {
             },
             "is_active": true,
         });
-        serde_json::to_string_pretty(&json).unwrap()
+        serde_json::to_string_pretty(&phenopacket_val).unwrap()
     }
 
     #[rstest]
@@ -276,12 +277,12 @@ mod tests {
     #[case(Value::String("guest".to_string()), Pointer::new("/roles/0"), Value::String("guest".to_string()))]
     #[case(Value::String("good".to_string()), Pointer::new("profile/preferences"), Value::String("good".to_string()))]
     fn test_set_value(
-        test_json: String,
+        test_phenopacket: String,
         #[case] new_value: Value,
         #[case] pointer: Pointer,
         #[case] expected_val: Value,
     ) {
-        let mut editor = PhenopacketEditor::new(&test_json).unwrap();
+        let mut editor = PhenopacketEditor::new(&test_phenopacket).unwrap();
 
         editor.point_to(&pointer);
         editor.set_value(new_value).unwrap();
@@ -289,8 +290,8 @@ mod tests {
     }
 
     #[rstest]
-    fn test_delete_from_obj(test_json: String) {
-        let mut editor = PhenopacketEditor::new(&test_json).unwrap();
+    fn test_delete_from_obj(test_phenopacket: String) {
+        let mut editor = PhenopacketEditor::new(&test_phenopacket).unwrap();
         let to_delete = "profile";
 
         editor.down(to_delete);
@@ -301,15 +302,15 @@ mod tests {
     }
 
     #[rstest]
-    fn test_delete_from_array(test_json: String) {
-        let n_entries = serde_json::from_str::<Value>(test_json.as_str())
+    fn test_delete_from_array(test_phenopacket: String) {
+        let n_entries = serde_json::from_str::<Value>(test_phenopacket.as_str())
             .unwrap()
             .get("roles")
             .unwrap()
             .as_array()
             .unwrap()
             .len();
-        let other_entry = serde_json::from_str::<Value>(test_json.as_str())
+        let other_entry = serde_json::from_str::<Value>(test_phenopacket.as_str())
             .unwrap()
             .get("roles")
             .unwrap()
@@ -320,7 +321,7 @@ mod tests {
             .as_str()
             .unwrap()
             .to_string();
-        let mut editor = PhenopacketEditor::new(&test_json).unwrap();
+        let mut editor = PhenopacketEditor::new(&test_phenopacket).unwrap();
 
         let to_delete = "roles/0";
         editor.down(to_delete);
@@ -333,8 +334,8 @@ mod tests {
     }
 
     #[rstest]
-    fn test_push_to_root(test_json: String) {
-        let mut editor = PhenopacketEditor::new(&test_json).unwrap();
+    fn test_push_to_root(test_phenopacket: String) {
+        let mut editor = PhenopacketEditor::new(&test_phenopacket).unwrap();
 
         let zip_code_key = "zip_code";
         let authenticated_key = "authenticated";
@@ -369,8 +370,8 @@ mod tests {
     }
 
     #[rstest]
-    fn test_push_to_obj(test_json: String) {
-        let mut editor = PhenopacketEditor::new(&test_json).unwrap();
+    fn test_push_to_obj(test_phenopacket: String) {
+        let mut editor = PhenopacketEditor::new(&test_phenopacket).unwrap();
 
         let zip_code_key = "zip_code";
         let authenticated_key = "authenticated";
@@ -407,8 +408,8 @@ mod tests {
     }
 
     #[rstest]
-    fn test_push_to_obj_with_path_construction(test_json: String) {
-        let mut editor = PhenopacketEditor::new(&test_json).unwrap();
+    fn test_push_to_obj_with_path_construction(test_phenopacket: String) {
+        let mut editor = PhenopacketEditor::new(&test_phenopacket).unwrap();
         let new_path = "profile/some/new/path";
         let zip_code_key = "zip_code";
         let authenticated_key = "authenticated";
@@ -445,8 +446,8 @@ mod tests {
     }
 
     #[rstest]
-    fn test_push_to_obj_absent_path(test_json: String) {
-        let mut editor = PhenopacketEditor::new(&test_json).unwrap();
+    fn test_push_to_obj_absent_path(test_phenopacket: String) {
+        let mut editor = PhenopacketEditor::new(&test_phenopacket).unwrap();
         let new_path = "/stuff/other";
         let zip_code_key = "zip_code";
         let authenticated_key = "authenticated";
