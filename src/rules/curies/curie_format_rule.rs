@@ -26,18 +26,23 @@ impl RuleCheck for CurieFormatRule {
     fn check(&self, cursor: &mut PhenopacketCursor, report: &mut LintReport) {
         let regex = Regex::new("^[A-Z][A-Z0-9_]+:[A-Za-z0-9_]+$").unwrap();
 
+        let mut otn_pointer = vec![];
+
         for (pointer, value) in cursor.iter_with_paths() {
             if let Some(ont_class) = Self::get_ontology_class_from_value(value)
                 && !regex.is_match(&ont_class.id)
             {
-                //let mut temp_cursor = cursor.clone();
-                report.push_finding(LintFinding::new(
-                    Self::RULE_ID,
-                    //TODO: no clone here
-                    Self::write_report(cursor.clone().point_to(&pointer)),
-                    None,
-                ));
+                otn_pointer.push(pointer);
             }
+        }
+
+        for ptr in otn_pointer {
+            report.push_finding(LintFinding::new(
+                Self::RULE_ID,
+                //TODO: no clone here
+                Self::write_report(cursor.point_to(&ptr)),
+                None,
+            ));
         }
     }
 }

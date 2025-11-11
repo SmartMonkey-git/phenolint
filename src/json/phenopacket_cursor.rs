@@ -24,15 +24,6 @@ pub struct PhenopacketCursor {
     anchor: Vec<Pointer>,
 }
 
-impl Clone for PhenopacketCursor {
-    fn clone(&self) -> Self {
-        let mut cursor = PhenopacketCursor::new(&self.phenopacket).unwrap();
-        cursor.pointer = self.pointer.clone();
-        cursor.anchor = self.anchor.clone();
-        cursor
-    }
-}
-
 impl PhenopacketCursor {
     /// Creates a new cursor positioned at the root of the provided Phenopacket value.
     ///
