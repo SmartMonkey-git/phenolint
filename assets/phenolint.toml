@@ -1,6 +1,6 @@
 rules = [
     "INTER001",
-    "CURIE001"
+    "CURIE001",
+    "HPO001"
 ]
-
-# hpo_dir = "/path/to/hpo/directory"
+hpo_path = '/Users/rouvenreuter/Downloads/hp(1).json'

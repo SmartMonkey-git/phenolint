@@ -4,7 +4,7 @@ use crate::traits::RuleCheck;
 
 pub struct RuleRegistration {
     pub rule_id: &'static str,
-    pub factory: fn(context: &LinterContext) -> Result<Box<dyn RuleCheck>, RuleInitError>,
+    pub factory: fn(context: &mut LinterContext) -> Result<Box<dyn RuleCheck>, RuleInitError>,
 }
 
 inventory::collect!(RuleRegistration);
@@ -15,7 +15,7 @@ macro_rules! register_rule {
         inventory::submit! {
             RuleRegistration {
                 rule_id: <$rule_type>::RULE_ID,
-                factory: |context: &LinterContext| <$rule_type>::from_context(context),
+                factory: |context: &mut LinterContext| <$rule_type>::from_context(context),
             }
         }
     };

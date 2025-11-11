@@ -1,5 +1,6 @@
 use phenolint::{Lint, Phenolinter};
 use phenopackets::schema::v2::Phenopacket;
+use phenopackets::schema::v2::core::PhenotypicFeature;
 use phenopackets::schema::v2::core::{Diagnosis, Disease, Interpretation, OntologyClass};
 use std::path::PathBuf;
 
@@ -46,6 +47,28 @@ fn main() {
     let phenopacket = Phenopacket {
         diseases,
         interpretations,
+        phenotypic_features: vec![
+            PhenotypicFeature {
+                modifiers: vec![OntologyClass {
+                    // Not a modifier, with phenotype
+                    id: "HP:0003196".to_string(),
+                    label: "Short Nose".to_string(),
+                }],
+                ..Default::default()
+            },
+            PhenotypicFeature {
+                r#type: Some(OntologyClass {
+                    id: "HP:0033142".to_string(),
+                    label: "Long nasal bridge".to_string(),
+                }),
+                modifiers: vec![OntologyClass {
+                    // Not a modifier, with phenotype
+                    id: "HP:0003196".to_string(),
+                    label: "Short Nose".to_string(),
+                }],
+                ..Default::default()
+            },
+        ],
         ..Default::default()
     };
 

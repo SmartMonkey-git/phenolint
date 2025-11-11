@@ -39,7 +39,7 @@ use std::collections::HashSet;
 pub struct DiseaseConsistencyRule;
 
 impl FromContext for DiseaseConsistencyRule {
-    fn from_context(_: &LinterContext) -> Result<Box<dyn RuleCheck>, RuleInitError> {
+    fn from_context(_: &mut LinterContext) -> Result<Box<dyn RuleCheck>, RuleInitError> {
         Ok(Box::new(Self))
     }
 }
@@ -276,7 +276,7 @@ mod tests {
         )
     }
 
-    #[test]
+    #[rstest]
     fn test_validate_multiple_interpretations_all_match() {
         let disease1 = create_ontology_class("MONDO:0007254", "Breast Cancer");
         let disease2 = create_ontology_class("MONDO:0005148", "Diabetes");
@@ -305,7 +305,7 @@ mod tests {
         assert!(report.violations().is_empty());
     }
 
-    #[test]
+    #[rstest]
     fn test_validate_multiple_interpretations_some_mismatch() {
         let disease1 = create_ontology_class("MONDO:0007254", "Breast Cancer");
         let disease2 = create_ontology_class("MONDO:0005148", "Diabetes");
@@ -353,7 +353,7 @@ mod tests {
         )
     }
 
-    #[test]
+    #[rstest]
     fn test_validate_interpretation_without_diagnosis() {
         let disease_term = create_ontology_class("MONDO:0007254", "Breast Cancer");
         let disease = create_disease(disease_term);
@@ -378,7 +378,7 @@ mod tests {
         assert!(report.violations().is_empty());
     }
 
-    #[test]
+    #[rstest]
     fn test_validate_interpretation_with_diagnosis_but_no_disease() {
         let disease_term = create_ontology_class("MONDO:0007254", "Breast Cancer");
         let disease = create_disease(disease_term);
@@ -406,7 +406,7 @@ mod tests {
         assert!(report.violations().is_empty());
     }
 
-    #[test]
+    #[rstest]
     fn test_validate_disease_without_term() {
         let interpretation_term = create_ontology_class("MONDO:0007254", "Breast Cancer");
 
@@ -447,7 +447,7 @@ mod tests {
         )
     }
 
-    #[test]
+    #[rstest]
     fn test_validate_multiple_mismatches() {
         let disease1 = create_ontology_class("MONDO:0007254", "Breast Cancer");
         let interpretation1 = create_ontology_class("MONDO:0005148", "Diabetes");
@@ -489,7 +489,7 @@ mod tests {
         )
     }
 
-    #[test]
+    #[rstest]
     fn test_validate_duplicate_interpretation_diseases() {
         let disease_term = create_ontology_class("MONDO:0007254", "Breast Cancer");
         let disease = create_disease(disease_term.clone());

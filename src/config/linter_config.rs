@@ -7,7 +7,7 @@ use std::path::PathBuf;
 pub struct LinterConfig {
     #[serde(rename = "rules")]
     pub rule_ids: Vec<String>,
-    pub hpo_dir: Option<PathBuf>,
+    pub hpo_path: Option<PathBuf>,
 }
 
 impl TryFrom<PathBuf> for LinterConfig {

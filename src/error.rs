@@ -69,6 +69,7 @@ pub enum PatchingError {
     InitError(#[from] InstantiationError),
 }
 
+#[derive(Debug)]
 pub enum RuleInitError {
     NeedsHPO,
 }

@@ -17,7 +17,7 @@ use serde_json::Value;
 pub struct CurieFormatRule;
 
 impl FromContext for CurieFormatRule {
-    fn from_context(_: &LinterContext) -> Result<Box<dyn RuleCheck>, RuleInitError> {
+    fn from_context(_: &mut LinterContext) -> Result<Box<dyn RuleCheck>, RuleInitError> {
         Ok(Box::new(CurieFormatRule))
     }
 }

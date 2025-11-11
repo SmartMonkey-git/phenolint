@@ -7,7 +7,7 @@ pub trait LintRule: RuleCheck + FromContext {
 }
 
 pub trait FromContext {
-    fn from_context(context: &LinterContext) -> Result<Box<dyn RuleCheck>, RuleInitError>;
+    fn from_context(context: &mut LinterContext) -> Result<Box<dyn RuleCheck>, RuleInitError>;
 }
 
 pub trait RuleCheck {

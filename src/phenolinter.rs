@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 #![allow(unused)]
+use crate::LinterContext;
 use crate::config::LinterConfig;
 use crate::config::config_loader::ConfigLoader;
 use crate::diagnostics::{LintReport, ReportParser};
@@ -89,7 +90,8 @@ impl TryFrom<LinterConfig> for Phenolinter {
     type Error = InstantiationError;
 
     fn try_from(config: LinterConfig) -> Result<Self, Self::Error> {
-        let policy = LinterPolicy::from(config.rule_ids.as_slice());
+        let mut context = LinterContext::new(config.hpo_path);
+        let policy = LinterPolicy::from_str(config.rule_ids.as_slice(), &mut context);
         Ok(Phenolinter::new(policy))
     }
 }

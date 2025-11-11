@@ -1,13 +1,22 @@
+use crate::LinterContext;
 use crate::diagnostics::{LintFinding, ReportParser};
 use once_cell::sync::Lazy;
 use ontolius::io::OntologyLoaderBuilder;
 use ontolius::ontology::csr::FullCsrOntology;
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex, RwLock};
 
 pub(crate) static HPO: Lazy<Arc<FullCsrOntology>> = Lazy::new(|| {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     init_ontolius(path.join("assets").join("hp.toy.json"))
+});
+
+pub(crate) static LINT_CONTEXT: Lazy<Mutex<LinterContext>> = Lazy::new(|| {
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("assets")
+        .join("hp.toy.json");
+    let path = PathBuf::from("/Users/rouvenreuter/Downloads/hp(1).json");
+    Mutex::new(LinterContext::new(Some(path)))
 });
 
 fn init_ontolius(hpo_path: PathBuf) -> Arc<FullCsrOntology> {

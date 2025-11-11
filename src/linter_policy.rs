@@ -16,44 +16,17 @@ pub struct LinterPolicy {
 
 impl LinterPolicy {
     #[allow(dead_code)]
-    pub(crate) fn new(rules: Vec<Box<dyn RuleCheck>>) -> LinterPolicy {
+    pub fn new(rules: Vec<Box<dyn RuleCheck>>) -> LinterPolicy {
         LinterPolicy { rules }
     }
-    pub fn apply(&self, phenobytes: &str) -> LintReport {
-        let mut report = LintReport::default();
 
-        for rule in &self.rules {
-            rule.check(phenobytes, &mut report)
-        }
-
-        report
-    }
-
-    pub fn push_rule(&mut self, rule: Box<dyn RuleCheck>) {
-        self.rules.push(rule);
-    }
-    #[allow(dead_code)]
-    pub fn try_from_path<P: AsRef<Path>>(path: P) -> Result<Self, InstantiationError> {
-        let config: LinterConfig = ConfigLoader::load(PathBuf::from(path.as_ref()))?;
-        Ok(LinterPolicy::from(config))
-    }
-}
-
-impl From<LinterConfig> for LinterPolicy {
-    fn from(config: LinterConfig) -> LinterPolicy {
-        LinterPolicy::from(config.rule_ids)
-    }
-}
-
-impl<T, S> From<T> for LinterPolicy
-where
-    T: IntoIterator<Item = S>,
-    S: AsRef<str>,
-{
-    fn from(rule_ids: T) -> Self {
+    pub fn from_str<T, S>(rule_ids: T, context: &mut LinterContext) -> Self
+    where
+        T: IntoIterator<Item = S>,
+        S: AsRef<str>,
+    {
         let mut policy = LinterPolicy::default();
         let mut seen_rules = HashSet::new();
-        let linter_context = LinterContext::default();
 
         let rule_ids: HashSet<String> = rule_ids
             .into_iter()
@@ -63,7 +36,8 @@ where
         for r in inventory::iter::<RuleRegistration>() {
             #[allow(clippy::collapsible_if)]
             if rule_ids.contains(r.rule_id) && !seen_rules.contains(&r.rule_id) {
-                match (r.factory)(&linter_context) {
+                println!("Rule {}", r.rule_id);
+                match (r.factory)(context) {
                     Ok(rule) => {
                         policy.push_rule(rule);
                     }
@@ -81,5 +55,18 @@ where
         }
 
         policy
+    }
+    pub fn apply(&self, phenobytes: &str) -> LintReport {
+        let mut report = LintReport::default();
+
+        for rule in &self.rules {
+            rule.check(phenobytes, &mut report)
+        }
+
+        report
+    }
+
+    pub fn push_rule(&mut self, rule: Box<dyn RuleCheck>) {
+        self.rules.push(rule);
     }
 }
