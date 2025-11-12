@@ -3,10 +3,9 @@
 use crate::config::LinterConfig;
 use crate::config::config_loader::ConfigLoader;
 use crate::diagnostics::{LintReport, ReportParser};
-use crate::error::{InstantiationError, LintResult, LinterError, PatchingError};
-use crate::linter_policy::LinterPolicy;
+use crate::error::{InitError, LintResult, LinterError, PatchingError};
 use crate::patcher::Patcher;
-use crate::rules::rule_registry::RuleRegistration;
+use crate::rules::rule_registry::LintingPolicy;
 use crate::traits::{Lint, RuleCheck};
 use log::warn;
 use phenopackets::schema::v2::Phenopacket;
@@ -22,23 +21,24 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 pub struct Phenolinter {
-    policy: LinterPolicy,
     patcher: Patcher,
 }
 
+impl Default for Phenolinter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Phenolinter {
-    pub fn new(policy: LinterPolicy) -> Phenolinter {
-        Phenolinter {
-            policy,
-            patcher: Patcher,
-        }
+    pub fn new() -> Phenolinter {
+        Phenolinter { patcher: Patcher }
     }
 }
 
 impl Lint<&str> for Phenolinter {
     fn lint(&mut self, phenostr: &str, patch: bool, quite: bool) -> LintResult {
-        let mut report = self.policy.apply(phenostr.as_ref());
-
+        let mut report = LintReport::default();
         if !quite {
             for info in report.findings() {
                 if let Err(err) = ReportParser::emit(info.violation().report(), phenostr) {
@@ -86,23 +86,22 @@ impl Lint<&[u8]> for Phenolinter {
 }
 
 impl TryFrom<LinterConfig> for Phenolinter {
-    type Error = InstantiationError;
+    type Error = InitError;
 
     fn try_from(config: LinterConfig) -> Result<Self, Self::Error> {
-        let policy = LinterPolicy::from(config.rule_ids.as_slice());
-        Ok(Phenolinter::new(policy))
+        Ok(Phenolinter::new())
     }
 }
 
 impl TryFrom<PathBuf> for Phenolinter {
-    type Error = InstantiationError;
+    type Error = InitError;
 
     fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
         Phenolinter::try_from(&path)
     }
 }
 impl TryFrom<&PathBuf> for Phenolinter {
-    type Error = InstantiationError;
+    type Error = InitError;
 
     fn try_from(path: &PathBuf) -> Result<Self, Self::Error> {
         let config: LinterConfig = ConfigLoader::load(path.clone())?;

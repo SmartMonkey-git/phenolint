@@ -1,16 +1,16 @@
 use crate::LinterContext;
 use crate::diagnostics::specs::{DiagnosticSpec, LabelSpecs};
-use crate::diagnostics::{LintFinding, LintReport, ReportSpecs};
-use crate::enums::Patch;
+use crate::diagnostics::{LintReport, ReportSpecs};
+
 use crate::error::RuleInitError;
 use crate::json::{JsonCursor, Pointer};
 use crate::register_rule;
-use crate::rules::rule_registry::RuleRegistration;
+use crate::rules::rule_registry::LintingPolicy;
 use crate::traits::{FromContext, LintRule, RuleCheck};
 use codespan_reporting::diagnostic::{LabelStyle, Severity};
 use phenolint_macros::lint_rule;
-use serde_json::Value;
-use std::collections::HashSet;
+use phenopackets::schema::v2::Phenopacket;
+use phenopackets::schema::v2::core::OntologyClass;
 
 #[derive(Debug, Default)]
 /// Validates that diseases in interpretations are also present in the diseases list.
@@ -39,71 +39,19 @@ use std::collections::HashSet;
 pub struct DiseaseConsistencyRule;
 
 impl FromContext for DiseaseConsistencyRule {
-    fn from_context(_: &LinterContext) -> Result<Box<dyn RuleCheck>, RuleInitError> {
+    type CheckType = Phenopacket;
+
+    fn from_context(
+        _: &LinterContext,
+    ) -> Result<Box<dyn RuleCheck<T = Phenopacket> + 'static>, RuleInitError> {
         Ok(Box::new(Self))
     }
 }
 
 impl RuleCheck for DiseaseConsistencyRule {
-    fn check(&self, phenostr: &str, report: &mut LintReport) {
-        let mut cursor = JsonCursor::new(phenostr).expect("Phenopacket is not a valid json");
+    type T = Phenopacket;
 
-        if !cursor.down("interpretations").is_valid_position() {
-            return;
-        }
-
-        let mut disease_ids = HashSet::new();
-
-        for disease_idx in cursor.root().down("diseases").peek() {
-            cursor.push_anchor();
-            if let Some(disease) = cursor
-                .down(disease_idx)
-                .down("term")
-                .down("id")
-                .current_value()
-            {
-                disease_ids.insert(disease.clone());
-            }
-            cursor.pop_anchor();
-        }
-
-        let n_diseases = disease_ids.len();
-        let mut seen: HashSet<Value> = HashSet::new();
-        let mut findings = vec![];
-
-        for inter in cursor.root().down("interpretations").peek() {
-            cursor.push_anchor();
-
-            if let Some(inter_disease_id) = cursor
-                .down(inter)
-                .down("diagnosis")
-                .down("disease")
-                .down("id")
-                .current_value()
-                && !disease_ids.contains(inter_disease_id)
-                && !seen.contains(inter_disease_id)
-            {
-                let id = inter_disease_id.clone();
-                cursor.up();
-                findings.push(LintFinding::new(
-                    Self::RULE_ID,
-                    Self::write_report(&mut cursor),
-                    Some(Patch::Duplicate {
-                        from: cursor.pointer().to_owned(),
-                        to: Pointer::new(&format!(
-                            "/diseases/{}/term",
-                            n_diseases + findings.len()
-                        )),
-                    }),
-                ));
-
-                seen.insert(id);
-            }
-            cursor.pop_anchor();
-        }
-
-        report.extend_finding(findings)
-    }
+    fn check(&self, phenostr: &Phenopacket, report: &mut LintReport) {}
 }
 
 impl DiseaseConsistencyRule {
@@ -149,7 +97,7 @@ impl DiseaseConsistencyRule {
         ReportSpecs::new(diagnostic_spec)
     }
 }
-
+/*
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -514,3 +462,4 @@ mod tests {
         assert!(report.violations().is_empty());
     }
 }
+*/

@@ -8,6 +8,7 @@ use std::sync::Arc;
 pub struct LinterContext {
     hpo_path: Option<PathBuf>,
     hpo: OnceCell<Option<Arc<FullCsrOntology>>>,
+    rule_ids: Vec<String>,
 }
 
 impl LinterContext {
@@ -15,6 +16,7 @@ impl LinterContext {
         LinterContext {
             hpo_path,
             hpo: OnceCell::default(),
+            rule_ids: Vec::new(),
         }
     }
     pub fn hpo(&mut self) -> Option<Arc<FullCsrOntology>> {
@@ -27,5 +29,9 @@ impl LinterContext {
                 ontology.map(Arc::new)
             })
             .clone()
+    }
+
+    pub fn rule_ids(&self) -> &[String] {
+        &self.rule_ids
     }
 }

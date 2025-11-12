@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use crate::error::InstantiationError;
+use crate::error::InitError;
 use crate::json::error::JsonEditError;
 use crate::json::{JsonCursor, Pointer};
 use serde_json::Value;
@@ -10,7 +10,7 @@ pub(crate) struct JsonEditor {
 }
 
 impl JsonEditor {
-    pub fn new(json: &str) -> Result<Self, InstantiationError> {
+    pub fn new(json: &str) -> Result<Self, InitError> {
         let cursor = JsonCursor::new(json)?;
         Ok(Self { cursor })
     }

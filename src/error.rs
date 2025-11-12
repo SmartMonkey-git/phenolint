@@ -47,10 +47,12 @@ pub enum LinterError {
     IoError(#[from] std::io::Error),
     #[error(transparent)]
     JsonError(#[from] serde_json::Error),
+    #[error(transparent)]
+    InitError(#[from] InitError),
 }
 
 #[derive(Error, Debug)]
-pub enum InstantiationError {
+pub enum InitError {
     #[error(transparent)]
     IO(std::io::Error),
     #[error(transparent)]
@@ -66,7 +68,7 @@ pub enum PatchingError {
     #[error(transparent)]
     JsonEditError(#[from] JsonEditError),
     #[error(transparent)]
-    InitError(#[from] InstantiationError),
+    InitError(#[from] InitError),
 }
 
 pub enum RuleInitError {

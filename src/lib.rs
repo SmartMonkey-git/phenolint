@@ -2,7 +2,6 @@ mod config;
 pub mod diagnostics;
 pub mod enums;
 pub mod error;
-pub mod linter_policy;
 pub mod patcher;
 pub mod phenolinter;
 pub use phenolinter::Phenolinter;
@@ -13,5 +12,7 @@ pub use traits::*;
 pub mod linter_context;
 pub use linter_context::LinterContext;
 mod json;
+
+mod new;
 #[cfg(test)]
 pub(crate) mod test_utils;
