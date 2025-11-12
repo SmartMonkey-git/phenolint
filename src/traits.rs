@@ -26,6 +26,10 @@ pub trait NodeParser<T> {
         Self: Sized;
 }
 
+pub trait DeserializePhenopackets<T> {
+    fn deserialize<'s>(bytes: &[u8]) -> T;
+}
+
 pub trait FromContext {
     type CheckType;
     fn from_context(

@@ -1,10 +1,12 @@
 use crate::diagnostics::{LintReport, ReportParser};
 use crate::error::{LintResult, LinterError};
+use crate::new::deserializer::PhenopacketsDeserializer;
 use crate::new::json_traverser::{PhenopacketJsonTraverser, PhenopacketYamlTraverser};
 use crate::new::router::NodeRouter;
 use crate::new::traverser_factory::TraverserFactory;
-use crate::{LinterContext, NodeParser, PhenopacketNodeTraversal};
+use crate::{DeserializePhenopackets, LinterContext, NodeParser, PhenopacketNodeTraversal};
 use log::warn;
+use serde_json::Value;
 
 pub struct Linter {
     context: LinterContext,
@@ -15,8 +17,12 @@ impl Linter {
     where
         PhenopacketJsonTraverser: PhenopacketNodeTraversal<T>,
         PhenopacketYamlTraverser: PhenopacketNodeTraversal<T>,
+        PhenopacketsDeserializer: DeserializePhenopackets<T>,
     {
         let mut report = LintReport::default();
+
+        let deserialized =
+            <PhenopacketsDeserializer as DeserializePhenopackets<T>>::deserialize(phenobytes);
 
         let traverser: Box<dyn PhenopacketNodeTraversal<T>> =
             match TraverserFactory::factory::<T>(phenobytes) {
