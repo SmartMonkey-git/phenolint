@@ -22,7 +22,7 @@ impl<T, P: NodeParser<T>> NodeRouter<T, P> {
         }
     }
 
-    fn route_to_rules<N>(parsed_value: &N, context: &LinterContext, report: &mut LintReport)
+    fn route_to_rules<N>(pared_node: &N, context: &LinterContext, report: &mut LintReport)
     where
         LintingPolicy<N>: inventory::Collect,
     {
@@ -30,7 +30,7 @@ impl<T, P: NodeParser<T>> NodeRouter<T, P> {
             if context.rule_ids().iter().any(|s| s == rule.rule_id) {
                 match (rule.factory)(context) {
                     Ok(rule) => {
-                        rule.check(parsed_value, report);
+                        rule.check(pared_node, report);
                     }
                     Err(err) => match err {
                         RuleInitError::NeedsHPO => {
