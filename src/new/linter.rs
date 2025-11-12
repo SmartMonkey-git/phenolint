@@ -1,15 +1,20 @@
 use crate::diagnostics::LintReport;
 use crate::error::{LintResult, LinterError};
 use crate::new::json_traverser::{PhenopacketJsonTraverser, PhenopacketYamlTraverser};
-use crate::new::phenopacket_traverser_factory::TraverserFactory;
 use crate::new::router::NodeRouter;
+use crate::new::traverser_factory::TraverserFactory;
 use crate::{LinterContext, NodeParser, PhenopacketNodeTraversal};
 
 pub struct Linter;
 
 impl Linter {
     // str for now
-    fn lint<T, P: NodeParser<T>>(&self, phenobytes: &[u8], patch: bool, quite: bool) -> LintResult
+    fn lint<T: 'static, P: NodeParser<T>>(
+        &self,
+        phenobytes: &[u8],
+        patch: bool,
+        quite: bool,
+    ) -> LintResult
     where
         PhenopacketJsonTraverser: PhenopacketNodeTraversal<T>,
         PhenopacketYamlTraverser: PhenopacketNodeTraversal<T>,
@@ -17,10 +22,11 @@ impl Linter {
         let context = LinterContext::default();
         let mut report = LintReport::default();
 
-        let traverser = match TraverserFactory::factory::<T>(phenobytes) {
-            Ok(traverser) => traverser,
-            Err(err) => return LintResult::err(LinterError::InitError(err)),
-        };
+        let traverser: Box<dyn PhenopacketNodeTraversal<T>> =
+            match TraverserFactory::factory::<T>(phenobytes) {
+                Ok(t) => t,
+                Err(err) => return LintResult::err(LinterError::InitError(err)),
+            };
 
         for node in traverser.traverse() {
             NodeRouter::<T, P>::route_value(&node, &context, &mut report);

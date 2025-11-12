@@ -10,7 +10,7 @@ pub trait LintRule: RuleCheck + FromContext {
 }
 
 pub trait PhenopacketNodeTraversal<T> {
-    fn traverse(&self) -> Box<dyn Iterator<Item = Box<dyn Node<T>>> + '_>;
+    fn traverse<'s>(&'s self) -> Box<dyn Iterator<Item = BoxedNode<T>> + 's>;
 }
 
 pub trait Node<T> {

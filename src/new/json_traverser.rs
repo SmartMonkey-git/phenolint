@@ -51,13 +51,13 @@ impl PhenopacketJsonTraverser {
 }
 
 impl PhenopacketNodeTraversal<Value> for PhenopacketJsonTraverser {
-    fn traverse(&self) -> Box<dyn Iterator<Item = Box<(dyn Node<Value> + 'static)>>> {
+    fn traverse<'s>(&'s self) -> Box<dyn Iterator<Item = BoxedNode<Value>> + 's> {
         let mut queue = VecDeque::new();
         let root_node = Box::new(JsonNode::new(
             &self.phenopacket,
             self.spans.span(),
             Pointer::new(""),
-        )) as Box<(dyn Node<Value> + 'static)>;
+        )) as BoxedNode<Value>;
         queue.push_back(root_node);
 
         Box::new(std::iter::from_fn(move || {
@@ -78,8 +78,7 @@ impl PhenopacketNodeTraversal<Value> for PhenopacketJsonTraverser {
                                 new_pointer,
                             );
 
-                            queue
-                                .push_back(Box::new(next_node) as Box<(dyn Node<Value> + 'static)>);
+                            queue.push_back(Box::new(next_node) as BoxedNode<Value>);
                         }
                     }
                     Value::Object(ref obj) => {
@@ -96,8 +95,7 @@ impl PhenopacketNodeTraversal<Value> for PhenopacketJsonTraverser {
                                 new_pointer,
                             );
 
-                            queue
-                                .push_back(Box::new(next_node) as Box<(dyn Node<Value> + 'static)>);
+                            queue.push_back(Box::new(next_node) as BoxedNode<Value>);
                         }
                     }
                     _ => {}
@@ -131,7 +129,7 @@ impl Node<String> for YamlNode {
 pub struct PhenopacketYamlTraverser;
 
 impl PhenopacketNodeTraversal<String> for PhenopacketYamlTraverser {
-    fn traverse(&self) -> Box<dyn Iterator<Item = Box<dyn Node<String>>> + '_> {
+    fn traverse<'s>(&'s self) -> Box<dyn Iterator<Item = BoxedNode<String>> + 's> {
         todo!()
     }
 }
