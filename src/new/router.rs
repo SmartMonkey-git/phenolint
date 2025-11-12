@@ -13,29 +13,24 @@ pub struct NodeRouter<T, P: NodeParser<T>> {
 }
 
 impl<T, P: NodeParser<T>> NodeRouter<T, P> {
-    pub fn route_value(value: &BoxedNode<T>, context: &LinterContext, report: &mut LintReport)
-    // Add other parsable structs here
-    where
-        P: NodeParser<T>,
-    {
+    pub fn route_value(value: &BoxedNode<T>, context: &LinterContext, report: &mut LintReport) {
         if let Some(oc) = P::parse_ontology_class(value) {
-            NodeRouter::<T, OntologyClass>::route_to_rules(&oc, context, report);
+            NodeRouter::<T, P>::route_to_rules::<OntologyClass>(&oc, context, report);
             println!("Parsed OntologyClass: {:?}", oc);
         } else {
             println!("Failed to parse as OntologyClass");
         }
     }
 
-    fn route_to_rules(parsed_value: &P, context: &LinterContext, report: &mut LintReport)
+    fn route_to_rules<N>(parsed_value: &N, context: &LinterContext, report: &mut LintReport)
     where
-        P: NodeParser<T>,
-        OntologyClass: NodeParser<T>,
+        LintingPolicy<N>: inventory::Collect,
     {
-        for rule in inventory::iter::<LintingPolicy<T>>.into_iter() {
+        for rule in inventory::iter::<LintingPolicy<N>>() {
             if context.rule_ids().iter().any(|s| s == rule.rule_id) {
-                match (rule.factory)(&context) {
+                match (rule.factory)(context) {
                     Ok(rule) => {
-                        rule.check(&parsed_value, report);
+                        rule.check(parsed_value, report);
                     }
                     Err(err) => match err {
                         RuleInitError::NeedsHPO => {

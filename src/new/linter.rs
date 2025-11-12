@@ -8,7 +8,6 @@ use crate::{LinterContext, NodeParser, PhenopacketNodeTraversal};
 pub struct Linter;
 
 impl Linter {
-    // str for now
     fn lint<T: 'static, P: NodeParser<T>>(
         &self,
         phenobytes: &[u8],

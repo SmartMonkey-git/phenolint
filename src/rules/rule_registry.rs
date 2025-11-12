@@ -30,21 +30,23 @@ macro_rules! register_rule {
 mod tests {
     use crate::rules::rule_registry::LintingPolicy;
     use inventory;
+    use phenopackets::schema::v2::core::OntologyClass;
     use regex::Regex;
     use rstest::rstest;
     use std::collections::HashSet;
-    /*#[rstest]
-     fn test_rule_id_uniqueness() {
-            let mut seen_ids = HashSet::new();
 
-            inventory::iter::<RuleRegistration>().for_each(|r| {
-                if seen_ids.contains(&r.rule_id) {
-                    panic!("rule {} already registered", r.rule_id);
-                }
-                seen_ids.insert(r.rule_id);
-            });
-        }
-    */
+    #[rstest]
+    fn test_rule_id_uniqueness() {
+        let mut seen_ids = HashSet::new();
+
+        inventory::iter::<LintingPolicy<OntologyClass>>().for_each(|r| {
+            if seen_ids.contains(&r.rule_id) {
+                panic!("rule {} already registered", r.rule_id);
+            }
+            seen_ids.insert(r.rule_id);
+        });
+    }
+
     /*
     #[rstest]
     fn test_rule_format() {
