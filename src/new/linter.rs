@@ -1,24 +1,21 @@
-use crate::diagnostics::LintReport;
+use crate::diagnostics::{LintReport, ReportParser};
 use crate::error::{LintResult, LinterError};
 use crate::new::json_traverser::{PhenopacketJsonTraverser, PhenopacketYamlTraverser};
 use crate::new::router::NodeRouter;
 use crate::new::traverser_factory::TraverserFactory;
 use crate::{LinterContext, NodeParser, PhenopacketNodeTraversal};
+use log::warn;
 
-pub struct Linter;
+pub struct Linter {
+    context: LinterContext,
+}
 
 impl Linter {
-    fn lint<T: 'static, P: NodeParser<T>>(
-        &self,
-        phenobytes: &[u8],
-        patch: bool,
-        quite: bool,
-    ) -> LintResult
+    fn lint<T, P: NodeParser<T>>(&self, phenobytes: &[u8], patch: bool, quite: bool) -> LintResult
     where
         PhenopacketJsonTraverser: PhenopacketNodeTraversal<T>,
         PhenopacketYamlTraverser: PhenopacketNodeTraversal<T>,
     {
-        let context = LinterContext::default();
         let mut report = LintReport::default();
 
         let traverser: Box<dyn PhenopacketNodeTraversal<T>> =
@@ -28,7 +25,7 @@ impl Linter {
             };
 
         for node in traverser.traverse() {
-            NodeRouter::<T, P>::route_value(&node, &context, &mut report);
+            NodeRouter::<T, P>::route_value(&node, &self.context, &mut report);
         }
 
         /*
