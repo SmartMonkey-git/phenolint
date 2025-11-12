@@ -1,11 +1,10 @@
 use crate::diagnostics::LintReport;
 use crate::error::RuleInitError;
-use crate::new::json_traverser::JsonNode;
+use crate::new::json_traverser::BoxedNode;
 use crate::rules::rule_registry::LintingPolicy;
-use crate::{LinterContext, Node, NodeParser};
+use crate::{LinterContext, NodeParser};
 use log::warn;
 use phenopackets::schema::v2::core::OntologyClass;
-use serde_json::Value;
 use std::marker::PhantomData;
 
 pub struct NodeRouter<T, P: NodeParser<T>> {
@@ -14,7 +13,7 @@ pub struct NodeRouter<T, P: NodeParser<T>> {
 }
 
 impl<T, P: NodeParser<T>> NodeRouter<T, P> {
-    pub fn route_value(value: &Box<dyn Node<T>>, context: &LinterContext, report: &mut LintReport)
+    pub fn route_value(value: &BoxedNode<T>, context: &LinterContext, report: &mut LintReport)
     // Add other parsable structs here
     where
         P: NodeParser<T>,
@@ -29,8 +28,8 @@ impl<T, P: NodeParser<T>> NodeRouter<T, P> {
 
     fn route_to_rules(parsed_value: &P, context: &LinterContext, report: &mut LintReport)
     where
-        T: 'static,
-        P: NodeParser<Value>,
+        P: NodeParser<T>,
+        OntologyClass: NodeParser<T>,
     {
         for rule in inventory::iter::<LintingPolicy<T>>.into_iter() {
             if context.rule_ids().iter().any(|s| s == rule.rule_id) {

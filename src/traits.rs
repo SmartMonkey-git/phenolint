@@ -2,6 +2,7 @@ use crate::diagnostics::report::LintReport;
 use crate::error::{LintResult, RuleInitError};
 use crate::json::Pointer;
 use crate::linter_context::LinterContext;
+use crate::new::json_traverser::BoxedNode;
 use phenopackets::schema::v2::core::OntologyClass;
 
 pub trait LintRule: RuleCheck + FromContext {
@@ -9,7 +10,7 @@ pub trait LintRule: RuleCheck + FromContext {
 }
 
 pub trait PhenopacketNodeTraversal<T> {
-    fn traverse(&'static self) -> Box<dyn Iterator<Item = Box<dyn Node<T>>> + '_>;
+    fn traverse(&self) -> Box<dyn Iterator<Item = Box<dyn Node<T>>> + '_>;
 }
 
 pub trait Node<T> {
@@ -20,7 +21,7 @@ pub trait Node<T> {
 }
 
 pub trait NodeParser<T> {
-    fn parse_ontology_class(value: &impl Node<T>) -> Option<OntologyClass>
+    fn parse_ontology_class(value: &BoxedNode<T>) -> Option<OntologyClass>
     where
         Self: Sized;
 }

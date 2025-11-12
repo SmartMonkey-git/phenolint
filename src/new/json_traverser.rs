@@ -5,6 +5,7 @@ use json_spanned_value::spanned::Value as SpannedValue;
 use serde_json::Value;
 use std::collections::VecDeque;
 
+pub type BoxedNode<T> = Box<dyn Node<T>>;
 pub struct JsonNode {
     pub value: Value,
     pub span: (usize, usize),
@@ -50,7 +51,7 @@ impl PhenopacketJsonTraverser {
 }
 
 impl PhenopacketNodeTraversal<Value> for PhenopacketJsonTraverser {
-    fn traverse(&'static self) -> Box<dyn Iterator<Item = Box<(dyn Node<Value> + 'static)>>> {
+    fn traverse(&self) -> Box<dyn Iterator<Item = Box<(dyn Node<Value> + 'static)>>> {
         let mut queue = VecDeque::new();
         let root_node = Box::new(JsonNode::new(
             &self.phenopacket,
