@@ -1,5 +1,6 @@
-use crate::diagnostics::LintFinding;
 use crate::diagnostics::report::LintReport;
+use crate::diagnostics::{LintFinding, LintViolation};
+use crate::enums::PatchAction;
 use crate::error::{LintResult, RuleInitError};
 use crate::json::Pointer;
 use crate::linter_context::LinterContext;
@@ -28,7 +29,11 @@ pub trait NodeParser<T> {
 }
 
 pub trait DeserializePhenopackets<T> {
-    fn deserialize<'s>(bytes: &[u8]) -> T;
+    fn deserialize(bytes: &[u8]) -> T;
+}
+
+pub trait CompilePatch<T> {
+    fn compile_patch(&self, value: &BoxedNode<T>) -> PatchAction;
 }
 
 pub trait FromContext {

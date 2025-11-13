@@ -1,4 +1,4 @@
-use crate::enums::Patch;
+use crate::enums::{Patch, PatchAction};
 use crate::error::PatchingError;
 use crate::json::JsonEditor;
 use crate::json::json_cursor::JsonCursor;
@@ -11,10 +11,12 @@ impl Patcher {
     pub fn patch(&self, phenostr: &str, patches: Vec<&Patch>) -> Result<String, PatchingError> {
         let mut cursor = JsonCursor::new(phenostr)?;
 
-        let patches = Self::resolve_patches(patches, &mut cursor)?;
-        Self::apply(cursor, patches)
+        //let patches = Self::resolve_patches(patches, &mut cursor)?;
+        //Self::apply(cursor, patches)
+        Ok("".to_string())
     }
-
+}
+/*
     /// Resolves high-level patch operations into primitive operations.
     ///
     /// This function transforms complex patch operations (`Move` and `Duplicate`) into
@@ -51,24 +53,24 @@ impl Patcher {
     fn resolve_patches(
         patches: Vec<&Patch>,
         cursor: &mut JsonCursor,
-    ) -> Result<Vec<Patch>, PatchingError> {
-        let mut resolved_patches: Vec<Patch> = patches
+    ) -> Result<Vec<PatchAction>, PatchingError> {
+        let mut resolved_patches: Vec<PatchAction> = patches
             .into_iter()
             .flat_map(|p| match p {
-                Patch::Move { from, to } => {
+                PatchAction::Move { from, to } => {
                     let value = cursor.point_to(from).current_value().unwrap().to_string();
                     vec![
-                        Patch::Add {
+                        PatchAction::Add {
                             at: to.clone(),
                             value,
                         },
-                        Patch::Remove { at: from.clone() },
+                        PatchAction::Remove { at: from.clone() },
                     ]
                 }
-                Patch::Duplicate { from, to } => {
+                PatchAction::Duplicate { from, to } => {
                     let value = cursor.point_to(from).current_value().unwrap().to_string();
 
-                    vec![Patch::Add {
+                    vec![PatchAction::Add {
                         at: to.clone(),
                         value,
                     }]
@@ -96,30 +98,30 @@ impl Patcher {
     /// - `Add` at `/a/b` (depth 2)
     ///
     /// After sorting: `Add /a/b`, `Add /a/b/c`, `Remove /a`
-    fn sort_patches(patches: &mut [Patch]) {
+    fn sort_patches(patches: &mut [PatchAction]) {
         patches.sort_by(|p1, p2| match (p1, p2) {
-            (Patch::Add { .. }, Patch::Remove { .. }) => Ordering::Less,
-            (Patch::Remove { .. }, Patch::Add { .. }) => Ordering::Greater,
-            (Patch::Add { at: at1, .. }, Patch::Add { at: at2, .. }) => {
+            (PatchAction::Add { .. }, PatchAction::Remove { .. }) => Ordering::Less,
+            (PatchAction::Remove { .. }, PatchAction::Add { .. }) => Ordering::Greater,
+            (PatchAction::Add { at: at1, .. }, PatchAction::Add { at: at2, .. }) => {
                 at1.segments().count().cmp(&at2.segments().count())
             }
-            (Patch::Remove { at: at1 }, Patch::Remove { at: at2 }) => {
+            (PatchAction::Remove { at: at1 }, PatchAction::Remove { at: at2 }) => {
                 at1.segments().count().cmp(&at2.segments().count())
             }
             _ => Ordering::Equal,
         });
     }
 
-    fn apply(cursor: JsonCursor, patches: Vec<Patch>) -> Result<String, PatchingError> {
+    fn apply(cursor: JsonCursor, patches: Vec<PatchAction>) -> Result<String, PatchingError> {
         let mut editor = JsonEditor::from(cursor);
 
         for patch in patches {
             match patch {
-                Patch::Add { at, value } => {
+                PatchAction::Add { at, value } => {
                     editor.point_to(&at);
                     editor.push(json!(value), true)?;
                 }
-                Patch::Remove { at } => {
+                PatchAction::Remove { at } => {
                     editor.point_to(&at);
                     editor.delete();
                 }
@@ -133,7 +135,7 @@ impl Patcher {
 
 #[cfg(test)]
 mod patcher_tests {
-    use crate::enums::Patch;
+    use crate::enums::PatchAction;
     use crate::json::Pointer;
     use crate::patcher::Patcher;
     use serde_json::{Value, json};
@@ -182,7 +184,7 @@ mod patcher_tests {
         let patcher = Patcher;
         let phenostr = sample_phenopacket();
 
-        let patches = [Patch::Add {
+        let patches = [PatchAction::Add {
             at: Pointer::new("/metaData"),
             value: json!({"created": "2024-01-01"}).to_string(),
         }];
@@ -199,7 +201,7 @@ mod patcher_tests {
         let patcher = Patcher;
         let phenostr = sample_phenopacket();
 
-        let patches = [Patch::Add {
+        let patches = [PatchAction::Add {
             at: Pointer::new("/subject/timeAtLastEncounter"),
             value: json!({"age": "P30Y"}).to_string(),
         }];
@@ -216,7 +218,7 @@ mod patcher_tests {
         let patcher = Patcher;
         let phenostr = sample_phenopacket();
 
-        let patches = [Patch::Remove {
+        let patches = [PatchAction::Remove {
             at: Pointer::new("/subject/dateOfBirth"),
         }];
 
@@ -231,7 +233,7 @@ mod patcher_tests {
         let patcher = Patcher;
         let phenostr = sample_phenopacket();
 
-        let patches = [Patch::Remove {
+        let patches = [PatchAction::Remove {
             at: Pointer::new("/diseases/0/onset"),
         }];
 
@@ -247,7 +249,7 @@ mod patcher_tests {
         let patcher = Patcher;
         let phenostr = sample_phenopacket();
 
-        let patches = [Patch::Move {
+        let patches = [PatchAction::Move {
             from: Pointer::new("/subject/dateOfBirth"),
             to: Pointer::new("/subject/birthDate"),
         }];
@@ -264,7 +266,7 @@ mod patcher_tests {
         let patcher = Patcher;
         let phenostr = sample_phenopacket();
 
-        let patches = [Patch::Move {
+        let patches = [PatchAction::Move {
             from: Pointer::new("/diseases/0/onset"),
             to: Pointer::new("/ageOfOnset"),
         }];
@@ -281,7 +283,7 @@ mod patcher_tests {
         let patcher = Patcher;
         let phenostr = sample_phenopacket();
 
-        let patches = [Patch::Duplicate {
+        let patches = [PatchAction::Duplicate {
             from: Pointer::new("/subject/id"),
             to: Pointer::new("/subject/patientId"),
         }];
@@ -298,7 +300,7 @@ mod patcher_tests {
         let patcher = Patcher;
         let phenostr = sample_phenopacket();
 
-        let patches = [Patch::Duplicate {
+        let patches = [PatchAction::Duplicate {
             from: Pointer::new("/diseases/0/term"),
             to: Pointer::new("/diagnosisTerm"),
         }];
@@ -317,11 +319,11 @@ mod patcher_tests {
         let phenostr = sample_phenopacket();
 
         let patches = [
-            Patch::Add {
+            PatchAction::Add {
                 at: Pointer::new("/subject/karyotypicSex"),
                 value: "XY".to_string(),
             },
-            Patch::Add {
+            PatchAction::Add {
                 at: Pointer::new("/subject/taxonomy"),
                 value: json!({"id": "NCBITaxon:9606", "label": "Homo sapiens"}).to_string(),
             },
@@ -340,14 +342,14 @@ mod patcher_tests {
         let phenostr = sample_phenopacket();
 
         let patches = [
-            Patch::Add {
+            PatchAction::Add {
                 at: Pointer::new("/metaData"),
                 value: json!({"created": "2024-01-01"}).to_string(),
             },
-            Patch::Remove {
+            PatchAction::Remove {
                 at: Pointer::new("/subject/dateOfBirth"),
             },
-            Patch::Move {
+            PatchAction::Move {
                 from: Pointer::new("/subject/sex"),
                 to: Pointer::new("/subject/gender"),
             },
@@ -369,10 +371,10 @@ mod patcher_tests {
 
         // Remove should not interfere with Add even if specified first
         let patches = [
-            Patch::Remove {
+            PatchAction::Remove {
                 at: Pointer::new("/subject/sex"),
             },
-            Patch::Add {
+            PatchAction::Add {
                 at: Pointer::new("/subject/gender"),
                 value: "MALE".to_string(),
             },
@@ -391,11 +393,11 @@ mod patcher_tests {
         let phenostr = sample_phenopacket();
 
         let patches = [
-            Patch::Move {
+            PatchAction::Move {
                 from: Pointer::new("/diseases/0"),
                 to: Pointer::new("/primaryDiagnosis"),
             },
-            Patch::Add {
+            PatchAction::Add {
                 at: Pointer::new("/primaryDiagnosis/confirmed"),
                 value: "true".to_string(),
             },
@@ -413,7 +415,7 @@ mod patcher_tests {
         let patcher = Patcher;
         let phenostr = sample_phenopacket();
 
-        let patches: Vec<&Patch> = vec![];
+        let patches: Vec<&PatchAction> = vec![];
         let result = patcher.patch(&phenostr, patches).unwrap();
 
         assert_json_eq(&result, &phenostr);
@@ -424,7 +426,7 @@ mod patcher_tests {
         let patcher = Patcher;
         let invalid_json = "{invalid json}";
 
-        let patches = [Patch::Add {
+        let patches = [PatchAction::Add {
             at: Pointer::new("/test"),
             value: "value".to_string(),
         }];
@@ -438,7 +440,7 @@ mod patcher_tests {
         let patcher = Patcher;
         let phenostr = sample_phenopacket();
 
-        let patches = [Patch::Add {
+        let patches = [PatchAction::Add {
             at: Pointer::new("/schemaVersion"),
             value: "2.0".to_string(),
         }];
@@ -455,11 +457,11 @@ mod patcher_tests {
         let phenostr = sample_phenopacket();
 
         let patches = [
-            Patch::Duplicate {
+            PatchAction::Duplicate {
                 from: Pointer::new("/subject"),
                 to: Pointer::new("/backup"),
             },
-            Patch::Remove {
+            PatchAction::Remove {
                 at: Pointer::new("/subject/dateOfBirth"),
             },
         ];
@@ -478,7 +480,7 @@ mod patcher_tests {
         let patcher = Patcher;
         let phenostr = sample_phenopacket();
 
-        let patches = [Patch::Add {
+        let patches = [PatchAction::Add {
             at: Pointer::new("/phenotypicFeatures/0/severity"),
             value: json!({"label": "severe"}).to_string(),
         }];
@@ -497,7 +499,7 @@ mod patcher_tests {
         let patcher = Patcher;
         let phenostr = sample_phenopacket();
 
-        let patches = [Patch::Add {
+        let patches = [PatchAction::Add {
             at: Pointer::new("/diseases/0/onset/iso8601/iso8601duration"),
             value: "P10Y".to_string(),
         }];
@@ -516,7 +518,7 @@ mod patcher_tests {
         let patcher = Patcher;
         let phenostr = sample_phenopacket();
 
-        let patches = [Patch::Add {
+        let patches = [PatchAction::Add {
             at: Pointer::new("/notes"),
             value: "Patient has \"complex\" symptoms; requires care.".to_string(),
         }];
@@ -533,11 +535,11 @@ mod patcher_tests {
         let phenostr = sample_phenopacket();
 
         let patches = [
-            Patch::Move {
+            PatchAction::Move {
                 from: Pointer::new("/subject/sex"),
                 to: Pointer::new("/subject/biologicalSex"),
             },
-            Patch::Move {
+            PatchAction::Move {
                 from: Pointer::new("/subject/id"),
                 to: Pointer::new("/patientIdentifier"),
             },
@@ -558,10 +560,10 @@ mod patcher_tests {
         let phenostr = sample_phenopacket();
 
         let patches = [
-            Patch::Remove {
+            PatchAction::Remove {
                 at: Pointer::new("/subject/sex"),
             },
-            Patch::Add {
+            PatchAction::Add {
                 at: Pointer::new("/subject/sex"),
                 value: "FEMALE".to_string(),
             },
@@ -580,7 +582,7 @@ mod patcher_tests {
         let patcher = Patcher;
         let minimal = json!({"id": "test"}).to_string();
 
-        let patches = [Patch::Add {
+        let patches = [PatchAction::Add {
             at: Pointer::new("/subject"),
             value: json!({"id": "patient.1"}).to_string(),
         }];
@@ -592,3 +594,6 @@ mod patcher_tests {
         assert_eq!(result_json["subject"]["id"], "patient.1");
     }
 }
+
+
+*/

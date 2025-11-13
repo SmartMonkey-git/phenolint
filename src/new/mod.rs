@@ -1,3 +1,4 @@
+mod curie_format_patch;
 pub mod json_traverser;
 pub mod linter;
 pub mod parser;

@@ -51,7 +51,7 @@ impl Lint<&str> for Phenolinter {
         }
 
         if patch && report.has_violations() {
-            match self.patcher.patch(phenostr, report.patches()) {
+            match self.patcher.patch(phenostr, report.unambiguous_patches()) {
                 Ok(patched) => report.patched_phenopacket = Some(patched),
                 Err(err) => {
                     return LintResult::partial(report, Some(LinterError::PatchingError(err)));

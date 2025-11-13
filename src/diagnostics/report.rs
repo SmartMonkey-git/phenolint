@@ -1,6 +1,6 @@
 use crate::diagnostics::LintViolation;
 use crate::diagnostics::finding::LintFinding;
-use crate::enums::Patch;
+use crate::enums::{Patch, PatchAction};
 
 #[derive(Debug, Default)]
 pub struct LintReport {
@@ -24,7 +24,23 @@ impl LintReport {
     }
 
     pub fn patches(&self) -> Vec<&Patch> {
-        self.findings.iter().filter_map(|lri| lri.patch()).collect()
+        self.findings.iter().flat_map(|lf| lf.patch()).collect()
+    }
+
+    pub fn ambiguous_patches(&self) -> Vec<&Patch> {
+        self.findings
+            .iter()
+            .filter(|lf| lf.ambiguous_patches())
+            .flat_map(|lf_filtered| lf_filtered.patch())
+            .collect()
+    }
+
+    pub fn unambiguous_patches(&self) -> Vec<&Patch> {
+        self.findings
+            .iter()
+            .filter(|lf| !lf.ambiguous_patches())
+            .flat_map(|lf_filtered| lf_filtered.patch())
+            .collect()
     }
 
     pub fn push_finding(&mut self, finding: LintFinding) {
@@ -41,7 +57,7 @@ impl LintReport {
 
     pub fn has_patches(&self) -> bool {
         for info in &self.findings {
-            if info.patch().is_some() {
+            if !info.patch().is_empty() {
                 return true;
             }
         }
