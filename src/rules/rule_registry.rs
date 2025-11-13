@@ -4,7 +4,7 @@ use crate::traits::RuleCheck;
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::OntologyClass;
 
-type BoxedRuleCheck<T> = Box<dyn RuleCheck<T = T>>;
+pub type BoxedRuleCheck<N> = Box<dyn RuleCheck<N = N>>;
 pub struct LintingPolicy<T> {
     pub rule_id: &'static str,
     pub factory: fn(context: &LinterContext) -> Result<BoxedRuleCheck<T>, RuleInitError>,
@@ -18,7 +18,7 @@ macro_rules! register_rule {
     ($rule_type:ty) => {
         inventory::submit! {
 
-            LintingPolicy::<<$rule_type as RuleCheck>::T> {
+            LintingPolicy::<<$rule_type as RuleCheck>::N> {
                 rule_id: <$rule_type>::RULE_ID,
                 factory: |context: &LinterContext| <$rule_type>::from_context(context),
             }

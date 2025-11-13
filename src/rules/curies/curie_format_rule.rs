@@ -1,16 +1,14 @@
 use crate::diagnostics::specs::{DiagnosticSpec, LabelSpecs};
-use crate::diagnostics::{LintFinding, LintReport, ReportSpecs};
+use crate::diagnostics::{LintFinding, ReportSpecs};
 use crate::error::RuleInitError;
 use crate::json::JsonCursor;
 use crate::linter_context::LinterContext;
 use crate::register_rule;
-use crate::rules::rule_registry::LintingPolicy;
+use crate::rules::rule_registry::{BoxedRuleCheck, LintingPolicy};
 use crate::traits::{FromContext, LintRule, RuleCheck};
 use codespan_reporting::diagnostic::{LabelStyle, Severity};
 use phenolint_macros::lint_rule;
 use phenopackets::schema::v2::core::OntologyClass;
-use regex::Regex;
-use serde_json::Value;
 
 #[derive(Debug, Default)]
 #[lint_rule(id = "CURIE001")]
@@ -19,17 +17,17 @@ pub struct CurieFormatRule;
 impl FromContext for CurieFormatRule {
     type CheckType = OntologyClass;
 
-    fn from_context(
-        _: &LinterContext,
-    ) -> Result<Box<dyn RuleCheck<T = OntologyClass>>, RuleInitError> {
+    fn from_context(_: &LinterContext) -> Result<BoxedRuleCheck<OntologyClass>, RuleInitError> {
         Ok(Box::new(CurieFormatRule))
     }
 }
 
 impl RuleCheck for CurieFormatRule {
-    type T = OntologyClass;
+    type N = OntologyClass;
 
-    fn check(&self, phenostr: &OntologyClass, report: &mut LintReport) {}
+    fn check(&self, node: &OntologyClass) -> Vec<LintFinding> {
+        todo!()
+    }
 }
 impl CurieFormatRule {
     fn write_report(cursor: &mut JsonCursor) -> ReportSpecs {

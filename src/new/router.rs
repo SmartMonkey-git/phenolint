@@ -30,7 +30,9 @@ impl<T, P: NodeParser<T>> NodeRouter<T, P> {
             if context.rule_ids().iter().any(|s| s == rule.rule_id) {
                 match (rule.factory)(context) {
                     Ok(rule) => {
-                        rule.check(pared_node, report);
+                        let finding = rule.check(pared_node);
+
+                        report.extend_finding(finding)
                     }
                     Err(err) => match err {
                         RuleInitError::NeedsHPO => {

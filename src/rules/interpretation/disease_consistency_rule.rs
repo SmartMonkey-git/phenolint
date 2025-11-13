@@ -1,11 +1,11 @@
 use crate::LinterContext;
 use crate::diagnostics::specs::{DiagnosticSpec, LabelSpecs};
-use crate::diagnostics::{LintReport, ReportSpecs};
+use crate::diagnostics::{LintFinding, LintReport, ReportSpecs};
 
 use crate::error::RuleInitError;
 use crate::json::{JsonCursor, Pointer};
 use crate::register_rule;
-use crate::rules::rule_registry::LintingPolicy;
+use crate::rules::rule_registry::{BoxedRuleCheck, LintingPolicy};
 use crate::traits::{FromContext, LintRule, RuleCheck};
 use codespan_reporting::diagnostic::{LabelStyle, Severity};
 use phenolint_macros::lint_rule;
@@ -41,17 +41,17 @@ pub struct DiseaseConsistencyRule;
 impl FromContext for DiseaseConsistencyRule {
     type CheckType = Phenopacket;
 
-    fn from_context(
-        _: &LinterContext,
-    ) -> Result<Box<dyn RuleCheck<T = Phenopacket> + 'static>, RuleInitError> {
+    fn from_context(_: &LinterContext) -> Result<BoxedRuleCheck<Phenopacket>, RuleInitError> {
         Ok(Box::new(Self))
     }
 }
 
 impl RuleCheck for DiseaseConsistencyRule {
-    type T = Phenopacket;
+    type N = Phenopacket;
 
-    fn check(&self, phenostr: &Phenopacket, report: &mut LintReport) {}
+    fn check(&self, phenostr: &Phenopacket) -> Vec<LintFinding> {
+        todo!()
+    }
 }
 
 impl DiseaseConsistencyRule {

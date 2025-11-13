@@ -1,3 +1,4 @@
+use crate::diagnostics::LintFinding;
 use crate::diagnostics::report::LintReport;
 use crate::error::{LintResult, RuleInitError};
 use crate::json::Pointer;
@@ -34,12 +35,12 @@ pub trait FromContext {
     type CheckType;
     fn from_context(
         context: &LinterContext,
-    ) -> Result<Box<dyn RuleCheck<T = Self::CheckType>>, RuleInitError>;
+    ) -> Result<Box<dyn RuleCheck<N = Self::CheckType>>, RuleInitError>;
 }
 
 pub trait RuleCheck {
-    type T;
-    fn check(&self, phenostr: &Self::T, report: &mut LintReport);
+    type N;
+    fn check(&self, node: &Self::N) -> Vec<LintFinding>;
 }
 
 pub trait Lint<T> {
