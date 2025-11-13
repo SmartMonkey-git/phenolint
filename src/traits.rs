@@ -4,26 +4,16 @@ use crate::enums::PatchAction;
 use crate::error::{LintResult, RuleInitError};
 use crate::json::Pointer;
 use crate::linter_context::LinterContext;
-use crate::new::json_traverser::BoxedNode;
+use crate::new::json_traverser::Node;
 use phenopackets::schema::v2::core::OntologyClass;
+use serde_json::Value;
 
 pub trait LintRule: RuleCheck + FromContext {
     const RULE_ID: &'static str;
 }
 
-pub trait PhenopacketNodeTraversal<T> {
-    fn traverse<'s>(&'s self) -> Box<dyn Iterator<Item = BoxedNode<T>> + 's>;
-}
-
-pub trait Node<T> {
-    fn value(&self) -> T;
-
-    fn span(&self) -> Option<(usize, usize)>;
-    fn pointer(&self) -> Pointer;
-}
-
-pub trait NodeParser<T> {
-    fn parse_ontology_class(value: &BoxedNode<T>) -> Option<OntologyClass>
+pub trait NodeParser {
+    fn parse_ontology_class(value: &Node) -> Option<OntologyClass>
     where
         Self: Sized;
 }
@@ -33,19 +23,19 @@ pub trait DeserializePhenopackets<T> {
 }
 
 pub trait CompilePatch<T> {
-    fn compile_patch(&self, value: &BoxedNode<T>) -> PatchAction;
+    fn compile_patch(&self, value: &Node) -> PatchAction;
 }
 
 pub trait FromContext {
     type CheckType;
     fn from_context(
         context: &LinterContext,
-    ) -> Result<Box<dyn RuleCheck<N = Self::CheckType>>, RuleInitError>;
+    ) -> Result<Box<dyn RuleCheck<CheckType = Self::CheckType>>, RuleInitError>;
 }
 
 pub trait RuleCheck {
-    type N;
-    fn check(&self, node: &Self::N) -> Vec<LintFinding>;
+    type CheckType;
+    fn check(&self, node: &Self::CheckType) -> Vec<LintViolation>;
 }
 
 pub trait Lint<T> {

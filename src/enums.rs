@@ -1,6 +1,6 @@
 use crate::json::Pointer;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Patch {
     rule_id: String,
     actions: Vec<PatchAction>,

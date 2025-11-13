@@ -2,9 +2,9 @@ use crate::error::RuleInitError;
 use crate::linter_context::LinterContext;
 use crate::traits::RuleCheck;
 use phenopackets::schema::v2::Phenopacket;
-use phenopackets::schema::v2::core::OntologyClass;
+use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
 
-pub type BoxedRuleCheck<N> = Box<dyn RuleCheck<N = N>>;
+pub type BoxedRuleCheck<N> = Box<dyn RuleCheck<CheckType = N>>;
 pub struct LintingPolicy<T> {
     pub rule_id: &'static str,
     pub factory: fn(context: &LinterContext) -> Result<BoxedRuleCheck<T>, RuleInitError>,
@@ -12,13 +12,14 @@ pub struct LintingPolicy<T> {
 
 inventory::collect!(LintingPolicy<OntologyClass>);
 inventory::collect!(LintingPolicy<Phenopacket>);
+inventory::collect!(LintingPolicy<PhenotypicFeature>);
 
 #[macro_export]
 macro_rules! register_rule {
     ($rule_type:ty) => {
         inventory::submit! {
 
-            LintingPolicy::<<$rule_type as RuleCheck>::N> {
+            LintingPolicy::<<$rule_type as RuleCheck>::CheckType> {
                 rule_id: <$rule_type>::RULE_ID,
                 factory: |context: &LinterContext| <$rule_type>::from_context(context),
             }

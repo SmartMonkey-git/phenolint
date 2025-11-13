@@ -13,6 +13,6 @@ pub mod linter_context;
 pub use linter_context::LinterContext;
 mod json;
 
-mod new;
+pub mod new;
 #[cfg(test)]
 pub(crate) mod test_utils;

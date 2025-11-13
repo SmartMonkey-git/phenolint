@@ -1,6 +1,6 @@
 use crate::LinterContext;
 use crate::diagnostics::specs::{DiagnosticSpec, LabelSpecs};
-use crate::diagnostics::{LintFinding, LintReport, ReportSpecs};
+use crate::diagnostics::{LintFinding, LintReport, LintViolation, ReportSpecs};
 
 use crate::error::RuleInitError;
 use crate::json::{JsonCursor, Pointer};
@@ -47,9 +47,9 @@ impl FromContext for DiseaseConsistencyRule {
 }
 
 impl RuleCheck for DiseaseConsistencyRule {
-    type N = Phenopacket;
+    type CheckType = Phenopacket;
 
-    fn check(&self, phenostr: &Phenopacket) -> Vec<LintFinding> {
+    fn check(&self, phenostr: &Phenopacket) -> Vec<LintViolation> {
         todo!()
     }
 }

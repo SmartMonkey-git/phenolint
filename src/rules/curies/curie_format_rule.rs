@@ -1,5 +1,5 @@
 use crate::diagnostics::specs::{DiagnosticSpec, LabelSpecs};
-use crate::diagnostics::{LintFinding, ReportSpecs};
+use crate::diagnostics::{LintFinding, LintViolation, ReportSpecs};
 use crate::error::RuleInitError;
 use crate::json::JsonCursor;
 use crate::linter_context::LinterContext;
@@ -23,10 +23,13 @@ impl FromContext for CurieFormatRule {
 }
 
 impl RuleCheck for CurieFormatRule {
-    type N = OntologyClass;
+    type CheckType = OntologyClass;
 
-    fn check(&self, node: &OntologyClass) -> Vec<LintFinding> {
-        todo!()
+    fn check(&self, node: &OntologyClass) -> Vec<LintViolation> {
+        println!("{}", Self::RULE_ID);
+        println!("{:?}", node);
+
+        vec![]
     }
 }
 impl CurieFormatRule {

@@ -1,6 +1,8 @@
-use phenolint::{Lint, Phenolinter};
+use phenolint::new::linter::Linter;
+use phenolint::{Lint, LinterContext, Phenolinter};
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{Diagnosis, Disease, Interpretation, OntologyClass};
+use std::fs;
 use std::path::PathBuf;
 
 fn create_ontology_class(id: &str, label: &str) -> OntologyClass {
@@ -28,7 +30,7 @@ fn create_interpretation(disease: Option<OntologyClass>) -> Interpretation {
 }
 
 fn main() {
-    let disease1 = create_ontology_class("MONDO:0007254", "Breast Cancer");
+    /*let disease1 = create_ontology_class("MONDO:0007254", "Breast Cancer");
     let disease2 = create_ontology_class("MONDO:0005148", "Diabetes");
     let disease3 = create_ontology_class("MONDO:0005015", "Hypertension");
     let disease4 = create_ontology_class("MONDO_0005016", "Some Disease");
@@ -65,5 +67,10 @@ fn main() {
             println!("Integration test failed!");
             std::process::exit(1);
         }
-    }
+    }*/
+    let context = LinterContext::new(None, vec!["CURIE001".to_string(), "DUMMY001".to_string()]);
+    let mut l = Linter::new(context);
+
+    let pp = fs::read(PathBuf::from("/Users/rouvenreuter/Documents/Projects/PhenoXtrackt/tests/assets/presentation/test_pp.yaml")).unwrap();
+    l.lint(pp.as_slice(), false, false);
 }

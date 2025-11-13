@@ -1,6 +1,7 @@
 use crate::diagnostics::LintReport;
 use crate::json::error::JsonEditError;
 use config::ConfigError;
+use std::string::FromUtf8Error;
 use thiserror::Error;
 
 /// A result type that combines a lint report with an optional error.
@@ -59,6 +60,10 @@ pub enum InitError {
     Config(#[from] ConfigError),
     #[error(transparent)]
     JsonError(#[from] serde_json::Error),
+    #[error(transparent)]
+    StringParsing(#[from] FromUtf8Error),
+    #[error("Unable to parse input file")]
+    Unparseable,
 }
 
 #[derive(Error, Debug)]

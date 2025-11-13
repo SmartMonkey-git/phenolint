@@ -30,7 +30,7 @@ impl LintReport {
     pub fn ambiguous_patches(&self) -> Vec<&Patch> {
         self.findings
             .iter()
-            .filter(|lf| lf.ambiguous_patches())
+            .filter(|lf| lf.patch().len() > 1)
             .flat_map(|lf_filtered| lf_filtered.patch())
             .collect()
     }
@@ -38,7 +38,7 @@ impl LintReport {
     pub fn unambiguous_patches(&self) -> Vec<&Patch> {
         self.findings
             .iter()
-            .filter(|lf| !lf.ambiguous_patches())
+            .filter(|lf| lf.patch().len() == 1)
             .flat_map(|lf_filtered| lf_filtered.patch())
             .collect()
     }

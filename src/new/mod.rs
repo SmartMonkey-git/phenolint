@@ -1,6 +1,6 @@
-mod curie_format_patch;
 pub mod json_traverser;
 pub mod linter;
-pub mod parser;
+pub mod phenopacket_tree;
 mod router;
-mod traverser_factory;
+pub mod traits;
+pub mod tree_factory;

@@ -12,11 +12,11 @@ pub struct LinterContext {
 }
 
 impl LinterContext {
-    pub fn new(hpo_path: Option<PathBuf>) -> Self {
+    pub fn new(hpo_path: Option<PathBuf>, rules_ids: Vec<String>) -> Self {
         LinterContext {
             hpo_path,
             hpo: OnceCell::default(),
-            rule_ids: Vec::new(),
+            rule_ids: rules_ids,
         }
     }
     pub fn hpo(&mut self) -> Option<Arc<FullCsrOntology>> {
