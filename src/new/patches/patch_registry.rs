@@ -3,6 +3,7 @@ use crate::diagnostics::LintViolation;
 use crate::enums::Patch;
 use crate::error::RuleInitError;
 use crate::new::node::Node;
+use crate::new::patches::patch_registration::PatchRegistration;
 use crate::new::traits::{CompilePatches, RulePatch};
 use std::collections::HashMap;
 
@@ -51,5 +52,15 @@ impl PatchRegistry {
         } else {
             vec![]
         }
+    }
+
+    pub fn with_all_patches() -> Self {
+        let mut registry = Self::new();
+
+        for registration in inventory::iter::<PatchRegistration> {
+            (registration.register)(&mut registry);
+        }
+
+        registry
     }
 }

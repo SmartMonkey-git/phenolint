@@ -59,3 +59,32 @@ pub fn register_patch(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     TokenStream::from(expanded)
 }
+
+#[proc_macro_attribute]
+pub fn register_report(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let rule_id = match extract_rule_id(&attr) {
+        Ok(rule_id) => rule_id,
+        Err(err) => panic!("{}", err),
+    };
+
+    let input = parse_macro_input!(item as ItemStruct);
+    let name = &input.ident;
+
+    let expanded = quote! {
+        #input
+        impl RuleReport for #name {
+            const RULE_ID: &'static str = #rule_id;
+        }
+
+        ::inventory::submit! {
+            crate::new::report::report_registration::ReportRegistration {
+                rule_id: #rule_id,
+                register: |registry| {
+                    registry.register(#rule_id, #name);
+                }
+            }
+        }
+    };
+
+    TokenStream::from(expanded)
+}

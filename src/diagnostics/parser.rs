@@ -48,9 +48,7 @@ impl ReportParser {
 
         diagnostic = diagnostic.with_message(spec.message());
 
-        if let Some(code) = spec.code() {
-            diagnostic = diagnostic.with_code(code);
-        }
+        diagnostic = diagnostic.with_code(&spec.code);
 
         if !spec.labels.is_empty() {
             let labels = spec

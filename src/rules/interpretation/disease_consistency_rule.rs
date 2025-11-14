@@ -88,7 +88,7 @@ impl DiseaseConsistencyRule {
 
         let diagnostic_spec = DiagnosticSpec {
             severity: Severity::Warning,
-            code: Some(Self::RULE_ID.to_string()),
+            code: Self::RULE_ID.to_string(),
             message: "Disease Inconsistency".to_string(),
             labels,
             notes: Vec::new(),

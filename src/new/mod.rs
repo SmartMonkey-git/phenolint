@@ -4,6 +4,7 @@ pub mod node;
 mod parseable_nodes;
 pub mod patches;
 mod phenopacket_parser;
+mod report;
 mod router;
 mod span_types;
 pub mod traits;

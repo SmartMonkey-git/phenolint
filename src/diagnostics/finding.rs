@@ -5,12 +5,12 @@ use crate::enums::Patch;
 #[derive(Debug)]
 pub struct LintFinding {
     violation: LintViolation,
-    report: ReportSpecs,
+    report: Option<ReportSpecs>,
     patches: Vec<Patch>,
 }
 
 impl LintFinding {
-    pub fn new(violation: LintViolation, report: ReportSpecs, patches: Vec<Patch>) -> Self {
+    pub fn new(violation: LintViolation, report: Option<ReportSpecs>, patches: Vec<Patch>) -> Self {
         Self {
             violation,
             report,
@@ -26,7 +26,7 @@ impl LintFinding {
         self.patches.as_ref()
     }
 
-    pub fn report(&self) -> &ReportSpecs {
-        &self.report
+    pub fn report(&self) -> Option<&ReportSpecs> {
+        self.report.as_ref()
     }
 }

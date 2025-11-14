@@ -34,12 +34,14 @@ impl Linter {
             match PhenopacketParser::to_string(phenobytes) {
                 Ok(phenostr) => {
                     for info in report.findings() {
-                        if let Err(err) = ReportParser::emit(info.report(), &phenostr) {
-                            warn!(
-                                "Unable to parse and emit report for: '{}'",
-                                info.violation().rule_id()
-                            );
-                        };
+                        if let Some(report_specs) = info.report() {
+                            if let Err(err) = ReportParser::emit(report_specs, &phenostr) {
+                                warn!(
+                                    "Unable to parse and emit report for: '{}'",
+                                    info.violation().rule_id()
+                                );
+                            };
+                        }
                     }
                 }
                 Err(err) => {

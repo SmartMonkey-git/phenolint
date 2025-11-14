@@ -3,6 +3,7 @@ use crate::diagnostics::{LintFinding, LintViolation, ReportSpecs};
 use crate::error::RuleInitError;
 use crate::new::node::Node;
 use crate::new::patches::patch_registry::PatchRegistry;
+use crate::new::report::report_registry::ReportRegistry;
 use crate::new::traits::ParsableNode;
 use crate::rules::rule_registry::LintingPolicy;
 use log::warn;
@@ -43,11 +44,14 @@ impl NodeRouter {
                                 node,
                                 &violation,
                             );
-                            findings.push(LintFinding::new(
-                                violation,
-                                ReportSpecs::default(),
-                                patches,
-                            ));
+
+                            let report = ReportRegistry::with_all_reports().get_report_for(
+                                rule.rule_id,
+                                node,
+                                &violation,
+                            );
+
+                            findings.push(LintFinding::new(violation, report, patches));
                         }
                     }
                     Err(err) => match err {

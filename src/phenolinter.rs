@@ -38,28 +38,29 @@ impl Phenolinter {
 
 impl Lint<&str> for Phenolinter {
     fn lint(&mut self, phenostr: &str, patch: bool, quite: bool) -> LintResult {
-        let mut report = LintReport::default();
-        if !quite {
-            for finding in report.findings() {
-                if let Err(err) = ReportParser::emit(finding.report(), phenostr) {
-                    warn!(
-                        "Unable to parse and emit report for: '{}'",
-                        finding.violation().rule_id()
-                    );
-                };
-            }
-        }
-
-        if patch && report.has_violations() {
-            match self.patcher.patch(phenostr, report.unambiguous_patches()) {
-                Ok(patched) => report.patched_phenopacket = Some(patched),
-                Err(err) => {
-                    return LintResult::partial(report, Some(LinterError::PatchingError(err)));
+        /*
+                let mut report = LintReport::default();
+                if !quite {
+                    for finding in report.findings() {
+                        if let Err(err) = ReportParser::emit(finding.report(), phenostr) {
+                            warn!(
+                                "Unable to parse and emit report for: '{}'",
+                                finding.violation().rule_id()
+                            );
+                        };
+                    }
                 }
-            }
-        }
 
-        LintResult::ok(report)
+                if patch && report.has_violations() {
+                    match self.patcher.patch(phenostr, report.unambiguous_patches()) {
+                        Ok(patched) => report.patched_phenopacket = Some(patched),
+                        Err(err) => {
+                            return LintResult::partial(report, Some(LinterError::PatchingError(err)));
+                        }
+                    }
+                }
+        */
+        LintResult::ok(LintReport::default())
     }
 }
 

@@ -78,7 +78,7 @@ impl CurieFormatRule {
 
         let diagnostic_spec = DiagnosticSpec {
             severity: Severity::Error,
-            code: Some(Self::RULE_ID.to_string()),
+            code: Self::RULE_ID.to_string(),
             message: "CURIE formatted incorrectly".to_string(),
             labels,
             notes: vec![
