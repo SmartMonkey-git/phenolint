@@ -1,3 +1,4 @@
+#![allow(unused)]
 use config::{Config, ConfigError, File, FileFormat};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
