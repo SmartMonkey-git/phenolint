@@ -1,38 +1,14 @@
 use crate::error::InitError;
 use crate::new::abstract_pheno_tree::AbstractPhenoTree;
-use crate::new::traits::Span;
+use crate::new::span_types::{JsonSpan, Span, YamlSpan};
 use phenopackets::schema::v2::Phenopacket;
 use prost::Message;
-use spanned_json_parser::SpannedValue;
 use spanned_json_parser::parse;
 
-#[derive(Debug, Clone)]
-pub struct JsonSpan {
-    spans: SpannedValue,
-}
+pub struct PhenopacketParser;
 
-impl JsonSpan {
-    fn new(spans: SpannedValue) -> JsonSpan {
-        JsonSpan { spans }
-    }
-}
-#[derive(Debug, Clone)]
-pub struct YamlSpan {
-    spans: Vec<(usize, usize)>,
-}
-
-impl YamlSpan {
-    fn new(spans: Vec<(usize, usize)>) -> YamlSpan {
-        YamlSpan { spans }
-    }
-}
-
-/// Tries to parse any tree like structure that is implemented into a serde_json::Value
-#[derive(Debug, Default)]
-pub struct TreeFactory;
-
-impl TreeFactory {
-    pub fn try_build(phenobytes: &[u8]) -> Result<AbstractPhenoTree, InitError> {
+impl PhenopacketParser {
+    pub fn to_tree(phenobytes: &[u8]) -> Result<AbstractPhenoTree, InitError> {
         //TODO: Better error reporting
         if let Ok(json) = Self::try_to_json(phenobytes) {
             println!("Going with json");
@@ -85,5 +61,26 @@ impl TreeFactory {
             ));
         }
         Err(InitError::Unparseable)
+    }
+
+    pub fn to_string(phenobytes: &[u8]) -> Result<String, InitError> {
+        if let Ok(json_str) = Self::try_from_json(phenobytes) {
+            Ok(json_str)
+        } else {
+            Err(InitError::Unparseable)
+        }
+    }
+
+    fn try_from_json(phenobytes: &[u8]) -> Result<String, InitError> {
+        Ok(serde_json::from_slice::<String>(phenobytes)?)
+    }
+
+    fn try_from_yaml(phenobytes: &[u8]) -> Result<String, InitError> {
+        Ok(serde_yaml::from_slice::<String>(phenobytes)?)
+    }
+
+    fn try_from_protobuf(phenobytes: &[u8]) -> Result<String, InitError> {
+        let pp = Phenopacket::decode(phenobytes)?;
+        Ok(serde_json::to_string_pretty(&pp)?)
     }
 }
