@@ -1,7 +1,7 @@
-use crate::Spanning;
 use crate::tree::node::Node;
 use crate::tree::pointer::Pointer;
 use crate::tree::span_types::Span;
+use crate::tree::traits::Spanning;
 use serde_json::Value;
 use std::collections::VecDeque;
 

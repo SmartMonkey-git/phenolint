@@ -1,29 +1,9 @@
 use crate::diagnostics::LintViolation;
 use crate::enums::Patch;
-use crate::error::RuleInitError;
 use crate::patches::patch_registration::PatchRegistration;
+use crate::patches::traits::{CompilePatches, RegisterablePatch, RulePatch};
 use crate::tree::node::Node;
-use crate::{CompilePatches, LinterContext, RulePatch};
 use std::collections::HashMap;
-
-pub trait RegisterablePatch: Send + Sync {
-    fn compile_patches(&self, value: &Node, lint_violation: &LintViolation) -> Vec<Patch>;
-    fn rule_id(&self) -> String;
-}
-
-pub trait PatchFromContext {
-    fn from_context(context: &LinterContext) -> Result<Box<dyn RegisterablePatch>, RuleInitError>;
-}
-
-impl<T: CompilePatches + Send + RulePatch> RegisterablePatch for T {
-    fn compile_patches(&self, value: &Node, lint_violation: &LintViolation) -> Vec<Patch> {
-        CompilePatches::compile_patches(self, value, lint_violation)
-    }
-
-    fn rule_id(&self) -> String {
-        Self::RULE_ID.to_string()
-    }
-}
 
 #[derive(Default)]
 pub struct PatchRegistry {

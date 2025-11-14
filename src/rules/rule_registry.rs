@@ -1,6 +1,6 @@
 use crate::error::RuleInitError;
 use crate::linter_context::LinterContext;
-use crate::traits::RuleCheck;
+use crate::rules::traits::RuleCheck;
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
 

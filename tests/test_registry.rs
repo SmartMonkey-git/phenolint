@@ -1,9 +1,10 @@
 use phenolint::diagnostics::LintViolation;
 use phenolint::error::RuleInitError;
 use phenolint::phenolint::Linter;
-use phenolint::register_rule;
 use phenolint::rules::rule_registry::{BoxedRuleCheck, LintingPolicy};
-use phenolint::{LintRule, LinterContext, RuleCheck, RuleFromContext};
+use phenolint::rules::traits::LintRule;
+use phenolint::rules::traits::{RuleCheck, RuleFromContext};
+use phenolint::{LinterContext, register_rule};
 use phenolint_macros::register_rule as rr;
 use phenopackets::schema::v2::core::OntologyClass;
 use rstest::rstest;

@@ -2,10 +2,8 @@
 use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use crate::error::RuleInitError;
-use crate::report::report_registry::{
-    CompileReport, RegisterableReport, ReportFromContext, RuleReport,
-};
 use crate::report::specs::{DiagnosticSpec, ReportSpecs};
+use crate::report::traits::{CompileReport, RegisterableReport, ReportFromContext, RuleReport};
 use crate::tree::node::Node;
 use codespan_reporting::diagnostic::Severity;
 use phenolint_macros::register_report;

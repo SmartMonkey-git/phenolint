@@ -41,7 +41,7 @@ pub(crate) fn assert_report_message(
     );
 }
 
-pub fn test_config() -> PathBuf {
+pub fn _test_config() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("assets")
         .join("phenolint.toml")

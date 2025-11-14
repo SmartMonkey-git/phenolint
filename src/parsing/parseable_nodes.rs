@@ -1,4 +1,4 @@
-use crate::ParsableNode;
+use crate::parsing::traits::ParsableNode;
 use crate::tree::node::Node;
 use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
 use serde_json::Value;

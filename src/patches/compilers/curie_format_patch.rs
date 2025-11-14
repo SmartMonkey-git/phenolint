@@ -1,12 +1,12 @@
 #![allow(unused)]
-use crate::RulePatch;
+use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use crate::enums::Patch;
 use crate::error::RuleInitError;
 use crate::patches::patch_registration;
-use crate::patches::patch_registry::{PatchFromContext, RegisterablePatch};
+use crate::patches::traits::RulePatch;
+use crate::patches::traits::{CompilePatches, PatchFromContext, RegisterablePatch};
 use crate::tree::node::Node;
-use crate::{CompilePatches, LinterContext};
 use phenolint_macros::register_patch;
 
 #[register_patch(id = "CURIE001")]

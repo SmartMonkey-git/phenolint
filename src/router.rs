@@ -1,14 +1,15 @@
+use crate::LinterContext;
 use crate::diagnostics::LintFinding;
 use crate::error::RuleInitError;
+use crate::parsing::traits::ParsableNode;
 use crate::patches::patch_registry::PatchRegistry;
 use crate::report::report_registry::ReportRegistry;
 use crate::rules::rule_registry::LintingPolicy;
 use crate::tree::node::Node;
-use crate::{LinterContext, ParsableNode};
 use log::warn;
 use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
 
-pub struct NodeRouter;
+pub(crate) struct NodeRouter;
 
 impl NodeRouter {
     pub fn lint_node(node: &Node, context: &mut LinterContext) -> Vec<LintFinding> {

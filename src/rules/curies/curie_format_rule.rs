@@ -3,7 +3,7 @@ use crate::error::RuleInitError;
 use crate::linter_context::LinterContext;
 use crate::register_rule;
 use crate::rules::rule_registry::{BoxedRuleCheck, LintingPolicy};
-use crate::traits::{LintRule, RuleCheck, RuleFromContext};
+use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
 use crate::tree::pointer::Pointer;
 use phenolint_macros::register_rule as rr;
 use phenopackets::schema::v2::core::OntologyClass;

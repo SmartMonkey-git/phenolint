@@ -1,6 +1,6 @@
 #![allow(dead_code)]
-use crate::Spanning;
 use crate::tree::pointer::Pointer;
+use crate::tree::traits::Spanning;
 use spanned_json_parser::SpannedValue;
 
 #[derive(Clone)]
