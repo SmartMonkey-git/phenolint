@@ -1,11 +1,11 @@
 use crate::diagnostics::specs::{DiagnosticSpec, LabelSpecs};
 use crate::diagnostics::{LintFinding, LintViolation, ReportSpecs};
 use crate::error::RuleInitError;
-use crate::json::JsonCursor;
+use crate::json::{JsonCursor, Pointer};
 use crate::linter_context::LinterContext;
 use crate::register_rule;
 use crate::rules::rule_registry::{BoxedRuleCheck, LintingPolicy};
-use crate::traits::{FromContext, LintRule, RuleCheck};
+use crate::traits::{LintRule, RuleCheck, RuleFromContext};
 use codespan_reporting::diagnostic::{LabelStyle, Severity};
 use phenolint_macros::register_rule as rr;
 use phenopackets::schema::v2::core::OntologyClass;
@@ -14,7 +14,7 @@ use phenopackets::schema::v2::core::OntologyClass;
 #[rr(id = "CURIE001")]
 pub struct CurieFormatRule;
 
-impl FromContext for CurieFormatRule {
+impl RuleFromContext for CurieFormatRule {
     type CheckType = OntologyClass;
 
     fn from_context(_: &LinterContext) -> Result<BoxedRuleCheck<OntologyClass>, RuleInitError> {
@@ -29,7 +29,7 @@ impl RuleCheck for CurieFormatRule {
         println!("{}", Self::RULE_ID);
         println!("{:?}", node);
 
-        vec![]
+        vec![LintViolation::new(Self::RULE_ID, Pointer::new(""))]
     }
 }
 impl CurieFormatRule {

@@ -5,7 +5,7 @@ use proc_macro::TokenStream;
 use regex::Regex;
 use syn::parse::Parser;
 
-static RULE_FORMAT: Lazy<Regex> = Lazy::new(|| Regex::new("[A-Z]{1,5}[0-9]{3}").unwrap());
+static RULE_FORMAT: Lazy<Regex> = Lazy::new(|| Regex::new("^[A-Z]{1,5}[0-9]{3}$").unwrap());
 
 pub(crate) fn extract_rule_id(attr_tokens: &TokenStream) -> Result<String, String> {
     let mut rule_id = None;
@@ -38,7 +38,7 @@ pub(crate) fn extract_rule_id(attr_tokens: &TokenStream) -> Result<String, Strin
                 Ok(rule_id)
             } else {
                 Err(
-                    "Invalid rule ID format. Rule needs to be of format [A-Z]{1,5}[0-9]{3}"
+                    "Invalid rule ID format. Rule needs to be of format ^[A-Z]{1,5}[0-9]{3}$"
                         .to_owned(),
                 )
             }

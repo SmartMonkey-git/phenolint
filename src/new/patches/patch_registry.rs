@@ -1,5 +1,7 @@
+use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use crate::enums::Patch;
+use crate::error::RuleInitError;
 use crate::new::node::Node;
 use crate::new::traits::{CompilePatches, RulePatch};
 use std::collections::HashMap;
@@ -7,6 +9,10 @@ use std::collections::HashMap;
 pub trait RegisterablePatch: Send + Sync {
     fn compile_patches(&self, value: &Node, lint_violation: &LintViolation) -> Vec<Patch>;
     fn rule_id(&self) -> String;
+}
+
+pub trait PatchFromContext {
+    fn from_context(context: &LinterContext) -> Result<Box<dyn RegisterablePatch>, RuleInitError>;
 }
 
 impl<T: CompilePatches + Send + RulePatch> RegisterablePatch for T {
@@ -47,13 +53,3 @@ impl PatchRegistry {
         }
     }
 }
-/*
-fn stuff() {
-    // Usage:
-    let mut registry = PatchRegistry::new();
-    registry.register(crate::new::patches::curie_format_patch::CurieFormatPatch);
-    let rule = CurieFormatRule::from_context(&LinterContext::default()).unwrap();
-    // Later, get patches for CurieFormatRule
-    let patches = registry.get_patches_for(&rule, &node, &violation);
-}
-*/

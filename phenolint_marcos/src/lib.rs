@@ -43,20 +43,15 @@ pub fn register_patch(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         #input
-
-        impl CompilePatches for #name {
+        impl RulePatch for #name {
             const RULE_ID: &'static str = #rule_id;
-
-            fn compile_patches(&self, value: &Node, lint_violation: &LintViolation) -> Vec<Patch> {
-                todo!()
-            }
         }
 
         ::inventory::submit! {
             crate::new::patches::patch_registration::PatchRegistration {
                 rule_id: #rule_id,
                 register: |registry| {
-                    registry.register(#name);
+                    registry.register(#rule_id, #name);
                 }
             }
         }

@@ -4,11 +4,11 @@ use crate::linter_context::LinterContext;
 use crate::new::node::Node;
 use phenopackets::schema::v2::core::OntologyClass;
 
-pub trait LintRule: RuleCheck + FromContext {
+pub trait LintRule: RuleCheck + RuleFromContext {
     const RULE_ID: &'static str;
 }
 
-pub trait FromContext {
+pub trait RuleFromContext {
     type CheckType;
     fn from_context(
         context: &LinterContext,

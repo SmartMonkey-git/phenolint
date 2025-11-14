@@ -3,14 +3,14 @@ use crate::diagnostics::LintViolation;
 use crate::error::RuleInitError;
 use crate::register_rule;
 use crate::rules::rule_registry::LintingPolicy;
-use crate::{FromContext, LintRule, RuleCheck};
+use crate::{LintRule, RuleCheck, RuleFromContext};
 use phenolint_macros::register_rule as rr;
 use phenopackets::schema::v2::core::PhenotypicFeature;
 
 #[rr(id = "DUMMY001")]
 struct DummyRule;
 
-impl FromContext for DummyRule {
+impl RuleFromContext for DummyRule {
     type CheckType = PhenotypicFeature;
 
     fn from_context(

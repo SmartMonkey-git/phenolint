@@ -63,7 +63,7 @@ impl Default for ReportSpecs {
         let diag = DiagnosticSpec {
             severity: Severity::Help,
             code: None,
-            message: "".to_string(),
+            message: "I'm the default Report. You forgot to implement me.".to_string(),
             labels: vec![],
             notes: vec![],
         };

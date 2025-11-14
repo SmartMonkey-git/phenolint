@@ -6,7 +6,7 @@ use crate::error::RuleInitError;
 use crate::json::{JsonCursor, Pointer};
 use crate::register_rule;
 use crate::rules::rule_registry::{BoxedRuleCheck, LintingPolicy};
-use crate::traits::{FromContext, LintRule, RuleCheck};
+use crate::traits::{LintRule, RuleCheck, RuleFromContext};
 use codespan_reporting::diagnostic::{LabelStyle, Severity};
 use phenolint_macros::register_rule as rr;
 use phenopackets::schema::v2::Phenopacket;
@@ -38,7 +38,7 @@ use phenopackets::schema::v2::core::OntologyClass;
 #[rr(id = "INTER001")]
 pub struct DiseaseConsistencyRule;
 
-impl FromContext for DiseaseConsistencyRule {
+impl RuleFromContext for DiseaseConsistencyRule {
     type CheckType = Phenopacket;
 
     fn from_context(_: &LinterContext) -> Result<BoxedRuleCheck<Phenopacket>, RuleInitError> {

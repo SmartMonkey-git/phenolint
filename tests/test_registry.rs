@@ -3,7 +3,7 @@ use phenolint::error::RuleInitError;
 use phenolint::new::linter::Linter;
 use phenolint::register_rule;
 use phenolint::rules::rule_registry::{BoxedRuleCheck, LintingPolicy};
-use phenolint::{FromContext, LintRule, LinterContext, RuleCheck};
+use phenolint::{LintRule, LinterContext, RuleCheck, RuleFromContext};
 use phenolint_macros::register_rule as rr;
 use phenopackets::schema::v2::core::OntologyClass;
 use rstest::rstest;
@@ -14,7 +14,7 @@ use std::process::exit;
 #[rr(id = "CURIE002")]
 struct SomeRule;
 
-impl FromContext for SomeRule {
+impl RuleFromContext for SomeRule {
     type CheckType = OntologyClass;
 
     fn from_context(_: &LinterContext) -> Result<BoxedRuleCheck<Self::CheckType>, RuleInitError> {
