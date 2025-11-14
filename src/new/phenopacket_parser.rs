@@ -10,13 +10,13 @@ pub struct PhenopacketParser;
 impl PhenopacketParser {
     pub fn to_tree(phenobytes: &[u8]) -> Result<AbstractPhenoTree, InitError> {
         //TODO: Better error reporting
-        if let Ok(json) = Self::try_to_json(phenobytes) {
+        if let Ok(json) = Self::try_to_json_tree(phenobytes) {
             println!("Going with json");
             return Ok(json);
-        } else if let Ok(yaml) = Self::try_to_yaml(phenobytes) {
+        } else if let Ok(yaml) = Self::try_to_yaml_tree(phenobytes) {
             println!("Going with yaml");
             return Ok(yaml);
-        } else if let Ok(pb) = Self::try_to_protobuf(phenobytes) {
+        } else if let Ok(pb) = Self::try_to_protobuf_tree(phenobytes) {
             println!("Going with protobuf");
             return Ok(pb);
         }
@@ -24,7 +24,7 @@ impl PhenopacketParser {
         Err(InitError::Unparseable)
     }
 
-    fn try_to_json(phenobytes: &[u8]) -> Result<AbstractPhenoTree, InitError> {
+    fn try_to_json_tree(phenobytes: &[u8]) -> Result<AbstractPhenoTree, InitError> {
         let json_string = String::from_utf8(phenobytes.to_vec())?;
 
         if let Ok(json) = serde_json::from_str(&json_string)
@@ -38,7 +38,7 @@ impl PhenopacketParser {
         Err(InitError::Unparseable)
     }
 
-    fn try_to_yaml(phenobytes: &[u8]) -> Result<AbstractPhenoTree, InitError> {
+    fn try_to_yaml_tree(phenobytes: &[u8]) -> Result<AbstractPhenoTree, InitError> {
         if let Ok(yaml) = serde_yaml::from_slice(phenobytes) {
             return Ok(AbstractPhenoTree::new(
                 yaml,
@@ -48,9 +48,8 @@ impl PhenopacketParser {
         Err(InitError::Unparseable)
     }
 
-    fn try_to_protobuf(phenobytes: &[u8]) -> Result<AbstractPhenoTree, InitError> {
-        let pp = Phenopacket::decode(phenobytes)?;
-        let json_string = serde_json::to_string_pretty(&pp)?;
+    fn try_to_protobuf_tree(phenobytes: &[u8]) -> Result<AbstractPhenoTree, InitError> {
+        let json_string = Self::try_from_protobuf(phenobytes)?;
 
         if let Ok(json) = serde_json::from_str(&json_string)
             && let Ok(spans) = parse(&json_string)
@@ -66,6 +65,10 @@ impl PhenopacketParser {
     pub fn to_string(phenobytes: &[u8]) -> Result<String, InitError> {
         if let Ok(json_str) = Self::try_from_json(phenobytes) {
             Ok(json_str)
+        } else if let Ok(yaml) = Self::try_from_yaml(phenobytes) {
+            Ok(yaml)
+        } else if let Ok(pb) = Self::try_from_protobuf(phenobytes) {
+            Ok(pb)
         } else {
             Err(InitError::Unparseable)
         }
