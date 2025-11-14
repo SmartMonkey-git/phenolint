@@ -17,11 +17,7 @@ impl AbstractPhenoTree {
 
     pub fn traverse<'s>(&'s self) -> Box<dyn Iterator<Item = Node> + 's> {
         let mut queue = VecDeque::new();
-        let root_node = Node::new(
-            &self.tree,
-            &self.spans.span(&Pointer::at_root()).unwrap(),
-            Pointer::at_root(),
-        );
+        let root_node = Node::new(&self.tree, &self.spans.clone(), Pointer::at_root());
         queue.push_back(root_node);
 
         Box::new(std::iter::from_fn(move || {
@@ -33,14 +29,7 @@ impl AbstractPhenoTree {
                             let mut new_pointer = current_node.pointer().clone();
                             new_pointer.down(i);
 
-                            let next_node = Node::new(
-                                val,
-                                &self
-                                    .spans
-                                    .span(&new_pointer)
-                                    .unwrap_or_else(|| panic!("Expected spans at {}", new_pointer)),
-                                new_pointer,
-                            );
+                            let next_node = Node::new(val, &self.spans.clone(), new_pointer);
 
                             queue.push_back(next_node);
                         }
@@ -50,14 +39,7 @@ impl AbstractPhenoTree {
                             let mut new_pointer = current_node.pointer().clone();
                             new_pointer.down(key);
 
-                            let next_node = Node::new(
-                                val,
-                                &self
-                                    .spans
-                                    .span(&new_pointer)
-                                    .unwrap_or_else(|| panic!("Expected spans at {}", new_pointer)),
-                                new_pointer,
-                            );
+                            let next_node = Node::new(val, &self.spans.clone(), new_pointer);
 
                             queue.push_back(next_node);
                         }

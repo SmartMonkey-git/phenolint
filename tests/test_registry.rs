@@ -49,7 +49,7 @@ fn test() {
 
     let test_pp = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("assets")
-        .join("phenopacket.pb");
+        .join("phenopacket.json");
 
     let pp = fs::read(test_pp).unwrap();
     let res = l.lint(pp.as_slice(), false, false);

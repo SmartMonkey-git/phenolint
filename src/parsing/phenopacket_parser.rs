@@ -1,9 +1,9 @@
 use crate::error::InitError;
+use crate::parsing::utils::collect_json_spans;
 use crate::tree::abstract_pheno_tree::AbstractPhenoTree;
 use crate::tree::span_types::{JsonSpan, Span, YamlSpan};
 use phenopackets::schema::v2::Phenopacket;
 use prost::Message;
-use spanned_json_parser::parse;
 
 pub struct PhenopacketParser;
 
@@ -29,7 +29,7 @@ impl PhenopacketParser {
         let json_string = String::from_utf8(phenobytes.to_vec())?;
 
         if let Ok(json) = serde_json::from_str(&json_string)
-            && let Ok(spans) = parse(&json_string)
+            && let Ok(spans) = collect_json_spans(&json_string)
         {
             return Ok(AbstractPhenoTree::new(
                 json,
@@ -53,7 +53,7 @@ impl PhenopacketParser {
         let json_string = Self::try_from_protobuf(phenobytes)?;
 
         if let Ok(json) = serde_json::from_str(&json_string)
-            && let Ok(spans) = parse(&json_string)
+            && let Ok(spans) = collect_json_spans(&json_string)
         {
             return Ok(AbstractPhenoTree::new(
                 json,

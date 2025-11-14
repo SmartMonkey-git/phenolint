@@ -1,19 +1,23 @@
 #![allow(unused)]
-use crate::tree::pointer::Pointer;
-use serde_json::Value;
 
-#[derive(Clone)]
+use crate::tree::pointer::Pointer;
+use crate::tree::span_types::Span;
+use crate::tree::traits::Spanning;
+use serde_json::Value;
+use std::ops::Range;
+
+#[derive()]
 pub struct Node {
     pub value: Value,
-    pub span: (usize, usize),
+    pub span: Span,
     pub pointer: Pointer,
 }
 
 impl Node {
-    pub fn new(value: &Value, span: &(usize, usize), pointer: Pointer) -> Self {
+    pub fn new(value: &Value, span: &Span, pointer: Pointer) -> Self {
         Node {
             value: value.clone(),
-            span: *span,
+            span: span.clone(),
             pointer,
         }
     }
@@ -21,8 +25,8 @@ impl Node {
         self.value.pointer(ptr.position()).unwrap().clone()
     }
 
-    pub fn span(&self, ptr: Pointer) -> Option<(usize, usize)> {
-        todo!()
+    pub fn span(&self, ptr: &Pointer) -> Option<&Range<usize>> {
+        self.span.span(ptr)
     }
 
     pub fn pointer(&self) -> Pointer {

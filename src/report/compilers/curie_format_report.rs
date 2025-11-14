@@ -2,11 +2,11 @@
 use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use crate::error::RuleInitError;
-use crate::report::specs::{DiagnosticSpec, ReportSpecs};
+use crate::report::specs::{DiagnosticSpec, LabelSpecs, ReportSpecs};
 use crate::report::traits::{CompileReport, RegisterableReport, ReportFromContext, RuleReport};
 use crate::tree::node::Node;
 use crate::tree::pointer::Pointer;
-use codespan_reporting::diagnostic::Severity;
+use codespan_reporting::diagnostic::{LabelStyle, Severity};
 use phenolint_macros::register_report;
 
 #[register_report(id = "CURIE001")]
@@ -20,14 +20,18 @@ impl ReportFromContext for CurieFormatReport {
 
 impl CompileReport for CurieFormatReport {
     #[allow(unused)]
-    fn compile_report(&self, value: &Node, lint_violation: &LintViolation) -> ReportSpecs {
+    fn compile_report(&self, node: &Node, lint_violation: &LintViolation) -> ReportSpecs {
         println!("Reached compilation of CurieFormatReport.");
-        let curie = value.value(Pointer::new("id"));
+        let curie = node.value(Pointer::new("id"));
         ReportSpecs::new(DiagnosticSpec {
             severity: Severity::Error,
             code: Self::RULE_ID.to_string(),
             message: format!("CURIE formatted wrong: {}", curie),
-            labels: vec![],
+            labels: vec![LabelSpecs {
+                style: LabelStyle::Primary,
+                range: node.span(&node.pointer).unwrap().clone(),
+                message: "".to_string(),
+            }],
             notes: vec![],
         })
     }

@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use crate::tree::pointer::Pointer;
-use crate::tree::traits::Spanning;
-use spanned_json_parser::SpannedValue;
+use std::collections::HashMap;
+use std::ops::Range;
 
 #[derive(Clone)]
 pub enum Span {
@@ -9,23 +9,36 @@ pub enum Span {
     Yaml(YamlSpan),
 }
 
-impl Spanning for Span {
+impl Span {
     #[allow(unused)]
-    fn span(&self, ptr: &Pointer) -> Option<(usize, usize)> {
+    pub(crate) fn span(&self, ptr: &Pointer) -> Option<&Range<usize>> {
         match self {
-            Span::Json(s) => Some((1, 2)),
-            Span::Yaml(s) => Some((1, 2)),
+            Span::Json(s) => s.spans.get(ptr),
+            Span::Yaml(s) => Some(&(1usize..2usize)),
         }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct JsonSpan {
-    spans: SpannedValue,
+    spans: HashMap<Pointer, Range<usize>>,
 }
 
+/*impl Clone for JsonSpan {
+    fn clone(&self) -> Self {
+        if let Some(obj) = self.spans.as_span_object() {
+            SpannedValue {
+                value: json_spanned_value::Value::Object(),
+                start: obj.start,
+                end: obj.end,
+            };
+            JsonSpan::new(SpannedValue::from(obj))
+        }
+    }
+}*/
+
 impl JsonSpan {
-    pub fn new(spans: SpannedValue) -> JsonSpan {
+    pub fn new(spans: HashMap<Pointer, Range<usize>>) -> JsonSpan {
         JsonSpan { spans }
     }
 }
