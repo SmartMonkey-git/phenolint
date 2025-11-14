@@ -1,6 +1,6 @@
 use phenolint::diagnostics::LintViolation;
 use phenolint::error::RuleInitError;
-use phenolint::phenolint::Linter;
+use phenolint::phenolint::Phenolint;
 use phenolint::rules::rule_registry::{BoxedRuleCheck, LintingPolicy};
 use phenolint::rules::traits::LintRule;
 use phenolint::rules::traits::{RuleCheck, RuleFromContext};
@@ -45,7 +45,7 @@ fn test() {
             "CURIE002".to_string(),
         ],
     );
-    let mut l = Linter::new(context);
+    let mut l = Phenolint::new(context);
 
     let test_pp = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("assets")

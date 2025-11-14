@@ -9,13 +9,13 @@ use crate::router::NodeRouter;
 use crate::tree::abstract_pheno_tree::AbstractPhenoTree;
 use log::warn;
 
-pub struct Linter {
+pub struct Phenolint {
     context: LinterContext,
 }
 
-impl Linter {
+impl Phenolint {
     pub fn new(context: LinterContext) -> Self {
-        Linter { context }
+        Phenolint { context }
     }
     pub fn lint(&mut self, phenobytes: &[u8], patch: bool, quit: bool) -> LintResult {
         let mut report = LintReport::default();
