@@ -1,5 +1,8 @@
 use phenolint::LinterContext;
 use phenolint::new::linter::Linter;
+use phenolint::new::patches::patch_registration::PatchRegistration;
+use phenolint::new::patches::patch_registry::PatchRegistry;
+use phenolint::rules::curies::curie_format_rule::CurieFormatRule;
 use phenopackets::schema::v2::core::{Diagnosis, Disease, Interpretation, OntologyClass};
 use std::fs;
 use std::path::PathBuf;
@@ -68,6 +71,7 @@ fn main() {
             std::process::exit(1);
         }
     }*/
+
     let context = LinterContext::new(None, vec!["CURIE001".to_string(), "DUMMY001".to_string()]);
     let mut l = Linter::new(context);
 

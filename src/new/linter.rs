@@ -25,14 +25,8 @@ impl Linter {
         };
 
         for node in apt.traverse() {
-            let violations = NodeRouter::lint_node(&node, &mut self.context);
-
-            for violation in violations {
-                // TODO: Compile Patches here from the violations
-                let finding =
-                    LintFinding::new(violation, ReportSpecs::default(), vec![Patch::default()]);
-                report.push_finding(finding);
-            }
+            let findings = NodeRouter::lint_node(&node, &mut self.context);
+            report.extend_finding(findings);
         }
 
         // TODO: Maybe this should be part of the CLI. If not, then we should convert the reports to Strings here and return them with the report. The CLI will just emit the Strings.

@@ -8,7 +8,7 @@ use crate::register_rule;
 use crate::rules::rule_registry::{BoxedRuleCheck, LintingPolicy};
 use crate::traits::{FromContext, LintRule, RuleCheck};
 use codespan_reporting::diagnostic::{LabelStyle, Severity};
-use phenolint_macros::lint_rule;
+use phenolint_macros::register_rule as rr;
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::OntologyClass;
 
@@ -35,7 +35,7 @@ use phenopackets::schema::v2::core::OntologyClass;
 /// this disease does not appear in the phenopacket's diseases field, the rule will
 /// flag this inconsistency. The disease should be added to both locations to maintain
 /// data integrity across the phenopacket structure.
-#[lint_rule(id = "INTER001")]
+#[rr(id = "INTER001")]
 pub struct DiseaseConsistencyRule;
 
 impl FromContext for DiseaseConsistencyRule {

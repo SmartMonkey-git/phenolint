@@ -7,11 +7,11 @@ use crate::register_rule;
 use crate::rules::rule_registry::{BoxedRuleCheck, LintingPolicy};
 use crate::traits::{FromContext, LintRule, RuleCheck};
 use codespan_reporting::diagnostic::{LabelStyle, Severity};
-use phenolint_macros::lint_rule;
+use phenolint_macros::register_rule as rr;
 use phenopackets::schema::v2::core::OntologyClass;
 
 #[derive(Debug, Default)]
-#[lint_rule(id = "CURIE001")]
+#[rr(id = "CURIE001")]
 pub struct CurieFormatRule;
 
 impl FromContext for CurieFormatRule {

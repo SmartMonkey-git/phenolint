@@ -1,29 +1,11 @@
-use crate::diagnostics::report::LintReport;
-use crate::diagnostics::{LintFinding, LintViolation};
-use crate::enums::PatchAction;
+use crate::diagnostics::LintViolation;
 use crate::error::{LintResult, RuleInitError};
-use crate::json::Pointer;
 use crate::linter_context::LinterContext;
 use crate::new::node::Node;
 use phenopackets::schema::v2::core::OntologyClass;
-use serde_json::Value;
 
 pub trait LintRule: RuleCheck + FromContext {
     const RULE_ID: &'static str;
-}
-
-pub trait NodeParser {
-    fn parse_ontology_class(value: &Node) -> Option<OntologyClass>
-    where
-        Self: Sized;
-}
-
-pub trait DeserializePhenopackets<T> {
-    fn deserialize(bytes: &[u8]) -> T;
-}
-
-pub trait CompilePatch<T> {
-    fn compile_patch(&self, value: &Node) -> PatchAction;
 }
 
 pub trait FromContext {
@@ -36,6 +18,12 @@ pub trait FromContext {
 pub trait RuleCheck {
     type CheckType;
     fn check(&self, node: &Self::CheckType) -> Vec<LintViolation>;
+}
+
+pub trait NodeParser {
+    fn parse_ontology_class(value: &Node) -> Option<OntologyClass>
+    where
+        Self: Sized;
 }
 
 pub trait Lint<T> {
