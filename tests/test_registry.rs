@@ -46,10 +46,11 @@ fn test() {
     );
     let mut l = Linter::new(context);
 
-    let pp = fs::read(PathBuf::from(
-        "/Users/rouvenreuter/Documents/Projects/phenolint/assets/phenopacket.pb",
-    ))
-    .unwrap();
+    let test_pp = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("assets")
+        .join("phenopacket.pb");
+
+    let pp = fs::read(test_pp).unwrap();
     let res = l.lint(pp.as_slice(), false, false);
 
     if let Err(ref e) = res.into_result() {
