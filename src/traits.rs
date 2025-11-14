@@ -4,7 +4,7 @@ use crate::enums::PatchAction;
 use crate::error::{LintResult, RuleInitError};
 use crate::json::Pointer;
 use crate::linter_context::LinterContext;
-use crate::new::json_traverser::Node;
+use crate::new::node::Node;
 use phenopackets::schema::v2::core::OntologyClass;
 use serde_json::Value;
 

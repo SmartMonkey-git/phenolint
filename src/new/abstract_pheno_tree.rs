@@ -1,5 +1,5 @@
 use crate::json::Pointer;
-use crate::new::json_traverser::Node;
+use crate::new::node::Node;
 use crate::new::traits::{Span, Spanning};
 use serde_json::Value;
 use std::collections::VecDeque;

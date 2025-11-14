@@ -1,12 +1,10 @@
 use crate::LinterContext;
 use crate::diagnostics::{LintFinding, LintReport};
 use crate::enums::Patch;
-use crate::error::{LintResult, LinterError, RuleInitError};
-use crate::new::phenopacket_tree::AbstractPhenoTree;
+use crate::error::{LintResult, LinterError};
+use crate::new::abstract_pheno_tree::AbstractPhenoTree;
 use crate::new::router::NodeRouter;
 use crate::new::tree_factory::TreeFactory;
-use crate::rules::rule_registry::LintingPolicy;
-use log::warn;
 use std::vec;
 
 pub struct Linter {

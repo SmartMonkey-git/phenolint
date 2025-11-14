@@ -32,7 +32,6 @@ mod tests {
     use crate::rules::rule_registry::LintingPolicy;
     use inventory;
     use phenopackets::schema::v2::core::OntologyClass;
-    use regex::Regex;
     use rstest::rstest;
     use std::collections::HashSet;
 

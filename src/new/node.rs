@@ -1,5 +1,4 @@
 use crate::json::Pointer;
-use crate::new::traits::Span;
 use serde_json::Value;
 
 #[derive(Clone)]

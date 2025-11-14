@@ -1,6 +1,7 @@
 use crate::diagnostics::LintReport;
 use crate::json::error::JsonEditError;
 use config::ConfigError;
+use prost::DecodeError;
 use std::string::FromUtf8Error;
 use thiserror::Error;
 
@@ -64,6 +65,8 @@ pub enum InitError {
     StringParsing(#[from] FromUtf8Error),
     #[error("Unable to parse input file")]
     Unparseable,
+    #[error(transparent)]
+    DecodeError(#[from] DecodeError),
 }
 
 #[derive(Error, Debug)]
