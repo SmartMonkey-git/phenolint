@@ -1,44 +1,89 @@
+mod utils;
+
+use crate::utils::extract_rule_id;
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Item, Lit, parse_macro_input};
+use syn::{Item, ItemStruct, parse_macro_input};
 
 #[proc_macro_attribute]
-pub fn lint_rule(attr: TokenStream, item: TokenStream) -> TokenStream {
-    // Parse as Item instead of DeriveInput to preserve the original tokens
+pub fn register_rule(attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as Item);
 
-    // Extract the struct name
     let struct_name = match &input {
         Item::Struct(item_struct) => &item_struct.ident,
         _ => panic!("lint_rule can only be applied to structs"),
     };
 
-    // Parse the attribute arguments
-    let mut rule_id = None;
-    let attr_parser = syn::meta::parser(|meta| {
-        if meta.path.is_ident("id") {
-            let value: Lit = meta.value()?.parse()?;
-            if let Lit::Str(lit_str) = value {
-                rule_id = Some(lit_str.value());
-            }
-            Ok(())
-        } else {
-            Err(meta.error("unsupported attribute argument"))
-        }
-    });
-
-    parse_macro_input!(attr with attr_parser);
-
-    let rule_id = rule_id.expect("lint_rule macro requires an `id` parameter");
+    let rule_id = match extract_rule_id(&attr) {
+        Ok(rule_id) => rule_id,
+        Err(err) => panic!("{}", err),
+    };
 
     let expanded = quote! {
         #input
 
-        // This is the new code the macro adds:
         impl LintRule for #struct_name {
             const RULE_ID: &'static str = #rule_id;
         }
         register_rule!(#struct_name);
+    };
+
+    TokenStream::from(expanded)
+}
+
+#[proc_macro_attribute]
+pub fn register_patch(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let rule_id = match extract_rule_id(&attr) {
+        Ok(rule_id) => rule_id,
+        Err(err) => panic!("{}", err),
+    };
+
+    let input = parse_macro_input!(item as ItemStruct);
+    let name = &input.ident;
+
+    let expanded = quote! {
+        #input
+        impl RulePatch for #name {
+            const RULE_ID: &'static str = #rule_id;
+        }
+
+        ::inventory::submit! {
+            crate::patches::patch_registration::PatchRegistration {
+                rule_id: #rule_id,
+                register: |registry| {
+                    registry.register(#rule_id, #name);
+                }
+            }
+        }
+    };
+
+    TokenStream::from(expanded)
+}
+
+#[proc_macro_attribute]
+pub fn register_report(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let rule_id = match extract_rule_id(&attr) {
+        Ok(rule_id) => rule_id,
+        Err(err) => panic!("{}", err),
+    };
+
+    let input = parse_macro_input!(item as ItemStruct);
+    let name = &input.ident;
+
+    let expanded = quote! {
+        #input
+        impl RuleReport for #name {
+            const RULE_ID: &'static str = #rule_id;
+        }
+
+        ::inventory::submit! {
+            crate::report::report_registration::ReportRegistration {
+                rule_id: #rule_id,
+                register: |registry| {
+                    registry.register(#rule_id, #name);
+                }
+            }
+        }
     };
 
     TokenStream::from(expanded)

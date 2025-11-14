@@ -1,0 +1,90 @@
+use crate::error::InitError;
+use crate::tree::abstract_pheno_tree::AbstractPhenoTree;
+use crate::tree::span_types::{JsonSpan, Span, YamlSpan};
+use phenopackets::schema::v2::Phenopacket;
+use prost::Message;
+use spanned_json_parser::parse;
+
+pub struct PhenopacketParser;
+
+// TODO: Find logical naming for the function. Try to avoid duplicate code.
+impl PhenopacketParser {
+    pub fn to_tree(phenobytes: &[u8]) -> Result<AbstractPhenoTree, InitError> {
+        //TODO: Better error reporting
+        if let Ok(json) = Self::try_to_json_tree(phenobytes) {
+            println!("Going with json");
+            return Ok(json);
+        } else if let Ok(yaml) = Self::try_to_yaml_tree(phenobytes) {
+            println!("Going with yaml");
+            return Ok(yaml);
+        } else if let Ok(pb) = Self::try_to_protobuf_tree(phenobytes) {
+            println!("Going with protobuf");
+            return Ok(pb);
+        }
+
+        Err(InitError::Unparseable)
+    }
+
+    fn try_to_json_tree(phenobytes: &[u8]) -> Result<AbstractPhenoTree, InitError> {
+        let json_string = String::from_utf8(phenobytes.to_vec())?;
+
+        if let Ok(json) = serde_json::from_str(&json_string)
+            && let Ok(spans) = parse(&json_string)
+        {
+            return Ok(AbstractPhenoTree::new(
+                json,
+                Span::Json(JsonSpan::new(spans)),
+            ));
+        }
+        Err(InitError::Unparseable)
+    }
+
+    fn try_to_yaml_tree(phenobytes: &[u8]) -> Result<AbstractPhenoTree, InitError> {
+        if let Ok(yaml) = serde_yaml::from_slice(phenobytes) {
+            return Ok(AbstractPhenoTree::new(
+                yaml,
+                Span::Yaml(YamlSpan::new(vec![(3, 4)])),
+            ));
+        }
+        Err(InitError::Unparseable)
+    }
+
+    fn try_to_protobuf_tree(phenobytes: &[u8]) -> Result<AbstractPhenoTree, InitError> {
+        let json_string = Self::try_from_protobuf(phenobytes)?;
+
+        if let Ok(json) = serde_json::from_str(&json_string)
+            && let Ok(spans) = parse(&json_string)
+        {
+            return Ok(AbstractPhenoTree::new(
+                json,
+                Span::Json(JsonSpan::new(spans)),
+            ));
+        }
+        Err(InitError::Unparseable)
+    }
+
+    pub fn to_string(phenobytes: &[u8]) -> Result<String, InitError> {
+        if let Ok(json_str) = Self::try_from_json(phenobytes) {
+            Ok(json_str)
+        } else if let Ok(yaml) = Self::try_from_yaml(phenobytes) {
+            Ok(yaml)
+        } else if let Ok(pb) = Self::try_from_protobuf(phenobytes) {
+            Ok(pb)
+        } else {
+            Err(InitError::Unparseable)
+        }
+    }
+
+    fn try_from_json(phenobytes: &[u8]) -> Result<String, InitError> {
+        Ok(serde_json::from_slice::<String>(phenobytes)?)
+    }
+
+    fn try_from_yaml(phenobytes: &[u8]) -> Result<String, InitError> {
+        Ok(serde_yaml::from_slice::<String>(phenobytes)?)
+    }
+
+    fn try_from_protobuf(phenobytes: &[u8]) -> Result<String, InitError> {
+        let pp = Phenopacket::decode(phenobytes)?;
+        Ok(serde_json::to_string_pretty(&pp)?)
+    }
+}

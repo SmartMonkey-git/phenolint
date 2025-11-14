@@ -1,6 +1,7 @@
 use crate::diagnostics::LintReport;
-use crate::json::error::JsonEditError;
 use config::ConfigError;
+use prost::DecodeError;
+use std::string::FromUtf8Error;
 use thiserror::Error;
 
 /// A result type that combines a lint report with an optional error.
@@ -47,16 +48,27 @@ pub enum LinterError {
     IoError(#[from] std::io::Error),
     #[error(transparent)]
     JsonError(#[from] serde_json::Error),
+    #[error(transparent)]
+    InitError(#[from] InitError),
 }
 
+// TODO: Split Init error to Init and parse error
 #[derive(Error, Debug)]
-pub enum InstantiationError {
+pub enum InitError {
     #[error(transparent)]
     IO(std::io::Error),
     #[error(transparent)]
     Config(#[from] ConfigError),
     #[error(transparent)]
     JsonError(#[from] serde_json::Error),
+    #[error(transparent)]
+    YamlError(#[from] serde_yaml::Error),
+    #[error(transparent)]
+    StringParsing(#[from] FromUtf8Error),
+    #[error("Unable to parse input file")]
+    Unparseable,
+    #[error(transparent)]
+    DecodeError(#[from] DecodeError),
 }
 
 #[derive(Error, Debug)]
@@ -64,11 +76,10 @@ pub enum PatchingError {
     #[error(transparent)]
     SerdeError(#[from] serde_json::Error),
     #[error(transparent)]
-    JsonEditError(#[from] JsonEditError),
-    #[error(transparent)]
-    InitError(#[from] InstantiationError),
+    InitError(#[from] InitError),
 }
 
+#[derive(Debug)]
 pub enum RuleInitError {
     NeedsHPO,
 }

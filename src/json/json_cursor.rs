@@ -1,8 +1,7 @@
 #![allow(dead_code)]
-use crate::error::InstantiationError;
-use crate::json::pointer::Pointer;
-use crate::json::utils::escape;
-use json_spanned_value::spanned::Value as SpannedValue;
+use crate::error::InitError;
+use crate::tree::pointer::Pointer;
+use crate::tree::utils::escape;
 use serde_json::Value;
 use std::collections::VecDeque;
 
@@ -17,7 +16,6 @@ use std::collections::VecDeque;
 #[derive(Debug)]
 pub(crate) struct JsonCursor {
     json: Value,
-    spans: SpannedValue,
     pointer: Pointer,
     anchor: Vec<Pointer>,
 }
@@ -30,11 +28,10 @@ impl JsonCursor {
     ///
     /// # Returns
     /// A new `JsonCursor` with an empty pointer (root position).
-    pub fn new(json: &str) -> Result<JsonCursor, InstantiationError> {
+    pub fn new(json: &str) -> Result<JsonCursor, InitError> {
         // TODO: Find crate that allows for single deserialization of the json and get the spans. Or get json_spanned_value to work.
         Ok(Self {
             json: serde_json::from_reader(json.as_bytes())?,
-            spans: json_spanned_value::from_str(json)?,
             pointer: Pointer::new(""),
             anchor: vec![],
         })
@@ -205,9 +202,7 @@ impl JsonCursor {
     }
 
     pub fn span(&self) -> Option<(usize, usize)> {
-        self.spans
-            .pointer(self.pointer.position())
-            .map(|span| span.span())
+        todo!()
     }
     /// Sets an anchor at the cursor's current position.
     ///

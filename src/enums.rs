@@ -1,7 +1,13 @@
-use crate::json::Pointer;
+use crate::tree::pointer::Pointer;
+
+#[derive(Debug, Default)]
+#[allow(unused)]
+pub struct Patch {
+    actions: Vec<PatchAction>,
+}
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Patch {
+pub enum PatchAction {
     Add {
         at: Pointer,
         value: String,

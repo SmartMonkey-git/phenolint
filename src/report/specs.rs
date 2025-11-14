@@ -24,7 +24,7 @@ impl LabelSpecs {
 #[derive(Debug, Clone, PartialEq)]
 pub struct DiagnosticSpec {
     pub severity: Severity,
-    pub code: Option<String>,
+    pub code: String,
     pub message: String,
     pub labels: Vec<LabelSpecs>,
     pub notes: Vec<String>,
@@ -35,8 +35,8 @@ impl DiagnosticSpec {
         &self.severity
     }
 
-    pub fn code(&self) -> Option<&str> {
-        self.code.as_deref()
+    pub fn code(&self) -> &str {
+        &self.code
     }
 
     pub fn message(&self) -> &str {
@@ -55,6 +55,20 @@ impl DiagnosticSpec {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReportSpecs {
     diagnostic_spec: DiagnosticSpec,
+}
+
+// TODO: Temp default implementation. Should not have one
+impl Default for ReportSpecs {
+    fn default() -> Self {
+        let diag = DiagnosticSpec {
+            severity: Severity::Help,
+            code: "None".to_string(),
+            message: "I'm the default Report. You forgot to implement me.".to_string(),
+            labels: vec![],
+            notes: vec![],
+        };
+        ReportSpecs::new(diag)
+    }
 }
 
 impl ReportSpecs {

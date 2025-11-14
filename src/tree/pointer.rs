@@ -1,4 +1,4 @@
-use crate::json::utils::{escape, unescape};
+use crate::tree::utils::{escape, unescape};
 use std::fmt::Display;
 
 /// A struct representing a JSON Pointer (RFC 6901).
@@ -20,6 +20,9 @@ impl Pointer {
         Self(location)
     }
 
+    pub fn at_root() -> Self {
+        Self(String::new())
+    }
     /// Returns the final segment (tip) of the pointer path.
     ///
     /// For example, if the pointer represents `"/user/name"`,

@@ -1,5 +1,5 @@
-use crate::diagnostics::error::ReportParseError;
-use crate::diagnostics::specs::ReportSpecs;
+use crate::report::error::ReportParseError;
+use crate::report::specs::ReportSpecs;
 use codespan_reporting::diagnostic::{Diagnostic, Label, LabelStyle, Severity};
 use codespan_reporting::files::SimpleFiles;
 use codespan_reporting::term;
@@ -48,9 +48,7 @@ impl ReportParser {
 
         diagnostic = diagnostic.with_message(spec.message());
 
-        if let Some(code) = spec.code() {
-            diagnostic = diagnostic.with_code(code);
-        }
+        diagnostic = diagnostic.with_code(&spec.code);
 
         if !spec.labels.is_empty() {
             let labels = spec
