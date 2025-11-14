@@ -1,4 +1,4 @@
-use crate::json::utils::{escape, unescape};
+use crate::tree::utils::{escape, unescape};
 use std::fmt::Display;
 
 /// A struct representing a JSON Pointer (RFC 6901).

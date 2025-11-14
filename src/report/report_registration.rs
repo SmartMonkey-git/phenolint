@@ -1,4 +1,5 @@
-use crate::new::report::report_registry::ReportRegistry;
+#![allow(dead_code)]
+use crate::report::report_registry::ReportRegistry;
 use inventory;
 
 pub struct ReportRegistration {

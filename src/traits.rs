@@ -1,9 +1,11 @@
 use crate::diagnostics::LintViolation;
+use crate::enums::Patch;
 use crate::error::{LintResult, RuleInitError};
 use crate::linter_context::LinterContext;
-use crate::new::node::Node;
+use crate::patches::patch_registry::{PatchFromContext, RegisterablePatch};
+use crate::tree::node::Node;
+use crate::tree::pointer::Pointer;
 use phenopackets::schema::v2::core::OntologyClass;
-
 pub trait LintRule: RuleCheck + RuleFromContext {
     const RULE_ID: &'static str;
 }
@@ -28,4 +30,21 @@ pub trait NodeParser {
 
 pub trait Lint<T> {
     fn lint(&mut self, input: T, patch: bool, quiet: bool) -> LintResult;
+}
+
+pub trait Spanning {
+    fn span(&self, ptr: &Pointer) -> Option<(usize, usize)>;
+}
+
+pub trait ParsableNode<N> {
+    fn parse(node: &Node) -> Option<N>;
+}
+
+pub trait RulePatch: PatchFromContext + RegisterablePatch + CompilePatches {
+    const RULE_ID: &'static str;
+}
+
+/// Tries to compile patches for a given rule.
+pub trait CompilePatches: Send + Sync {
+    fn compile_patches(&self, value: &Node, lint_violation: &LintViolation) -> Vec<Patch>;
 }

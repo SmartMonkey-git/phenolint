@@ -1,5 +1,6 @@
-use crate::json::Pointer;
-use crate::new::traits::Spanning;
+#![allow(dead_code)]
+use crate::Spanning;
+use crate::tree::pointer::Pointer;
 use spanned_json_parser::SpannedValue;
 
 #[derive(Clone)]
@@ -9,6 +10,7 @@ pub enum Span {
 }
 
 impl Spanning for Span {
+    #[allow(unused)]
     fn span(&self, ptr: &Pointer) -> Option<(usize, usize)> {
         match self {
             Span::Json(s) => Some((1, 2)),
@@ -23,7 +25,7 @@ pub struct JsonSpan {
 }
 
 impl JsonSpan {
-    pub(crate) fn new(spans: SpannedValue) -> JsonSpan {
+    pub fn new(spans: SpannedValue) -> JsonSpan {
         JsonSpan { spans }
     }
 }
@@ -33,7 +35,7 @@ pub struct YamlSpan {
 }
 
 impl YamlSpan {
-    pub(crate) fn new(spans: Vec<(usize, usize)>) -> YamlSpan {
+    pub fn new(spans: Vec<(usize, usize)>) -> YamlSpan {
         YamlSpan { spans }
     }
 }

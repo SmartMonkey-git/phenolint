@@ -1,5 +1,5 @@
-use crate::new::node::Node;
-use crate::new::traits::ParsableNode;
+use crate::ParsableNode;
+use crate::tree::node::Node;
 use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
 use serde_json::Value;
 

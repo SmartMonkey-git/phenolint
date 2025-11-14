@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use crate::error::InitError;
-use crate::json::pointer::Pointer;
-use crate::json::utils::escape;
+use crate::tree::pointer::Pointer;
+use crate::tree::utils::escape;
 use serde_json::Value;
 use std::collections::VecDeque;
 

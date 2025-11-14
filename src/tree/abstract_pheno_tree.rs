@@ -1,7 +1,7 @@
-use crate::json::Pointer;
-use crate::new::node::Node;
-use crate::new::span_types::Span;
-use crate::new::traits::Spanning;
+use crate::Spanning;
+use crate::tree::node::Node;
+use crate::tree::pointer::Pointer;
+use crate::tree::span_types::Span;
 use serde_json::Value;
 use std::collections::VecDeque;
 
@@ -11,16 +11,16 @@ pub struct AbstractPhenoTree {
 }
 
 impl AbstractPhenoTree {
-    pub(crate) fn new(tree: Value, spans: Span) -> AbstractPhenoTree {
+    pub fn new(tree: Value, spans: Span) -> AbstractPhenoTree {
         AbstractPhenoTree { tree, spans }
     }
 
-    pub(crate) fn traverse<'s>(&'s self) -> Box<dyn Iterator<Item = Node> + 's> {
+    pub fn traverse<'s>(&'s self) -> Box<dyn Iterator<Item = Node> + 's> {
         let mut queue = VecDeque::new();
         let root_node = Node::new(
             &self.tree,
             &self.spans.span(&Pointer::at_root()).unwrap(),
-            Pointer::new(""),
+            Pointer::at_root(),
         );
         queue.push_back(root_node);
 

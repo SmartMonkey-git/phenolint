@@ -48,7 +48,7 @@ pub fn register_patch(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
 
         ::inventory::submit! {
-            crate::new::patches::patch_registration::PatchRegistration {
+            crate::patches::patch_registration::PatchRegistration {
                 rule_id: #rule_id,
                 register: |registry| {
                     registry.register(#rule_id, #name);
@@ -77,7 +77,7 @@ pub fn register_report(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
 
         ::inventory::submit! {
-            crate::new::report::report_registration::ReportRegistration {
+            crate::report::report_registration::ReportRegistration {
                 rule_id: #rule_id,
                 register: |registry| {
                     registry.register(#rule_id, #name);

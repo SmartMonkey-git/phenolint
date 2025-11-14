@@ -1,6 +1,6 @@
 use phenolint::diagnostics::LintViolation;
 use phenolint::error::RuleInitError;
-use phenolint::new::linter::Linter;
+use phenolint::phenolint::Linter;
 use phenolint::register_rule;
 use phenolint::rules::rule_registry::{BoxedRuleCheck, LintingPolicy};
 use phenolint::{LintRule, LinterContext, RuleCheck, RuleFromContext};

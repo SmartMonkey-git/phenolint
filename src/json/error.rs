@@ -1,4 +1,4 @@
-use crate::json::Pointer;
+use crate::tree::pointer::Pointer;
 use thiserror::Error;
 
 #[derive(Error, Debug)]

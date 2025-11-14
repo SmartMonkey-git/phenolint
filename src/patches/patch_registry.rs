@@ -1,10 +1,9 @@
-use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use crate::enums::Patch;
 use crate::error::RuleInitError;
-use crate::new::node::Node;
-use crate::new::patches::patch_registration::PatchRegistration;
-use crate::new::traits::{CompilePatches, RulePatch};
+use crate::patches::patch_registration::PatchRegistration;
+use crate::tree::node::Node;
+use crate::{CompilePatches, LinterContext, RulePatch};
 use std::collections::HashMap;
 
 pub trait RegisterablePatch: Send + Sync {
@@ -26,17 +25,12 @@ impl<T: CompilePatches + Send + RulePatch> RegisterablePatch for T {
     }
 }
 
+#[derive(Default)]
 pub struct PatchRegistry {
     patches: HashMap<String, Box<dyn RegisterablePatch>>,
 }
 
 impl PatchRegistry {
-    pub fn new() -> Self {
-        Self {
-            patches: HashMap::new(),
-        }
-    }
-
     pub fn register<P: CompilePatches + RulePatch + 'static>(&mut self, rule_id: &str, patch: P) {
         self.patches.insert(rule_id.to_string(), Box::new(patch));
     }
@@ -55,7 +49,7 @@ impl PatchRegistry {
     }
 
     pub fn with_all_patches() -> Self {
-        let mut registry = Self::new();
+        let mut registry = Self::default();
 
         for registration in inventory::iter::<PatchRegistration> {
             (registration.register)(&mut registry);

@@ -1,4 +1,5 @@
-use crate::json::Pointer;
+#![allow(unused)]
+use crate::tree::pointer::Pointer;
 use serde_json::Value;
 
 #[derive(Clone)]
@@ -12,7 +13,7 @@ impl Node {
     pub fn new(value: &Value, span: &(usize, usize), pointer: Pointer) -> Self {
         Node {
             value: value.clone(),
-            span: span.clone(),
+            span: *span,
             pointer,
         }
     }

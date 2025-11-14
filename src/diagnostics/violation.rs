@@ -1,5 +1,4 @@
-use crate::diagnostics::specs::ReportSpecs;
-use crate::json::Pointer;
+use crate::tree::pointer::Pointer;
 
 #[derive(Debug, PartialEq)]
 pub struct LintViolation {

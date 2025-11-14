@@ -1,8 +1,8 @@
-use crate::json::Pointer;
+use crate::tree::pointer::Pointer;
 
 #[derive(Debug, Default)]
+#[allow(unused)]
 pub struct Patch {
-    rule_id: String,
     actions: Vec<PatchAction>,
 }
 

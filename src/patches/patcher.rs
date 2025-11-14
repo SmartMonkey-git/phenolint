@@ -1,7 +1,6 @@
+#![allow(unused)]
 use crate::enums::{Patch, PatchAction};
 use crate::error::PatchingError;
-use crate::json::JsonEditor;
-use crate::json::json_cursor::JsonCursor;
 use serde_json::json;
 use std::cmp::Ordering;
 
@@ -9,8 +8,6 @@ pub struct Patcher;
 
 impl Patcher {
     pub fn patch(&self, phenostr: &str, patches: Vec<&Patch>) -> Result<String, PatchingError> {
-        let mut cursor = JsonCursor::new(phenostr)?;
-
         //let patches = Self::resolve_patches(patches, &mut cursor)?;
         //Self::apply(cursor, patches)
         Ok("".to_string())

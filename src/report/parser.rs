@@ -1,5 +1,5 @@
-use crate::diagnostics::error::ReportParseError;
-use crate::diagnostics::specs::ReportSpecs;
+use crate::report::error::ReportParseError;
+use crate::report::specs::ReportSpecs;
 use codespan_reporting::diagnostic::{Diagnostic, Label, LabelStyle, Severity};
 use codespan_reporting::files::SimpleFiles;
 use codespan_reporting::term;

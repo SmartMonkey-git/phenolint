@@ -1,3 +1,4 @@
-pub mod curie_format_patch;
+mod compilers;
 pub mod patch_registration;
 pub mod patch_registry;
+pub mod patcher;

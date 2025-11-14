@@ -1,11 +1,12 @@
+#![allow(unused)]
 use crate::LinterContext;
-use crate::diagnostics::specs::DiagnosticSpec;
-use crate::diagnostics::{LintViolation, ReportSpecs};
+use crate::diagnostics::LintViolation;
 use crate::error::RuleInitError;
-use crate::new::node::Node;
-use crate::new::report::report_registry::{
+use crate::report::report_registry::{
     CompileReport, RegisterableReport, ReportFromContext, RuleReport,
 };
+use crate::report::specs::{DiagnosticSpec, ReportSpecs};
+use crate::tree::node::Node;
 use codespan_reporting::diagnostic::Severity;
 use phenolint_macros::register_report;
 
@@ -19,6 +20,7 @@ impl ReportFromContext for CurieFormatReport {
 }
 
 impl CompileReport for CurieFormatReport {
+    #[allow(unused)]
     fn compile_report(&self, value: &Node, lint_violation: &LintViolation) -> ReportSpecs {
         println!("Reached compilation of CurieFormatReport.");
 

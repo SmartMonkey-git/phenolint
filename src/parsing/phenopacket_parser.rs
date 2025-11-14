@@ -1,6 +1,6 @@
 use crate::error::InitError;
-use crate::new::abstract_pheno_tree::AbstractPhenoTree;
-use crate::new::span_types::{JsonSpan, Span, YamlSpan};
+use crate::tree::abstract_pheno_tree::AbstractPhenoTree;
+use crate::tree::span_types::{JsonSpan, Span, YamlSpan};
 use phenopackets::schema::v2::Phenopacket;
 use prost::Message;
 use spanned_json_parser::parse;

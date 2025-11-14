@@ -1,8 +1,10 @@
+#![allow(dead_code)]
 use crate::LinterContext;
-use crate::diagnostics::{LintViolation, ReportSpecs};
+use crate::diagnostics::LintViolation;
 use crate::error::RuleInitError;
-use crate::new::node::Node;
-use crate::new::report::report_registration::ReportRegistration;
+use crate::report::report_registration::ReportRegistration;
+use crate::report::specs::ReportSpecs;
+use crate::tree::node::Node;
 use std::collections::HashMap;
 
 pub trait RuleReport: ReportFromContext + RegisterableReport + CompileReport {

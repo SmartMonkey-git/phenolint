@@ -1,11 +1,10 @@
-use crate::LinterContext;
-use crate::diagnostics::{LintFinding, LintViolation, ReportSpecs};
+use crate::diagnostics::LintFinding;
 use crate::error::RuleInitError;
-use crate::new::node::Node;
-use crate::new::patches::patch_registry::PatchRegistry;
-use crate::new::report::report_registry::ReportRegistry;
-use crate::new::traits::ParsableNode;
+use crate::patches::patch_registry::PatchRegistry;
+use crate::report::report_registry::ReportRegistry;
 use crate::rules::rule_registry::LintingPolicy;
+use crate::tree::node::Node;
+use crate::{LinterContext, ParsableNode};
 use log::warn;
 use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
 

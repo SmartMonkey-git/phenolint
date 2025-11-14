@@ -1,4 +1,5 @@
-use crate::new::patches::patch_registry::PatchRegistry;
+#![allow(dead_code)]
+use crate::patches::patch_registry::PatchRegistry;
 use inventory;
 
 pub struct PatchRegistration {
