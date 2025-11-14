@@ -36,7 +36,7 @@ impl NodeRouter {
                 println!("------");
                 match (rule.factory)(context) {
                     Ok(rule_check) => {
-                        let violations = rule_check.check(pared_node);
+                        let violations = rule_check.check(pared_node, node);
 
                         for violation in violations {
                             let patches = PatchRegistry::with_all_patches().get_patches_for(

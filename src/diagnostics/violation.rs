@@ -18,4 +18,8 @@ impl LintViolation {
     pub fn rule_id(&self) -> &str {
         &self.rule_id
     }
+
+    pub fn at(&self) -> &Pointer {
+        &self.at
+    }
 }

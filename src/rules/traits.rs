@@ -1,6 +1,7 @@
 use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use crate::error::RuleInitError;
+use crate::tree::node::Node;
 
 pub trait LintRule: RuleCheck + RuleFromContext {
     const RULE_ID: &'static str;
@@ -15,5 +16,5 @@ pub trait RuleFromContext {
 
 pub trait RuleCheck {
     type CheckType;
-    fn check(&self, node: &Self::CheckType) -> Vec<LintViolation>;
+    fn check(&self, parsed_node: &Self::CheckType, node: &Node) -> Vec<LintViolation>;
 }

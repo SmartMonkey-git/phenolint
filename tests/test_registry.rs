@@ -4,6 +4,7 @@ use phenolint::phenolint::Linter;
 use phenolint::rules::rule_registry::{BoxedRuleCheck, LintingPolicy};
 use phenolint::rules::traits::LintRule;
 use phenolint::rules::traits::{RuleCheck, RuleFromContext};
+use phenolint::tree::node::Node;
 use phenolint::{LinterContext, register_rule};
 use phenolint_macros::register_rule as rr;
 use phenopackets::schema::v2::core::OntologyClass;
@@ -26,8 +27,8 @@ impl RuleFromContext for SomeRule {
 impl RuleCheck for SomeRule {
     type CheckType = OntologyClass;
 
-    fn check(&self, node: &Self::CheckType) -> Vec<LintViolation> {
-        println!("Checking node: {:?}", node);
+    fn check(&self, parsed_node: &Self::CheckType, node: &Node) -> Vec<LintViolation> {
+        println!("Checking node: {:?}", parsed_node);
         println!("Reached: {}", Self::RULE_ID);
 
         vec![]

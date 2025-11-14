@@ -4,6 +4,7 @@ use crate::linter_context::LinterContext;
 use crate::register_rule;
 use crate::rules::rule_registry::{BoxedRuleCheck, LintingPolicy};
 use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
+use crate::tree::node::Node;
 use crate::tree::pointer::Pointer;
 use phenolint_macros::register_rule as rr;
 use phenopackets::schema::v2::core::OntologyClass;
@@ -28,16 +29,16 @@ impl RuleFromContext for CurieFormatRule {
 impl RuleCheck for CurieFormatRule {
     type CheckType = OntologyClass;
 
-    fn check(&self, node: &OntologyClass) -> Vec<LintViolation> {
+    fn check(&self, pared_node: &OntologyClass, node: &Node) -> Vec<LintViolation> {
         let mut violations = vec![];
         println!("{}", Self::RULE_ID);
-        println!("{:?}", node);
+        println!("{:?}", pared_node);
 
-        if !self.regex.is_match(&node.id) {
-            violations.push(LintViolation::new(
-                Self::RULE_ID,
-                Pointer::new("phenofeature/4/type/id"),
-            ))
+        let mut ptr = node.pointer.clone();
+        ptr.down("id");
+
+        if !self.regex.is_match(&pared_node.id) {
+            violations.push(LintViolation::new(Self::RULE_ID, ptr))
         }
         violations
     }
