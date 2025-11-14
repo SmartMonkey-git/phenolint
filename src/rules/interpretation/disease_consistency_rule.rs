@@ -6,6 +6,7 @@ use crate::error::RuleInitError;
 use crate::register_rule;
 use crate::rules::rule_registry::{BoxedRuleCheck, LintingPolicy};
 use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
+use crate::tree::node::Node;
 use phenolint_macros::register_rule as rr;
 use phenopackets::schema::v2::Phenopacket;
 
@@ -46,7 +47,7 @@ impl RuleFromContext for DiseaseConsistencyRule {
 impl RuleCheck for DiseaseConsistencyRule {
     type CheckType = Phenopacket;
 
-    fn check(&self, phenostr: &Phenopacket) -> Vec<LintViolation> {
+    fn check(&self, parsed_node: &Phenopacket, node: &Node) -> Vec<LintViolation> {
         todo!()
     }
 }

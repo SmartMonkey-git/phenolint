@@ -1,3 +1,4 @@
+#![allow(unused)]
 use crate::config::config_loader::ConfigLoader;
 use crate::error::InitError;
 use serde::{Deserialize, Serialize};
