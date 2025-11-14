@@ -9,16 +9,21 @@ use crate::traits::{LintRule, RuleCheck, RuleFromContext};
 use codespan_reporting::diagnostic::{LabelStyle, Severity};
 use phenolint_macros::register_rule as rr;
 use phenopackets::schema::v2::core::OntologyClass;
+use regex::Regex;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 #[rr(id = "CURIE001")]
-pub struct CurieFormatRule;
+pub struct CurieFormatRule {
+    regex: Regex,
+}
 
 impl RuleFromContext for CurieFormatRule {
     type CheckType = OntologyClass;
 
     fn from_context(_: &LinterContext) -> Result<BoxedRuleCheck<OntologyClass>, RuleInitError> {
-        Ok(Box::new(CurieFormatRule))
+        Ok(Box::new(CurieFormatRule {
+            regex: Regex::new("^[A-Z][A-Z0-9_]+:[A-Za-z0-9_]+$").expect("Invalid regex"),
+        }))
     }
 }
 
@@ -29,9 +34,13 @@ impl RuleCheck for CurieFormatRule {
         println!("{}", Self::RULE_ID);
         println!("{:?}", node);
 
-        vec![LintViolation::new(Self::RULE_ID, Pointer::new(""))]
+        vec![LintViolation::new(
+            Self::RULE_ID,
+            Pointer::new("phenofeature/4/type/id"),
+        )]
     }
 }
+
 impl CurieFormatRule {
     fn write_report(cursor: &mut JsonCursor) -> ReportSpecs {
         cursor.push_anchor();
