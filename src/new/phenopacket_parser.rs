@@ -7,6 +7,7 @@ use spanned_json_parser::parse;
 
 pub struct PhenopacketParser;
 
+// TODO: Find logical naming for the function. Try to avoid duplicate code.
 impl PhenopacketParser {
     pub fn to_tree(phenobytes: &[u8]) -> Result<AbstractPhenoTree, InitError> {
         //TODO: Better error reporting
