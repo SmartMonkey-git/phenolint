@@ -4,7 +4,7 @@ use crate::new::node::Node;
 use crate::new::traits::CompilePatches;
 use phenolint_macros::register_patch;
 
-#[register_patch("CURIE001")]
+#[register_patch(id = "CURIE001")]
 struct CurieFormatPatch;
 
 impl CompilePatches for CurieFormatPatch {

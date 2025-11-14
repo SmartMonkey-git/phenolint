@@ -4,14 +4,14 @@ use phenolint::new::linter::Linter;
 use phenolint::register_rule;
 use phenolint::rules::rule_registry::{BoxedRuleCheck, LintingPolicy};
 use phenolint::{FromContext, LintRule, LinterContext, RuleCheck};
-use phenolint_macros::register_rule;
+use phenolint_macros::register_rule as rr;
 use phenopackets::schema::v2::core::OntologyClass;
 use rstest::rstest;
 use std::fs;
 use std::path::PathBuf;
 use std::process::exit;
 
-#[register_rule(id = "CURIE002")]
+#[rr(id = "CURIE002")]
 struct SomeRule;
 
 impl FromContext for SomeRule {

@@ -1,17 +1,19 @@
 use syn::Lit;
 
+use once_cell::sync::Lazy;
 use proc_macro::TokenStream;
+use regex::Regex;
 use syn::parse::Parser;
 
-pub(crate) fn extract_rule_id(attr_tokens: TokenStream) -> Result<String, String> {
+static RULE_FORMAT: Lazy<Regex> = Lazy::new(|| Regex::new("[A-Z]{1,5}[0-9]{3}").unwrap());
+
+pub(crate) fn extract_rule_id(attr_tokens: &TokenStream) -> Result<String, String> {
     let mut rule_id = None;
 
-    // This parser closure captures the mutable `rule_id`
     let attr_parser = syn::meta::parser(|meta| {
         if meta.path.is_ident("id") {
             let value: Lit = meta.value()?.parse()?;
             if let Lit::Str(lit_str) = value {
-                // Good practice: check for duplicates
                 if rule_id.is_some() {
                     return Err(meta.error("duplicate `id` attribute argument"));
                 }
@@ -25,11 +27,21 @@ pub(crate) fn extract_rule_id(attr_tokens: TokenStream) -> Result<String, String
         }
     });
 
-    // 1. THIS IS THE FIX: Actually *run* the parser on the input tokens
-    // We map the `syn::Error` to a `String` to match your function signature.
-    attr_parser.parse(attr_tokens).map_err(|e| e.to_string())?;
+    attr_parser
+        .parse(attr_tokens.clone())
+        .map_err(|e| e.to_string())?;
 
-    // 2. ANOTHER FIX: Handle the case where `id` wasn't found
-    // Instead of `unwrap()`, return an error if `rule_id` is still `None`.
-    rule_id.ok_or_else(|| "Missing required `id = \"...\"` attribute argument".to_string())
+    match rule_id {
+        None => Err("Missing required `id = \"...\"` attribute argument".to_owned()),
+        Some(rule_id) => {
+            if RULE_FORMAT.is_match(&rule_id) {
+                Ok(rule_id)
+            } else {
+                Err(
+                    "Invalid rule ID format. Rule needs to be of format [A-Z]{1,5}[0-9]{3}"
+                        .to_owned(),
+                )
+            }
+        }
+    }
 }
