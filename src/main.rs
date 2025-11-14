@@ -1,3 +1,3 @@
 fn main() {
-    println!("Welcome to Phenolint.");
+    println!("Welcome to Phenoslint.");
 }
