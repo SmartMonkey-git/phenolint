@@ -32,7 +32,7 @@ impl YamlSpan {
 pub struct TreeFactory;
 
 impl TreeFactory {
-    pub fn try_parse(phenobytes: &[u8]) -> Result<AbstractPhenoTree, InitError> {
+    pub fn try_build(phenobytes: &[u8]) -> Result<AbstractPhenoTree, InitError> {
         //TODO: Better error reporting
         if let Ok(json) = Self::try_to_json(phenobytes) {
             println!("Going with json");

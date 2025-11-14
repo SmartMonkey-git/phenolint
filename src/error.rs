@@ -53,6 +53,7 @@ pub enum LinterError {
     InitError(#[from] InitError),
 }
 
+// TODO: Split Init error to Init and parse error
 #[derive(Error, Debug)]
 pub enum InitError {
     #[error(transparent)]
@@ -61,6 +62,8 @@ pub enum InitError {
     Config(#[from] ConfigError),
     #[error(transparent)]
     JsonError(#[from] serde_json::Error),
+    #[error(transparent)]
+    YamlError(#[from] serde_yaml::Error),
     #[error(transparent)]
     StringParsing(#[from] FromUtf8Error),
     #[error("Unable to parse input file")]

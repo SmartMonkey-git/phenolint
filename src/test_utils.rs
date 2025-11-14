@@ -25,7 +25,7 @@ pub(crate) fn assert_report_message(
     message_snippet: &str,
     phenostr: &str,
 ) {
-    let owned_report = finding.violation().report();
+    let owned_report = finding.report();
     assert!(
         ReportParser::parse(owned_report, phenostr)
             .unwrap()

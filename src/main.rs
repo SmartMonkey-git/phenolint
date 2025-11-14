@@ -1,9 +1,9 @@
+use phenolint::LinterContext;
 use phenolint::new::linter::Linter;
-use phenolint::{Lint, LinterContext, Phenolinter};
-use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{Diagnosis, Disease, Interpretation, OntologyClass};
 use std::fs;
 use std::path::PathBuf;
+use std::process::exit;
 
 fn create_ontology_class(id: &str, label: &str) -> OntologyClass {
     OntologyClass {
@@ -71,6 +71,14 @@ fn main() {
     let context = LinterContext::new(None, vec!["CURIE001".to_string(), "DUMMY001".to_string()]);
     let mut l = Linter::new(context);
 
-    let pp = fs::read(PathBuf::from("/Users/rouvenreuter/Documents/Projects/PhenoXtrackt/tests/assets/presentation/test_pp.yaml")).unwrap();
-    l.lint(pp.as_slice(), false, false);
+    let pp = fs::read(PathBuf::from(
+        "/Users/rouvenreuter/Documents/Projects/phenolint/assets/phenopacket.pb",
+    ))
+    .unwrap();
+    let res = l.lint(pp.as_slice(), false, false);
+
+    if let Err(ref e) = res.into_result() {
+        eprintln!("{}", e);
+        exit(1);
+    }
 }

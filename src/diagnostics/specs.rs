@@ -57,6 +57,20 @@ pub struct ReportSpecs {
     diagnostic_spec: DiagnosticSpec,
 }
 
+// TODO: Temp default implementation. Should not have one
+impl Default for ReportSpecs {
+    fn default() -> Self {
+        let diag = DiagnosticSpec {
+            severity: Severity::Help,
+            code: None,
+            message: "".to_string(),
+            labels: vec![],
+            notes: vec![],
+        };
+        ReportSpecs::new(diag)
+    }
+}
+
 impl ReportSpecs {
     pub fn new(report: DiagnosticSpec) -> Self {
         Self {

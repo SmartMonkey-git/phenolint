@@ -40,11 +40,11 @@ impl Lint<&str> for Phenolinter {
     fn lint(&mut self, phenostr: &str, patch: bool, quite: bool) -> LintResult {
         let mut report = LintReport::default();
         if !quite {
-            for info in report.findings() {
-                if let Err(err) = ReportParser::emit(info.violation().report(), phenostr) {
+            for finding in report.findings() {
+                if let Err(err) = ReportParser::emit(finding.report(), phenostr) {
                     warn!(
                         "Unable to parse and emit report for: '{}'",
-                        info.violation().rule_id()
+                        finding.violation().rule_id()
                     );
                 };
             }
