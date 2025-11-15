@@ -1,8 +1,7 @@
 #![allow(dead_code)]
 use crate::LinterContext;
-use crate::error::{FromContextError, InitError};
-use crate::patches::patch_registry::PatchRegistry;
-use crate::patches::traits::{CompilePatches, RegisterablePatch};
+use crate::error::FromContextError;
+use crate::patches::traits::RegisterablePatch;
 use inventory;
 
 pub struct PatchRegistration {

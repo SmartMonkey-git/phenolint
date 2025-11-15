@@ -28,7 +28,9 @@ impl ReportRegistry {
             .map(|report_compiler| report_compiler.compile_report(value, violation))
     }
 
-    pub fn with_enabled_reports(enabled_rules: &[String]) -> Self {
+    pub fn with_enabled_reports(
+        enabled_rules: &[Strig], // TODO: Change so, its the same as patch registry
+    ) -> Self {
         let mut registry = Self::default();
 
         for registration in inventory::iter::<ReportRegistration> {
