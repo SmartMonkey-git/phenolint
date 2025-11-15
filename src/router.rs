@@ -1,6 +1,5 @@
 use crate::LinterContext;
 use crate::diagnostics::LintFinding;
-use crate::error::RuleInitError;
 use crate::parsing::traits::ParsableNode;
 use crate::patches::patch_registry::PatchRegistry;
 use crate::report::report_registry::ReportRegistry;
@@ -66,14 +65,7 @@ impl NodeRouter {
                             findings.push(LintFinding::new(violation, report, patches));
                         }
                     }
-                    Err(err) => match err {
-                        RuleInitError::NeedsHPO => {
-                            warn!(
-                                "Rule '{}'  was configured, but needs the HPO. HPO not found or not configured.",
-                                rule.rule_id,
-                            );
-                        }
-                    },
+                    Err(err) => warn!("From Context Error: {}", err),
                 }
             }
         }

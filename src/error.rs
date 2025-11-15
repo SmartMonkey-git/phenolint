@@ -82,7 +82,8 @@ pub enum PatchingError {
     InitError(#[from] InitError),
 }
 
-#[derive(Debug)]
-pub enum RuleInitError {
-    NeedsHPO,
+#[derive(Debug, Error)]
+pub enum FromContextError {
+    #[error("Rule '{0}'  was configured, but needs the HPO. HPO not found or not configured.")]
+    NeedsHPO(String),
 }

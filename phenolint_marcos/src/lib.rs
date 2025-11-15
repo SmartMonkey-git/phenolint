@@ -31,7 +31,7 @@ pub fn register_rule(attr: TokenStream, item: TokenStream) -> TokenStream {
             const RULE_ID: &'static str = #rule_id;
         }
 
-        static #upper_snake_case_struct: OnceLock<Arc<Result<BoxedRuleCheck<<#struct_name as RuleCheck>::CheckType>, RuleInitError>>> = OnceLock::new();
+        static #upper_snake_case_struct: OnceLock<Arc<Result<BoxedRuleCheck<<#struct_name as RuleCheck>::CheckType>, FromContextError>>> = OnceLock::new();
 
         inventory::submit! {
             LintingPolicy::<<#struct_name as RuleCheck>::CheckType> {
@@ -68,8 +68,8 @@ pub fn register_patch(attr: TokenStream, item: TokenStream) -> TokenStream {
         ::inventory::submit! {
             crate::patches::patch_registration::PatchRegistration {
                 rule_id: #rule_id,
-                register: |registry| {
-                    registry.register(#rule_id, #name);
+                factory: |context: &LinterContext| {
+                    #name::from_context(context)
                 }
             }
         }

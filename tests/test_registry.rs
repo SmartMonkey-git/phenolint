@@ -1,6 +1,6 @@
 use phenolint::LinterContext;
 use phenolint::diagnostics::LintViolation;
-use phenolint::error::RuleInitError;
+use phenolint::error::FromContextError;
 use phenolint::phenolint::Phenolint;
 use phenolint::rules::rule_registry::LintingPolicy;
 use phenolint::rules::traits::{BoxedRuleCheck, LintRule};
@@ -27,7 +27,9 @@ struct SomeRule;
 impl RuleFromContext for SomeRule {
     type CheckType = OntologyClass;
 
-    fn from_context(_: &LinterContext) -> Result<BoxedRuleCheck<Self::CheckType>, RuleInitError> {
+    fn from_context(
+        _: &LinterContext,
+    ) -> Result<BoxedRuleCheck<Self::CheckType>, FromContextError> {
         Ok(Box::new(SomeRule))
     }
 }

@@ -1,7 +1,7 @@
 use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use crate::enums::Patch;
-use crate::error::RuleInitError;
+use crate::error::FromContextError;
 use crate::tree::node::Node;
 
 pub trait RegisterablePatch: Send + Sync {
@@ -10,7 +10,9 @@ pub trait RegisterablePatch: Send + Sync {
 }
 
 pub trait PatchFromContext {
-    fn from_context(context: &LinterContext) -> Result<Box<dyn RegisterablePatch>, RuleInitError>;
+    fn from_context(
+        context: &LinterContext,
+    ) -> Result<Box<dyn RegisterablePatch>, FromContextError>;
 }
 
 impl<T: CompilePatches + Send + RulePatch> RegisterablePatch for T {

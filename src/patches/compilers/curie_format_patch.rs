@@ -2,7 +2,7 @@
 use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use crate::enums::Patch;
-use crate::error::RuleInitError;
+use crate::error::FromContextError;
 use crate::patches::patch_registration;
 use crate::patches::traits::RulePatch;
 use crate::patches::traits::{CompilePatches, PatchFromContext, RegisterablePatch};
@@ -13,7 +13,9 @@ use phenolint_macros::register_patch;
 struct CurieFormatPatch;
 
 impl PatchFromContext for CurieFormatPatch {
-    fn from_context(context: &LinterContext) -> Result<Box<dyn RegisterablePatch>, RuleInitError> {
+    fn from_context(
+        context: &LinterContext,
+    ) -> Result<Box<dyn RegisterablePatch>, FromContextError> {
         Ok(Box::new(CurieFormatPatch))
     }
 }

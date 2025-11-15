@@ -1,8 +1,10 @@
+use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use crate::enums::Patch;
 use crate::patches::patch_registration::PatchRegistration;
 use crate::patches::traits::{CompilePatches, RegisterablePatch, RulePatch};
 use crate::tree::node::Node;
+use log::warn;
 use std::collections::HashMap;
 
 #[derive(Default)]
@@ -28,18 +30,23 @@ impl PatchRegistry {
         }
     }
 
-    pub fn with_enabled_patches(enabled_rules: &[String]) -> Self {
-        let mut registry = Self::default();
+    pub fn with_enabled_patches(enabled_rules: &[String], context: &LinterContext) -> Self {
+        let mut registry = HashMap::new();
 
         for registration in inventory::iter::<PatchRegistration> {
             if enabled_rules
                 .iter()
                 .any(|r_id| r_id == registration.rule_id)
             {
-                (registration.register)(&mut registry);
+                match (registration.factory)(context) {
+                    Ok(patch) => {
+                        registry.insert(registration.rule_id.to_string(), patch);
+                    }
+                    Err(err) => warn!("Failed to register patch: {}", err),
+                }
             }
         }
 
-        registry
+        PatchRegistry { patches: registry }
     }
 }

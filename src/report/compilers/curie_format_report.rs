@@ -1,7 +1,7 @@
 #![allow(unused)]
 use crate::LinterContext;
 use crate::diagnostics::LintViolation;
-use crate::error::RuleInitError;
+use crate::error::FromContextError;
 use crate::report::specs::{DiagnosticSpec, LabelSpecs, ReportSpecs};
 use crate::report::traits::{CompileReport, RegisterableReport, ReportFromContext, RuleReport};
 use crate::tree::node::Node;
@@ -13,7 +13,9 @@ use phenolint_macros::register_report;
 struct CurieFormatReport;
 
 impl ReportFromContext for CurieFormatReport {
-    fn from_context(context: &LinterContext) -> Result<Box<dyn RegisterableReport>, RuleInitError> {
+    fn from_context(
+        context: &LinterContext,
+    ) -> Result<Box<dyn RegisterableReport>, FromContextError> {
         Ok(Box::new(CurieFormatReport))
     }
 }

@@ -1,5 +1,5 @@
 use crate::diagnostics::LintViolation;
-use crate::error::RuleInitError;
+use crate::error::FromContextError;
 use crate::linter_context::LinterContext;
 use crate::rules::rule_registry::LintingPolicy;
 use crate::rules::traits::{BoxedRuleCheck, LintRule, RuleCheck, RuleFromContext};
@@ -19,7 +19,7 @@ pub struct CurieFormatRule {
 impl RuleFromContext for CurieFormatRule {
     type CheckType = OntologyClass;
 
-    fn from_context(_: &LinterContext) -> Result<BoxedRuleCheck<OntologyClass>, RuleInitError> {
+    fn from_context(_: &LinterContext) -> Result<BoxedRuleCheck<OntologyClass>, FromContextError> {
         Ok(Box::new(CurieFormatRule {
             regex: Regex::new("^[A-Z][A-Z0-9_]+:[A-Za-z0-9_]+$").expect("Invalid regex"),
         }))
