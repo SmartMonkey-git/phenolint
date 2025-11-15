@@ -1,5 +1,5 @@
 use crate::error::InitError;
-use crate::parsing::utils::collect_json_spans;
+use crate::parsing::utils::{collect_json_spans, collect_yaml_spans};
 use crate::tree::abstract_pheno_tree::AbstractPhenoTree;
 use crate::tree::span_types::{JsonSpan, Span, YamlSpan};
 use phenopackets::schema::v2::Phenopacket;
@@ -40,10 +40,13 @@ impl PhenopacketParser {
     }
 
     fn try_to_yaml_tree(phenobytes: &[u8]) -> Result<AbstractPhenoTree, InitError> {
-        if let Ok(yaml) = serde_yaml::from_slice(phenobytes) {
+        let yaml_string = String::from_utf8(phenobytes.to_vec())?;
+        if let Ok(yaml) = serde_yaml::from_str(&yaml_string)
+            && let Ok(spans) = collect_yaml_spans(&yaml_string)
+        {
             return Ok(AbstractPhenoTree::new(
                 yaml,
-                Span::Yaml(YamlSpan::new(vec![(3, 4)])),
+                Span::Yaml(YamlSpan::new(spans)),
             ));
         }
         Err(InitError::Unparseable)
@@ -80,7 +83,7 @@ impl PhenopacketParser {
     }
 
     fn try_from_yaml(phenobytes: &[u8]) -> Result<String, InitError> {
-        Ok(serde_yaml::from_slice::<String>(phenobytes)?)
+        Ok(String::from_utf8(phenobytes.to_vec())?)
     }
 
     fn try_from_protobuf(phenobytes: &[u8]) -> Result<String, InitError> {

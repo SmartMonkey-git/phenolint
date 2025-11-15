@@ -28,8 +28,8 @@ impl RuleCheck for SomeRule {
     type CheckType = OntologyClass;
 
     fn check(&self, parsed_node: &Self::CheckType, _: &Node) -> Vec<LintViolation> {
-        println!("Checking node: {:?}", parsed_node);
-        println!("Reached: {}", Self::RULE_ID);
+        //println!("Checking node: {:?}", parsed_node);
+        //println!("Reached: {}", Self::RULE_ID);
 
         vec![]
     }
@@ -49,7 +49,7 @@ fn test() {
 
     let test_pp = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("assets")
-        .join("phenopacket.json");
+        .join("phenopacket.pb");
 
     let pp = fs::read(test_pp).unwrap();
     let res = l.lint(pp.as_slice(), false, false);

@@ -21,7 +21,6 @@ impl ReportFromContext for CurieFormatReport {
 impl CompileReport for CurieFormatReport {
     #[allow(unused)]
     fn compile_report(&self, node: &Node, lint_violation: &LintViolation) -> ReportSpecs {
-        println!("Reached compilation of CurieFormatReport.");
         let curie = node.value(Pointer::new("id"));
         ReportSpecs::new(DiagnosticSpec {
             severity: Severity::Error,

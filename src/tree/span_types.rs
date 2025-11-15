@@ -14,7 +14,7 @@ impl Span {
     pub(crate) fn span(&self, ptr: &Pointer) -> Option<&Range<usize>> {
         match self {
             Span::Json(s) => s.spans.get(ptr),
-            Span::Yaml(s) => Some(&(1usize..2usize)),
+            Span::Yaml(s) => s.spans.get(ptr),
         }
     }
 }
@@ -44,11 +44,11 @@ impl JsonSpan {
 }
 #[derive(Debug, Clone)]
 pub struct YamlSpan {
-    spans: Vec<(usize, usize)>,
+    spans: HashMap<Pointer, Range<usize>>,
 }
 
 impl YamlSpan {
-    pub fn new(spans: Vec<(usize, usize)>) -> YamlSpan {
+    pub fn new(spans: HashMap<Pointer, Range<usize>>) -> YamlSpan {
         YamlSpan { spans }
     }
 }

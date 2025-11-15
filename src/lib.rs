@@ -6,8 +6,7 @@ pub mod rules;
 
 pub mod linter_context;
 pub use linter_context::LinterContext;
-mod json;
-mod parsing;
+pub(crate) mod parsing;
 pub mod patches;
 pub mod phenolint;
 mod report;
