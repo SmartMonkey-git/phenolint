@@ -10,12 +10,23 @@ use log::warn;
 use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
 
 pub(crate) struct NodeRouter {
+    //TODO: hand registries as objects
     enabled_rules: Vec<String>,
+    report_registry: ReportRegistry,
+    patch_registry: PatchRegistry,
 }
 
 impl NodeRouter {
-    pub fn new(enabled_rules: Vec<String>) -> Self {
-        Self { enabled_rules }
+    pub fn new(
+        enabled_rules: Vec<String>,
+        report_registry: ReportRegistry,
+        patch_registry: PatchRegistry,
+    ) -> Self {
+        Self {
+            enabled_rules,
+            report_registry,
+            patch_registry,
+        }
     }
     pub fn lint_node(&self, node: &Node, context: &mut LinterContext) -> Vec<LintFinding> {
         if let Some(oc) = OntologyClass::parse(node) {
@@ -44,17 +55,13 @@ impl NodeRouter {
                         let violations = rule_check.check(pared_node, node);
 
                         for violation in violations {
-                            let patches = PatchRegistry::with_all_patches().get_patches_for(
-                                rule.rule_id,
-                                node,
-                                &violation,
-                            );
+                            let patches =
+                                self.patch_registry
+                                    .get_patches_for(rule.rule_id, node, &violation);
 
-                            let report = ReportRegistry::with_all_reports().get_report_for(
-                                rule.rule_id,
-                                node,
-                                &violation,
-                            );
+                            let report =
+                                self.report_registry
+                                    .get_report_for(rule.rule_id, node, &violation);
 
                             findings.push(LintFinding::new(violation, report, patches));
                         }

@@ -4,7 +4,9 @@ use crate::LinterContext;
 use crate::diagnostics::LintReport;
 use crate::error::{LintResult, LinterError};
 use crate::parsing::phenopacket_parser::PhenopacketParser;
+use crate::patches::patch_registry::PatchRegistry;
 use crate::report::parser::ReportParser;
+use crate::report::report_registry::ReportRegistry;
 use crate::router::NodeRouter;
 use crate::tree::abstract_pheno_tree::AbstractPhenoTree;
 use log::warn;
@@ -16,9 +18,11 @@ pub struct Phenolint {
 
 impl Phenolint {
     pub fn new(context: LinterContext, rule_ids: Vec<String>) -> Self {
+        let report_registry = ReportRegistry::with_enabled_reports(rule_ids.as_slice());
+        let patch_registry = PatchRegistry::with_enabled_patches(rule_ids.as_slice());
         Phenolint {
             context,
-            router: NodeRouter::new(rule_ids),
+            router: NodeRouter::new(rule_ids, report_registry, patch_registry),
         }
     }
     pub fn lint(&mut self, phenobytes: &[u8], patch: bool, quit: bool) -> LintResult {

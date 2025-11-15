@@ -28,11 +28,16 @@ impl PatchRegistry {
         }
     }
 
-    pub fn with_all_patches() -> Self {
+    pub fn with_enabled_patches(enabled_rules: &[String]) -> Self {
         let mut registry = Self::default();
 
         for registration in inventory::iter::<PatchRegistration> {
-            (registration.register)(&mut registry);
+            if enabled_rules
+                .iter()
+                .any(|r_id| r_id == registration.rule_id)
+            {
+                (registration.register)(&mut registry);
+            }
         }
 
         registry

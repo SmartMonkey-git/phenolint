@@ -28,11 +28,16 @@ impl ReportRegistry {
             .map(|report_compiler| report_compiler.compile_report(value, violation))
     }
 
-    pub fn with_all_reports() -> Self {
+    pub fn with_enabled_reports(enabled_rules: &[String]) -> Self {
         let mut registry = Self::default();
 
         for registration in inventory::iter::<ReportRegistration> {
-            (registration.register)(&mut registry);
+            if enabled_rules
+                .iter()
+                .any(|r_id| r_id == registration.rule_id)
+            {
+                (registration.register)(&mut registry);
+            }
         }
 
         registry
