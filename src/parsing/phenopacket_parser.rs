@@ -11,13 +11,10 @@ impl PhenopacketParser {
     pub fn to_tree(phenobytes: &[u8]) -> Result<AbstractPhenoTree, InitError> {
         //TODO: Better error reporting
         if let Ok(json) = Self::try_to_json_tree(phenobytes) {
-            println!("Going with json");
             return Ok(json);
         } else if let Ok(yaml) = Self::try_to_yaml_tree(phenobytes) {
-            println!("Going with yaml");
             return Ok(yaml);
         } else if let Ok(pb) = Self::try_to_protobuf_tree(phenobytes) {
-            println!("Going with protobuf");
             return Ok(pb);
         }
 
