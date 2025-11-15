@@ -9,7 +9,6 @@ use log::warn;
 use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
 
 pub(crate) struct NodeRouter {
-    //TODO: hand registries as objects
     enabled_rules: Vec<String>,
     report_registry: ReportRegistry,
     patch_registry: PatchRegistry,
