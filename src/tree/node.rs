@@ -1,22 +1,22 @@
 #![allow(unused)]
 
 use crate::tree::pointer::Pointer;
-use crate::tree::span_types::Span;
 use serde_json::Value;
+use std::collections::HashMap;
 use std::ops::Range;
 
 #[derive()]
 pub struct Node {
     pub value: Value,
-    pub span: Span,
+    pub spans: HashMap<Pointer, Range<usize>>,
     pub pointer: Pointer,
 }
 
 impl Node {
-    pub fn new(value: &Value, span: &Span, pointer: Pointer) -> Self {
+    pub fn new(value: &Value, span: &HashMap<Pointer, Range<usize>>, pointer: Pointer) -> Self {
         Node {
             value: value.clone(),
-            span: span.clone(),
+            spans: span.clone(),
             pointer,
         }
     }
@@ -25,7 +25,7 @@ impl Node {
     }
 
     pub fn span(&self, ptr: &Pointer) -> Option<&Range<usize>> {
-        self.span.span(ptr)
+        self.spans.get(ptr)
     }
 
     pub fn pointer(&self) -> Pointer {

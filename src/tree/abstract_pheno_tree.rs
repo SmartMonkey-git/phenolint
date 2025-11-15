@@ -1,16 +1,16 @@
 use crate::tree::node::Node;
 use crate::tree::pointer::Pointer;
-use crate::tree::span_types::Span;
 use serde_json::Value;
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
+use std::ops::Range;
 
 pub struct AbstractPhenoTree {
     tree: Value,
-    spans: Span,
+    spans: HashMap<Pointer, Range<usize>>,
 }
 
 impl AbstractPhenoTree {
-    pub fn new(tree: Value, spans: Span) -> AbstractPhenoTree {
+    pub fn new(tree: Value, spans: HashMap<Pointer, Range<usize>>) -> AbstractPhenoTree {
         AbstractPhenoTree { tree, spans }
     }
 

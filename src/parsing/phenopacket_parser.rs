@@ -1,7 +1,6 @@
 use crate::error::InitError;
 use crate::parsing::utils::{collect_json_spans, collect_yaml_spans};
 use crate::tree::abstract_pheno_tree::AbstractPhenoTree;
-use crate::tree::span_types::{JsonSpan, Span, YamlSpan};
 use phenopackets::schema::v2::Phenopacket;
 use prost::Message;
 
@@ -31,10 +30,7 @@ impl PhenopacketParser {
         if let Ok(json) = serde_json::from_str(&json_string)
             && let Ok(spans) = collect_json_spans(&json_string)
         {
-            return Ok(AbstractPhenoTree::new(
-                json,
-                Span::Json(JsonSpan::new(spans)),
-            ));
+            return Ok(AbstractPhenoTree::new(json, spans));
         }
         Err(InitError::Unparseable)
     }
@@ -44,10 +40,7 @@ impl PhenopacketParser {
         if let Ok(yaml) = serde_yaml::from_str(&yaml_string)
             && let Ok(spans) = collect_yaml_spans(&yaml_string)
         {
-            return Ok(AbstractPhenoTree::new(
-                yaml,
-                Span::Yaml(YamlSpan::new(spans)),
-            ));
+            return Ok(AbstractPhenoTree::new(yaml, spans));
         }
         Err(InitError::Unparseable)
     }
@@ -58,10 +51,7 @@ impl PhenopacketParser {
         if let Ok(json) = serde_json::from_str(&json_string)
             && let Ok(spans) = collect_json_spans(&json_string)
         {
-            return Ok(AbstractPhenoTree::new(
-                json,
-                Span::Json(JsonSpan::new(spans)),
-            ));
+            return Ok(AbstractPhenoTree::new(json, spans));
         }
         Err(InitError::Unparseable)
     }
