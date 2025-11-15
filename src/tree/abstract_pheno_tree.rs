@@ -1,27 +1,22 @@
 use crate::tree::node::Node;
 use crate::tree::pointer::Pointer;
-use crate::tree::span_types::Span;
-use crate::tree::traits::Spanning;
 use serde_json::Value;
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
+use std::ops::Range;
 
 pub struct AbstractPhenoTree {
     tree: Value,
-    spans: Span,
+    spans: HashMap<Pointer, Range<usize>>,
 }
 
 impl AbstractPhenoTree {
-    pub fn new(tree: Value, spans: Span) -> AbstractPhenoTree {
+    pub fn new(tree: Value, spans: HashMap<Pointer, Range<usize>>) -> AbstractPhenoTree {
         AbstractPhenoTree { tree, spans }
     }
 
     pub fn traverse<'s>(&'s self) -> Box<dyn Iterator<Item = Node> + 's> {
         let mut queue = VecDeque::new();
-        let root_node = Node::new(
-            &self.tree,
-            &self.spans.span(&Pointer::at_root()).unwrap(),
-            Pointer::at_root(),
-        );
+        let root_node = Node::new(&self.tree, &self.spans.clone(), Pointer::at_root());
         queue.push_back(root_node);
 
         Box::new(std::iter::from_fn(move || {
@@ -33,14 +28,7 @@ impl AbstractPhenoTree {
                             let mut new_pointer = current_node.pointer().clone();
                             new_pointer.down(i);
 
-                            let next_node = Node::new(
-                                val,
-                                &self
-                                    .spans
-                                    .span(&new_pointer)
-                                    .unwrap_or_else(|| panic!("Expected spans at {}", new_pointer)),
-                                new_pointer,
-                            );
+                            let next_node = Node::new(val, &self.spans.clone(), new_pointer);
 
                             queue.push_back(next_node);
                         }
@@ -50,14 +38,7 @@ impl AbstractPhenoTree {
                             let mut new_pointer = current_node.pointer().clone();
                             new_pointer.down(key);
 
-                            let next_node = Node::new(
-                                val,
-                                &self
-                                    .spans
-                                    .span(&new_pointer)
-                                    .unwrap_or_else(|| panic!("Expected spans at {}", new_pointer)),
-                                new_pointer,
-                            );
+                            let next_node = Node::new(val, &self.spans.clone(), new_pointer);
 
                             queue.push_back(next_node);
                         }

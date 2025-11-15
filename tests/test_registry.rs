@@ -27,9 +27,9 @@ impl RuleFromContext for SomeRule {
 impl RuleCheck for SomeRule {
     type CheckType = OntologyClass;
 
-    fn check(&self, parsed_node: &Self::CheckType, _: &Node) -> Vec<LintViolation> {
-        println!("Checking node: {:?}", parsed_node);
-        println!("Reached: {}", Self::RULE_ID);
+    fn check(&self, _: &Self::CheckType, _: &Node) -> Vec<LintViolation> {
+        //println!("Checking node: {:?}", parsed_node);
+        //println!("Reached: {}", Self::RULE_ID);
 
         vec![]
     }

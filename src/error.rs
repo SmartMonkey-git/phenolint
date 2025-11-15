@@ -1,6 +1,7 @@
 use crate::diagnostics::LintReport;
 use config::ConfigError;
 use prost::DecodeError;
+use saphyr::ScanError;
 use std::string::FromUtf8Error;
 use thiserror::Error;
 
@@ -69,6 +70,8 @@ pub enum InitError {
     Unparseable,
     #[error(transparent)]
     DecodeError(#[from] DecodeError),
+    #[error(transparent)]
+    YamlSpanError(#[from] ScanError),
 }
 
 #[derive(Error, Debug)]
