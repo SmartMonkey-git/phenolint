@@ -9,13 +9,17 @@ use crate::router::NodeRouter;
 use crate::tree::abstract_pheno_tree::AbstractPhenoTree;
 use log::warn;
 
-pub struct Linter {
+pub struct Phenolint {
     context: LinterContext,
+    router: NodeRouter,
 }
 
-impl Linter {
-    pub fn new(context: LinterContext) -> Self {
-        Linter { context }
+impl Phenolint {
+    pub fn new(context: LinterContext, rule_ids: Vec<String>) -> Self {
+        Phenolint {
+            context,
+            router: NodeRouter::new(rule_ids),
+        }
     }
     pub fn lint(&mut self, phenobytes: &[u8], patch: bool, quit: bool) -> LintResult {
         let mut report = LintReport::default();
@@ -26,11 +30,10 @@ impl Linter {
         };
 
         for node in apt.traverse() {
-            let findings = NodeRouter::lint_node(&node, &mut self.context);
+            let findings = self.router.lint_node(&node, &mut self.context);
             report.extend_finding(findings);
         }
 
-        // TODO: Maybe this should be part of the CLI. If not, then we should convert the reports to Strings here and return them with the report. The CLI will just emit the Strings.
         if !quit {
             self.emit(phenobytes, &report);
         }
