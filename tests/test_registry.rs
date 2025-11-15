@@ -13,6 +13,12 @@ use std::fs;
 use std::path::PathBuf;
 use std::process::exit;
 
+pub fn assets_dir() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests")
+        .join("assets")
+}
+
 #[register_rule(id = "CURIE002")]
 struct SomeRule;
 
@@ -47,9 +53,7 @@ fn test() {
         ],
     );
 
-    let test_pp = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("assets")
-        .join("phenopacket.pb");
+    let test_pp = assets_dir().join("phenopacket.pb");
 
     let pp = fs::read(test_pp).unwrap();
     let res = l.lint(pp.as_slice(), false, false);

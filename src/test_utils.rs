@@ -6,10 +6,14 @@ use ontolius::ontology::csr::FullCsrOntology;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-pub(crate) static HPO: Lazy<Arc<FullCsrOntology>> = Lazy::new(|| {
-    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    init_ontolius(path.join("assets").join("hp.toy.json"))
-});
+pub(crate) fn assets_dir() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests")
+        .join("assets")
+}
+
+pub(crate) static HPO: Lazy<Arc<FullCsrOntology>> =
+    Lazy::new(|| init_ontolius(assets_dir().join("hp.toy.json")));
 
 fn init_ontolius(hpo_path: PathBuf) -> Arc<FullCsrOntology> {
     let loader = OntologyLoaderBuilder::new().obographs_parser().build();
