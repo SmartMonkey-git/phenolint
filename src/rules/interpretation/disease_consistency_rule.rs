@@ -1,10 +1,12 @@
 #![allow(unused)]
 use crate::LinterContext;
 use crate::diagnostics::LintViolation;
+use std::sync::Arc;
+use std::sync::OnceLock;
 
 use crate::error::RuleInitError;
-use crate::rules::rule_registry::{BoxedRuleCheck, LintingPolicy};
-use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
+use crate::rules::rule_registry::LintingPolicy;
+use crate::rules::traits::{BoxedRuleCheck, LintRule, RuleCheck, RuleFromContext};
 use crate::tree::node::Node;
 use phenolint_macros::register_rule;
 use phenopackets::schema::v2::Phenopacket;

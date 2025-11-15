@@ -39,7 +39,7 @@ impl NodeRouter {
         let mut findings = vec![];
         for rule in inventory::iter::<LintingPolicy<N>>() {
             if self.enabled_rules.iter().any(|s| s == rule.rule_id) {
-                match (rule.factory)(context) {
+                match (rule.factory)(context).as_ref() {
                     Ok(rule_check) => {
                         let violations = rule_check.check(pared_node, node);
 

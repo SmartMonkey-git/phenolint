@@ -14,7 +14,9 @@ pub trait RuleFromContext {
     ) -> Result<Box<dyn RuleCheck<CheckType = Self::CheckType>>, RuleInitError>;
 }
 
-pub trait RuleCheck {
+pub trait RuleCheck: Send + Sync {
     type CheckType;
     fn check(&self, parsed_node: &Self::CheckType, node: &Node) -> Vec<LintViolation>;
 }
+
+pub type BoxedRuleCheck<N> = Box<dyn RuleCheck<CheckType = N>>;
