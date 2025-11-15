@@ -14,19 +14,6 @@ inventory::collect!(LintingPolicy<OntologyClass>);
 inventory::collect!(LintingPolicy<Phenopacket>);
 inventory::collect!(LintingPolicy<PhenotypicFeature>);
 
-#[macro_export]
-macro_rules! register_rule {
-    ($rule_type:ty) => {
-        inventory::submit! {
-
-            LintingPolicy::<<$rule_type as RuleCheck>::CheckType> {
-                rule_id: <$rule_type>::RULE_ID,
-                factory: |context: &LinterContext| <$rule_type>::from_context(context),
-            }
-        }
-    };
-}
-
 #[cfg(test)]
 mod tests {
     use crate::rules::rule_registry::LintingPolicy;

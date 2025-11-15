@@ -20,7 +20,6 @@ impl PatchFromContext for CurieFormatPatch {
 
 impl CompilePatches for CurieFormatPatch {
     fn compile_patches(&self, value: &Node, lint_violation: &LintViolation) -> Vec<Patch> {
-        println!("Reached compilation of CurieFormatPatch");
         vec![]
     }
 }

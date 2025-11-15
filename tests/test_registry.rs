@@ -1,3 +1,4 @@
+use phenolint::LinterContext;
 use phenolint::diagnostics::LintViolation;
 use phenolint::error::RuleInitError;
 use phenolint::phenolint::Linter;
@@ -5,15 +6,14 @@ use phenolint::rules::rule_registry::{BoxedRuleCheck, LintingPolicy};
 use phenolint::rules::traits::LintRule;
 use phenolint::rules::traits::{RuleCheck, RuleFromContext};
 use phenolint::tree::node::Node;
-use phenolint::{LinterContext, register_rule};
-use phenolint_macros::register_rule as rr;
+use phenolint_macros::register_rule;
 use phenopackets::schema::v2::core::OntologyClass;
 use rstest::rstest;
 use std::fs;
 use std::path::PathBuf;
 use std::process::exit;
 
-#[rr(id = "CURIE002")]
+#[register_rule(id = "CURIE002")]
 struct SomeRule;
 
 impl RuleFromContext for SomeRule {

@@ -25,7 +25,14 @@ pub fn register_rule(attr: TokenStream, item: TokenStream) -> TokenStream {
         impl LintRule for #struct_name {
             const RULE_ID: &'static str = #rule_id;
         }
-        register_rule!(#struct_name);
+
+        inventory::submit! {
+            LintingPolicy::<<#struct_name as RuleCheck>::CheckType> {
+                rule_id: #rule_id,
+                factory: |context: &LinterContext| #struct_name::from_context(context),
+            }
+        }
+
     };
 
     TokenStream::from(expanded)

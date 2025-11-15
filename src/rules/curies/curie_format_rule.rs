@@ -1,16 +1,15 @@
 use crate::diagnostics::LintViolation;
 use crate::error::RuleInitError;
 use crate::linter_context::LinterContext;
-use crate::register_rule;
 use crate::rules::rule_registry::{BoxedRuleCheck, LintingPolicy};
 use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
 use crate::tree::node::Node;
-use phenolint_macros::register_rule as rr;
+use phenolint_macros::register_rule;
 use phenopackets::schema::v2::core::OntologyClass;
 use regex::Regex;
 
 #[derive(Debug)]
-#[rr(id = "CURIE001")]
+#[register_rule(id = "CURIE001")]
 pub struct CurieFormatRule {
     regex: Regex,
 }

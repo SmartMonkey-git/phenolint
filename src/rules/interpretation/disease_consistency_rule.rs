@@ -3,11 +3,10 @@ use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 
 use crate::error::RuleInitError;
-use crate::register_rule;
 use crate::rules::rule_registry::{BoxedRuleCheck, LintingPolicy};
 use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
 use crate::tree::node::Node;
-use phenolint_macros::register_rule as rr;
+use phenolint_macros::register_rule;
 use phenopackets::schema::v2::Phenopacket;
 
 #[derive(Debug, Default)]
@@ -33,7 +32,7 @@ use phenopackets::schema::v2::Phenopacket;
 /// this disease does not appear in the phenopacket's diseases field, the rule will
 /// flag this inconsistency. The disease should be added to both locations to maintain
 /// data integrity across the phenopacket structure.
-#[rr(id = "INTER001")]
+#[register_rule(id = "INTER001")]
 pub struct DiseaseConsistencyRule;
 
 impl RuleFromContext for DiseaseConsistencyRule {
