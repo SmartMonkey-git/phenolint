@@ -9,20 +9,26 @@ use crate::tree::node::Node;
 use log::warn;
 use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
 
-pub(crate) struct NodeRouter;
+pub(crate) struct NodeRouter {
+    enabled_rules: Vec<String>,
+}
 
 impl NodeRouter {
-    pub fn lint_node(node: &Node, context: &mut LinterContext) -> Vec<LintFinding> {
+    pub fn new(enabled_rules: Vec<String>) -> Self {
+        Self { enabled_rules }
+    }
+    pub fn lint_node(&self, node: &Node, context: &mut LinterContext) -> Vec<LintFinding> {
         if let Some(oc) = OntologyClass::parse(node) {
-            Self::route_to_rules(node, &oc, context)
+            self.route_to_rules(node, &oc, context)
         } else if let Some(pf) = PhenotypicFeature::parse(node) {
-            Self::route_to_rules(node, &pf, context)
+            self.route_to_rules(node, &pf, context)
         } else {
             vec![]
         }
     }
 
     fn route_to_rules<N>(
+        &self,
         node: &Node,
         pared_node: &N,
         context: &mut LinterContext,
@@ -32,7 +38,7 @@ impl NodeRouter {
     {
         let mut findings = vec![];
         for rule in inventory::iter::<LintingPolicy<N>>() {
-            if context.rule_ids().iter().any(|s| s == rule.rule_id) {
+            if self.enabled_rules.iter().any(|s| s == rule.rule_id) {
                 match (rule.factory)(context) {
                     Ok(rule_check) => {
                         let violations = rule_check.check(pared_node, node);

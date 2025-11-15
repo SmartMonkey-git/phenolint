@@ -1,7 +1,7 @@
 use phenolint::LinterContext;
 use phenolint::diagnostics::LintViolation;
 use phenolint::error::RuleInitError;
-use phenolint::phenolint::Linter;
+use phenolint::phenolint::Phenolint;
 use phenolint::rules::rule_registry::{BoxedRuleCheck, LintingPolicy};
 use phenolint::rules::traits::LintRule;
 use phenolint::rules::traits::{RuleCheck, RuleFromContext};
@@ -37,15 +37,15 @@ impl RuleCheck for SomeRule {
 
 #[rstest]
 fn test() {
-    let context = LinterContext::new(
-        None,
+    let context = LinterContext::new(None);
+    let mut l = Phenolint::new(
+        context,
         vec![
             "CURIE001".to_string(),
             "DUMMY001".to_string(),
             "CURIE002".to_string(),
         ],
     );
-    let mut l = Linter::new(context);
 
     let test_pp = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("assets")
