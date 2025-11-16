@@ -1,11 +1,13 @@
-use crate::error::InitError;
+use crate::error::ParsingError;
 use crate::tree::pointer::Pointer;
 use json_spanned_value::spanned::Value as SpannedValue;
 use saphyr::{LoadableYamlNode, MarkedYaml, YamlData};
 use std::collections::HashMap;
 use std::ops::Range;
 
-pub(super) fn collect_json_spans(value: &str) -> Result<HashMap<Pointer, Range<usize>>, InitError> {
+pub(super) fn collect_json_spans(
+    value: &str,
+) -> Result<HashMap<Pointer, Range<usize>>, ParsingError> {
     let val = json_spanned_value::from_str(value)?;
     let mut out = HashMap::new();
     collect_json_spans_inner(&val, Pointer::at_root(), &mut out);
@@ -42,7 +44,7 @@ fn collect_json_spans_inner(
 /// Collect all spans for a `Spanned<Value>` YAML structure
 pub(crate) fn collect_yaml_spans(
     yaml_str: &str,
-) -> Result<HashMap<Pointer, Range<usize>>, InitError> {
+) -> Result<HashMap<Pointer, Range<usize>>, ParsingError> {
     let mut spans: HashMap<Pointer, Range<usize>> = HashMap::new();
 
     let yaml = MarkedYaml::load_from_str(yaml_str)?;

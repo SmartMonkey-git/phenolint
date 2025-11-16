@@ -1,6 +1,6 @@
 #![allow(unused)]
 use crate::enums::{Patch, PatchAction};
-use crate::error::PatchingError;
+use crate::patches::error::PatchingError;
 use serde_json::json;
 use std::cmp::Ordering;
 

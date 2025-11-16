@@ -30,7 +30,7 @@ impl Phenolint {
 
         let apt: AbstractPhenoTree = match PhenopacketParser::to_tree(phenobytes) {
             Ok(t) => t,
-            Err(err) => return LintResult::err(LinterError::InitError(err)),
+            Err(err) => return LintResult::err(LinterError::ParsingError(err)),
         };
 
         for node in apt.traverse() {

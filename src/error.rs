@@ -44,16 +44,29 @@ impl LintResult {
 #[derive(Error, Debug)]
 pub enum LinterError {
     #[error("Can't patch Phenopacket {0}")]
-    PatchingError(PatchingError),
+    PatchingError(ParsingError),
     #[error(transparent)]
-    IoError(#[from] std::io::Error),
+    InitError(#[from] InitError),
+    #[error(transparent)]
+    ParsingError(#[from] ParsingError),
+}
+
+#[derive(Error, Debug)]
+pub enum ParsingError {
+    #[error("Unable to parse input file")]
+    Unparseable,
+    #[error(transparent)]
+    StringParsing(#[from] FromUtf8Error),
+    #[error(transparent)]
+    DecodeError(#[from] DecodeError),
     #[error(transparent)]
     JsonError(#[from] serde_json::Error),
     #[error(transparent)]
-    InitError(#[from] InitError),
+    YamlSpanError(#[from] ScanError),
+    #[error(transparent)]
+    YamlError(#[from] serde_yaml::Error),
 }
 
-// TODO: Split Init error to Init and parse error
 #[derive(Error, Debug)]
 pub enum InitError {
     #[error(transparent)]
@@ -61,25 +74,7 @@ pub enum InitError {
     #[error(transparent)]
     Config(#[from] ConfigError),
     #[error(transparent)]
-    JsonError(#[from] serde_json::Error),
-    #[error(transparent)]
-    YamlError(#[from] serde_yaml::Error),
-    #[error(transparent)]
-    StringParsing(#[from] FromUtf8Error),
-    #[error("Unable to parse input file")]
-    Unparseable,
-    #[error(transparent)]
-    DecodeError(#[from] DecodeError),
-    #[error(transparent)]
-    YamlSpanError(#[from] ScanError),
-}
-
-#[derive(Error, Debug)]
-pub enum PatchingError {
-    #[error(transparent)]
-    SerdeError(#[from] serde_json::Error),
-    #[error(transparent)]
-    InitError(#[from] InitError),
+    ParsingError(#[from] ParsingError),
 }
 
 #[derive(Debug, Error)]
