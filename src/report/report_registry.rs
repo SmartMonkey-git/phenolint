@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 use crate::LinterContext;
 use crate::diagnostics::LintViolation;
-use crate::error::FromContextError;
 use crate::report::report_registration::ReportRegistration;
 use crate::report::specs::ReportSpecs;
 use crate::report::traits::{CompileReport, RegisterableReport, RuleReport};

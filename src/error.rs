@@ -84,6 +84,8 @@ pub enum PatchingError {
 
 #[derive(Debug, Error)]
 pub enum FromContextError {
-    #[error("Rule '{0}'  was configured, but needs the HPO. HPO not found or not configured.")]
-    NeedsHPO(String),
+    #[error(
+        "Rule '{rule_ids}'  was configured, but needs the {ontology}. {ontology} not found or not configured."
+    )]
+    NeedsOntology { rule_ids: String, ontology: String },
 }
