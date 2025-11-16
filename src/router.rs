@@ -39,27 +39,31 @@ impl NodeRouter {
     fn route_to_rules<N>(
         &self,
         node: &Node,
-        pared_node: &N,
+        parsed_node: &N,
         context: &mut LinterContext,
     ) -> Vec<LintFinding>
     where
         LintingPolicy<N>: inventory::Collect,
     {
         let mut findings = vec![];
-        for rule in inventory::iter::<LintingPolicy<N>>() {
-            if self.enabled_rules.iter().any(|s| s == rule.rule_id) {
-                match (rule.factory)(context).as_ref() {
-                    Ok(rule_check) => {
-                        let violations = rule_check.check(pared_node, node);
+        for rule_res in inventory::iter::<LintingPolicy<N>>() {
+            if self.enabled_rules.iter().any(|s| s == rule_res.rule_id) {
+                match (rule_res.factory)(context).as_ref() {
+                    Ok(rule) => {
+                        let violations = rule.check(parsed_node, node);
 
                         for violation in violations {
-                            let patches =
-                                self.patch_registry
-                                    .get_patches_for(rule.rule_id, node, &violation);
+                            let patches = self.patch_registry.get_patches_for(
+                                rule_res.rule_id,
+                                node,
+                                &violation,
+                            );
 
-                            let report =
-                                self.report_registry
-                                    .get_report_for(rule.rule_id, node, &violation);
+                            let report = self.report_registry.get_report_for(
+                                rule_res.rule_id,
+                                node,
+                                &violation,
+                            );
 
                             findings.push(LintFinding::new(violation, report, patches));
                         }
