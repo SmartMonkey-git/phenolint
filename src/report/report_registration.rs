@@ -1,10 +1,13 @@
 #![allow(dead_code)]
-use crate::report::report_registry::ReportRegistry;
+use crate::LinterContext;
+use crate::error::FromContextError;
+use crate::report::traits::RegisterableReport;
 use inventory;
 
 pub struct ReportRegistration {
     pub(crate) rule_id: &'static str,
-    pub(crate) register: fn(&mut ReportRegistry),
+    pub(crate) factory:
+        fn(context: &LinterContext) -> Result<Box<dyn RegisterableReport>, FromContextError>,
 }
 
 inventory::collect!(ReportRegistration);

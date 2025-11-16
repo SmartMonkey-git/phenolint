@@ -97,8 +97,8 @@ pub fn register_report(attr: TokenStream, item: TokenStream) -> TokenStream {
         ::inventory::submit! {
             crate::report::report_registration::ReportRegistration {
                 rule_id: #rule_id,
-                register: |registry| {
-                    registry.register(#rule_id, #name);
+                factory: |context: &LinterContext| {
+                    #name::from_context(context)
                 }
             }
         }

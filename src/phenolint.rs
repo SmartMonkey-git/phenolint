@@ -18,7 +18,7 @@ pub struct Phenolint {
 
 impl Phenolint {
     pub fn new(context: LinterContext, rule_ids: Vec<String>) -> Self {
-        let report_registry = ReportRegistry::with_enabled_reports(rule_ids.as_slice());
+        let report_registry = ReportRegistry::with_enabled_reports(rule_ids.as_slice(), &context);
         let patch_registry = PatchRegistry::with_enabled_patches(rule_ids.as_slice(), &context);
         Phenolint {
             context,
