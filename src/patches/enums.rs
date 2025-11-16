@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::tree::pointer::Pointer;
 
 #[derive(Clone, Debug, PartialEq)]
