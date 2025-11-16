@@ -8,45 +8,40 @@ pub struct PhenopacketParser;
 
 // TODO: Find logical naming for the function. Try to avoid duplicate code.
 impl PhenopacketParser {
-    pub fn to_tree(phenobytes: &[u8]) -> Result<AbstractPhenoTree, ParsingError> {
+    pub fn to_tree(phenostr: &str) -> Result<AbstractPhenoTree, ParsingError> {
         //TODO: Better error reporting
-        if let Ok(json) = Self::try_to_json_tree(phenobytes) {
+        if let Ok(json) = Self::try_to_json_tree(phenostr) {
             return Ok(json);
-        } else if let Ok(yaml) = Self::try_to_yaml_tree(phenobytes) {
+        } else if let Ok(yaml) = Self::try_to_yaml_tree(phenostr) {
             return Ok(yaml);
-        } else if let Ok(pb) = Self::try_to_protobuf_tree(phenobytes) {
+        } else if let Ok(pb) = Self::try_to_protobuf_tree(phenostr) {
             return Ok(pb);
         }
 
         Err(ParsingError::Unparseable)
     }
 
-    fn try_to_json_tree(phenobytes: &[u8]) -> Result<AbstractPhenoTree, ParsingError> {
-        let json_string = String::from_utf8(phenobytes.to_vec())?;
-
-        if let Ok(json) = serde_json::from_str(&json_string)
-            && let Ok(spans) = collect_json_spans(&json_string)
+    fn try_to_json_tree(phenostr: &str) -> Result<AbstractPhenoTree, ParsingError> {
+        if let Ok(json) = serde_json::from_str(phenostr)
+            && let Ok(spans) = collect_json_spans(phenostr)
         {
             return Ok(AbstractPhenoTree::new(json, spans));
         }
         Err(ParsingError::Unparseable)
     }
 
-    fn try_to_yaml_tree(phenobytes: &[u8]) -> Result<AbstractPhenoTree, ParsingError> {
-        let yaml_string = String::from_utf8(phenobytes.to_vec())?;
-        if let Ok(yaml) = serde_yaml::from_str(&yaml_string)
-            && let Ok(spans) = collect_yaml_spans(&yaml_string)
+    fn try_to_yaml_tree(phenostr: &str) -> Result<AbstractPhenoTree, ParsingError> {
+        if let Ok(yaml) = serde_yaml::from_str(phenostr)
+            && let Ok(spans) = collect_yaml_spans(phenostr)
         {
             return Ok(AbstractPhenoTree::new(yaml, spans));
         }
         Err(ParsingError::Unparseable)
     }
 
-    fn try_to_protobuf_tree(phenobytes: &[u8]) -> Result<AbstractPhenoTree, ParsingError> {
-        let json_string = Self::try_from_protobuf(phenobytes)?;
-
-        if let Ok(json) = serde_json::from_str(&json_string)
-            && let Ok(spans) = collect_json_spans(&json_string)
+    fn try_to_protobuf_tree(phenostr: &str) -> Result<AbstractPhenoTree, ParsingError> {
+        if let Ok(json) = serde_json::from_str(phenostr)
+            && let Ok(spans) = collect_json_spans(phenostr)
         {
             return Ok(AbstractPhenoTree::new(json, spans));
         }

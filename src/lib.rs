@@ -13,4 +13,5 @@ mod report;
 mod router;
 #[cfg(test)]
 pub(crate) mod test_utils;
+pub mod traits;
 pub mod tree;

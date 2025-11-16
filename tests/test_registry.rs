@@ -5,6 +5,7 @@ use phenolint::phenolint::Phenolint;
 use phenolint::rules::rule_registry::LintingPolicy;
 use phenolint::rules::traits::{BoxedRuleCheck, LintRule};
 use phenolint::rules::traits::{RuleCheck, RuleFromContext};
+use phenolint::traits::Lint;
 use phenolint::tree::node::Node;
 use phenolint_macros::register_rule;
 use phenopackets::schema::v2::core::OntologyClass;
