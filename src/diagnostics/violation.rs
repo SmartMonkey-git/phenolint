@@ -2,6 +2,7 @@ use crate::tree::pointer::Pointer;
 
 #[derive(Debug, PartialEq)]
 pub struct LintViolation {
+    // TODO: Add level of violation (Error, Warning ...)
     rule_id: String,
     at: Pointer,
 }

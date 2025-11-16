@@ -1,3 +1,4 @@
+use crate::enums::InputTypes;
 use crate::error::ParsingError;
 use crate::parsing::utils::{collect_json_spans, collect_yaml_spans};
 use crate::tree::abstract_pheno_tree::AbstractPhenoTree;
@@ -48,13 +49,13 @@ impl PhenopacketParser {
         Err(ParsingError::Unparseable)
     }
 
-    pub fn to_string(phenobytes: &[u8]) -> Result<String, ParsingError> {
+    pub fn to_string(phenobytes: &[u8]) -> Result<(String, InputTypes), ParsingError> {
         if let Ok(json_str) = Self::try_from_json(phenobytes) {
-            Ok(json_str)
+            Ok((json_str, InputTypes::Json))
         } else if let Ok(yaml) = Self::try_from_yaml(phenobytes) {
-            Ok(yaml)
+            Ok((yaml, InputTypes::Yaml))
         } else if let Ok(pb) = Self::try_from_protobuf(phenobytes) {
-            Ok(pb)
+            Ok((pb, InputTypes::Protobuf))
         } else {
             Err(ParsingError::Unparseable)
         }

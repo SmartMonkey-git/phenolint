@@ -1,5 +1,5 @@
 use crate::diagnostics::violation::LintViolation;
-use crate::enums::Patch;
+use crate::patches::patch::Patch;
 use crate::report::specs::ReportSpecs;
 
 #[derive(Debug)]

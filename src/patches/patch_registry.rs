@@ -1,6 +1,6 @@
 use crate::LinterContext;
 use crate::diagnostics::LintViolation;
-use crate::enums::Patch;
+use crate::patches::patch::Patch;
 use crate::patches::patch_registration::PatchRegistration;
 use crate::patches::traits::{CompilePatches, RegisterablePatch, RulePatch};
 use crate::tree::node::Node;
