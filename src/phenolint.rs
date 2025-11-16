@@ -2,6 +2,8 @@
 
 use crate::LinterContext;
 use crate::diagnostics::LintReport;
+use crate::diagnostics::report::PhenopacketData;
+use crate::enums::InputTypes;
 use crate::error::{InitError, LintResult, LinterError, ParsingError};
 use crate::parsing::phenopacket_parser::PhenopacketParser;
 use crate::patches::patch_registry::PatchRegistry;
@@ -10,7 +12,11 @@ use crate::report::report_registry::ReportRegistry;
 use crate::router::NodeRouter;
 use crate::traits::Lint;
 use crate::tree::abstract_pheno_tree::AbstractPhenoTree;
+use codespan_reporting::term::termcolor::Buffer;
 use log::warn;
+use phenopackets::schema::v2::Phenopacket;
+use prost::Message;
+use prost::bytes::{Buf, BufMut};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -84,13 +90,33 @@ impl Lint<PathBuf> for Phenolint {
 
 impl Lint<[u8]> for Phenolint {
     fn lint(&mut self, phenodata: &[u8], patch: bool, quit: bool) -> LintResult {
-        let phenostr = match PhenopacketParser::to_string(phenodata) {
+        let (phenostr, input_type) = match PhenopacketParser::to_string(phenodata) {
             Ok(phenostr) => phenostr,
             Err(err) => {
                 return LintResult::err(LinterError::ParsingError(err));
             }
         };
+        let mut lint_result = self.lint(phenostr.as_str(), patch, quit);
 
-        Self::lint(self, phenostr.as_str(), patch, quit)
+        if let Some(patched_phenopacket) = lint_result.report.patched_phenopacket {
+            lint_result.report.patched_phenopacket = Some(match patched_phenopacket {
+                PhenopacketData::Text(phenotext) => match input_type {
+                    InputTypes::Protobuf => {
+                        let mut buf = Vec::new();
+
+                        let phenopb = Phenopacket::decode(phenotext.as_bytes())
+                            .expect("Failed to decode patched phenopacket");
+                        phenopb
+                            .encode(&mut buf)
+                            .expect("Failed to encode patched phenopacket");
+                        PhenopacketData::Binary(buf)
+                    }
+                    _ => PhenopacketData::Binary(phenotext.as_bytes().to_vec()),
+                },
+                PhenopacketData::Binary(phenobytes) => PhenopacketData::Binary(phenobytes),
+            })
+        };
+
+        lint_result
     }
 }

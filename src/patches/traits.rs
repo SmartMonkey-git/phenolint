@@ -1,7 +1,7 @@
 use crate::LinterContext;
 use crate::diagnostics::LintViolation;
-use crate::enums::Patch;
 use crate::error::FromContextError;
+use crate::patches::patch::Patch;
 use crate::tree::node::Node;
 
 pub trait RegisterablePatch: Send + Sync {
