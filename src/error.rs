@@ -1,6 +1,6 @@
 use crate::diagnostics::LintReport;
 use config::ConfigError;
-use prost::DecodeError;
+use prost::{DecodeError, EncodeError};
 use saphyr::ScanError;
 use std::string::FromUtf8Error;
 use thiserror::Error;
@@ -59,6 +59,8 @@ pub enum ParsingError {
     StringParsing(#[from] FromUtf8Error),
     #[error(transparent)]
     DecodeError(#[from] DecodeError),
+    #[error(transparent)]
+    EncodeError(#[from] EncodeError),
     #[error(transparent)]
     JsonError(#[from] serde_json::Error),
     #[error(transparent)]

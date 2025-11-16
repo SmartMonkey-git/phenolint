@@ -13,7 +13,7 @@ use crate::router::NodeRouter;
 use crate::traits::Lint;
 use crate::tree::abstract_pheno_tree::AbstractPhenoTree;
 use codespan_reporting::term::termcolor::Buffer;
-use log::warn;
+use log::{error, warn};
 use phenopackets::schema::v2::Phenopacket;
 use prost::Message;
 use prost::bytes::{Buf, BufMut};
@@ -101,27 +101,48 @@ impl Lint<[u8]> for Phenolint {
         };
         let mut lint_result = self.lint(phenostr.as_str(), patch, quit);
 
-        if let Some(patched_phenopacket) = lint_result.report.patched_phenopacket {
-            lint_result.report.patched_phenopacket = Some(match patched_phenopacket {
-                PhenopacketData::Text(phenotext) => match input_type {
-                    InputTypes::Protobuf => {
-                        let mut buf = Vec::new();
-
-                        let phenopb: Phenopacket = serde_json::from_str(&phenotext)
-                            .expect("Failed to deserialize patched phenopacket from JSON");
-
-                        phenopb
-                            .encode(&mut buf)
-                            .expect("Failed to encode patched phenopacket to Protobuf");
-
-                        PhenopacketData::Binary(buf)
-                    }
-                    _ => PhenopacketData::Binary(phenotext.as_bytes().to_vec()),
-                },
-                PhenopacketData::Binary(phenobytes) => PhenopacketData::Binary(phenobytes),
-            })
-        };
+        convert_phenopacket_to_input_type(&mut lint_result, phenostr.as_str(), input_type);
 
         lint_result
+    }
+}
+
+fn convert_phenopacket_to_input_type(
+    lint_result: &mut LintResult,
+    phenostr: &str,
+    input_type: InputTypes,
+) {
+    if let Some(patched_phenopacket) = lint_result.report.patched_phenopacket.take() {
+        let new_data = match patched_phenopacket {
+            PhenopacketData::Text(phenotext) => match input_type {
+                InputTypes::Protobuf => {
+                    let phenopb: Result<Phenopacket, _> = serde_json::from_str(&phenotext);
+
+                    match phenopb {
+                        Ok(parsed) => {
+                            let mut buf = Vec::new();
+                            if let Err(e) = parsed.encode(&mut buf) {
+                                error!("Error encoding Phenopacket to protobuf: {:?}", e);
+                                lint_result.error =
+                                    Some(LinterError::ParsingError(ParsingError::EncodeError(e)));
+                                PhenopacketData::Text(phenotext)
+                            } else {
+                                PhenopacketData::Binary(buf)
+                            }
+                        }
+                        Err(e) => {
+                            error!("Error decoding Phenopacket from JSON: {:?}", e);
+                            lint_result.error =
+                                Some(LinterError::ParsingError(ParsingError::JsonError(e)));
+                            PhenopacketData::Text(phenotext)
+                        }
+                    }
+                }
+                _ => PhenopacketData::Binary(phenotext.as_bytes().to_vec()),
+            },
+            PhenopacketData::Binary(phenobytes) => PhenopacketData::Binary(phenobytes),
+        };
+
+        lint_result.report.patched_phenopacket = Some(new_data);
     }
 }
