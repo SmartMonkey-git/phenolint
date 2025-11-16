@@ -1,13 +1,16 @@
-use crate::error::RuleInitError;
+use crate::error::FromContextError;
 use crate::linter_context::LinterContext;
-use crate::rules::traits::RuleCheck;
+use crate::rules::traits::BoxedRuleCheck;
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
+use std::sync::Arc;
 
-pub type BoxedRuleCheck<N> = Box<dyn RuleCheck<CheckType = N>>;
+pub type RuleFactory<T> = fn(context: &LinterContext) -> RuleCheckResult<T>;
+pub type RuleCheckResult<T> = Arc<Result<BoxedRuleCheck<T>, FromContextError>>;
+
 pub struct LintingPolicy<T> {
     pub rule_id: &'static str,
-    pub factory: fn(context: &LinterContext) -> Result<BoxedRuleCheck<T>, RuleInitError>,
+    pub factory: RuleFactory<T>,
 }
 
 inventory::collect!(LintingPolicy<OntologyClass>);

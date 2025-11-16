@@ -1,9 +1,11 @@
 #![allow(dead_code)]
+use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use crate::report::report_registration::ReportRegistration;
 use crate::report::specs::ReportSpecs;
 use crate::report::traits::{CompileReport, RegisterableReport, RuleReport};
 use crate::tree::node::Node;
+use log::warn;
 use std::collections::HashMap;
 
 #[derive(Default)]
@@ -28,13 +30,25 @@ impl ReportRegistry {
             .map(|report_compiler| report_compiler.compile_report(value, violation))
     }
 
-    pub fn with_all_reports() -> Self {
-        let mut registry = Self::default();
+    pub fn with_enabled_reports(enabled_rules: &[String], context: &LinterContext) -> Self {
+        let mut registry = HashMap::new();
 
         for registration in inventory::iter::<ReportRegistration> {
-            (registration.register)(&mut registry);
+            if enabled_rules
+                .iter()
+                .any(|r_id| r_id == registration.rule_id)
+            {
+                match (registration.factory)(context) {
+                    Ok(report) => {
+                        registry.insert(registration.rule_id.to_string(), report);
+                    }
+                    Err(err) => warn!("Failed to register patch: {}", err),
+                }
+            }
         }
 
-        registry
+        Self {
+            report_compiler: registry,
+        }
     }
 }

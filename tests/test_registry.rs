@@ -1,9 +1,9 @@
 use phenolint::LinterContext;
 use phenolint::diagnostics::LintViolation;
-use phenolint::error::RuleInitError;
+use phenolint::error::FromContextError;
 use phenolint::phenolint::Phenolint;
-use phenolint::rules::rule_registry::{BoxedRuleCheck, LintingPolicy};
-use phenolint::rules::traits::LintRule;
+use phenolint::rules::rule_registry::LintingPolicy;
+use phenolint::rules::traits::{BoxedRuleCheck, LintRule};
 use phenolint::rules::traits::{RuleCheck, RuleFromContext};
 use phenolint::tree::node::Node;
 use phenolint_macros::register_rule;
@@ -12,6 +12,8 @@ use rstest::rstest;
 use std::fs;
 use std::path::PathBuf;
 use std::process::exit;
+use std::sync::Arc;
+use std::sync::OnceLock;
 
 pub fn assets_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -25,7 +27,9 @@ struct SomeRule;
 impl RuleFromContext for SomeRule {
     type CheckType = OntologyClass;
 
-    fn from_context(_: &LinterContext) -> Result<BoxedRuleCheck<Self::CheckType>, RuleInitError> {
+    fn from_context(
+        _: &LinterContext,
+    ) -> Result<BoxedRuleCheck<Self::CheckType>, FromContextError> {
         Ok(Box::new(SomeRule))
     }
 }

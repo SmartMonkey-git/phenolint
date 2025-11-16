@@ -1,7 +1,7 @@
 #![allow(unused)]
 use crate::LinterContext;
 use crate::diagnostics::LintViolation;
-use crate::error::RuleInitError;
+use crate::error::FromContextError;
 use crate::report::specs::ReportSpecs;
 use crate::tree::node::Node;
 
@@ -29,5 +29,7 @@ pub trait CompileReport {
 }
 
 pub trait ReportFromContext {
-    fn from_context(context: &LinterContext) -> Result<Box<dyn RegisterableReport>, RuleInitError>;
+    fn from_context(
+        context: &LinterContext,
+    ) -> Result<Box<dyn RegisterableReport>, FromContextError>;
 }

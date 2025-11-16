@@ -1,11 +1,10 @@
 use syn::Lit;
 
-use once_cell::sync::Lazy;
 use proc_macro::TokenStream;
 use regex::Regex;
 use syn::parse::Parser;
 
-static RULE_FORMAT: Lazy<Regex> = Lazy::new(|| Regex::new("^[A-Z]{1,5}[0-9]{3}$").unwrap());
+static RULE_FORMAT: &str = "^[A-Z]{1,5}[0-9]{3}$";
 
 pub(crate) fn extract_rule_id(attr_tokens: &TokenStream) -> Result<String, String> {
     let mut rule_id = None;
@@ -31,10 +30,12 @@ pub(crate) fn extract_rule_id(attr_tokens: &TokenStream) -> Result<String, Strin
         .parse(attr_tokens.clone())
         .map_err(|e| e.to_string())?;
 
+    let rule_regex = Regex::new(RULE_FORMAT).unwrap();
+
     match rule_id {
         None => Err("Missing required `id = \"...\"` attribute argument".to_owned()),
         Some(rule_id) => {
-            if RULE_FORMAT.is_match(&rule_id) {
+            if rule_regex.is_match(&rule_id) {
                 Ok(rule_id)
             } else {
                 Err(
