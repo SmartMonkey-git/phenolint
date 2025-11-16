@@ -22,8 +22,8 @@ impl PhenopacketParser {
     }
 
     fn try_to_json_tree(phenostr: &str) -> Result<AbstractPhenoTree, ParsingError> {
-        if let Ok(json) = serde_json::from_str(&phenostr)
-            && let Ok(spans) = collect_json_spans(&phenostr)
+        if let Ok(json) = serde_json::from_str(phenostr)
+            && let Ok(spans) = collect_json_spans(phenostr)
         {
             return Ok(AbstractPhenoTree::new(json, spans));
         }
@@ -31,8 +31,8 @@ impl PhenopacketParser {
     }
 
     fn try_to_yaml_tree(phenostr: &str) -> Result<AbstractPhenoTree, ParsingError> {
-        if let Ok(yaml) = serde_yaml::from_str(&phenostr)
-            && let Ok(spans) = collect_yaml_spans(&phenostr)
+        if let Ok(yaml) = serde_yaml::from_str(phenostr)
+            && let Ok(spans) = collect_yaml_spans(phenostr)
         {
             return Ok(AbstractPhenoTree::new(yaml, spans));
         }
@@ -40,8 +40,8 @@ impl PhenopacketParser {
     }
 
     fn try_to_protobuf_tree(phenostr: &str) -> Result<AbstractPhenoTree, ParsingError> {
-        if let Ok(json) = serde_json::from_str(&phenostr)
-            && let Ok(spans) = collect_json_spans(&phenostr)
+        if let Ok(json) = serde_json::from_str(phenostr)
+            && let Ok(spans) = collect_json_spans(phenostr)
         {
             return Ok(AbstractPhenoTree::new(json, spans));
         }
