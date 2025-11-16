@@ -17,6 +17,7 @@ use log::warn;
 use phenopackets::schema::v2::Phenopacket;
 use prost::Message;
 use prost::bytes::{Buf, BufMut};
+use serde_json::Value;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -70,7 +71,9 @@ impl Lint<str> for Phenolint {
         }
 
         // TODO: Apply patches here if patch=True
+        let a: Value = serde_json::from_str(phenostr).unwrap();
 
+        report.patched_phenopacket = Some(PhenopacketData::Text(a.to_string()));
         LintResult::ok(report)
     }
 }
@@ -104,11 +107,13 @@ impl Lint<[u8]> for Phenolint {
                     InputTypes::Protobuf => {
                         let mut buf = Vec::new();
 
-                        let phenopb = Phenopacket::decode(phenotext.as_bytes())
-                            .expect("Failed to decode patched phenopacket");
+                        let phenopb: Phenopacket = serde_json::from_str(&phenotext)
+                            .expect("Failed to deserialize patched phenopacket from JSON");
+
                         phenopb
                             .encode(&mut buf)
-                            .expect("Failed to encode patched phenopacket");
+                            .expect("Failed to encode patched phenopacket to Protobuf");
+
                         PhenopacketData::Binary(buf)
                     }
                     _ => PhenopacketData::Binary(phenotext.as_bytes().to_vec()),
