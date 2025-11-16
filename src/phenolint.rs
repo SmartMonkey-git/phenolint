@@ -2,14 +2,17 @@
 
 use crate::LinterContext;
 use crate::diagnostics::LintReport;
-use crate::error::{LintResult, LinterError};
+use crate::error::{InitError, LintResult, LinterError, ParsingError};
 use crate::parsing::phenopacket_parser::PhenopacketParser;
 use crate::patches::patch_registry::PatchRegistry;
 use crate::report::parser::ReportParser;
 use crate::report::report_registry::ReportRegistry;
 use crate::router::NodeRouter;
+use crate::traits::Lint;
 use crate::tree::abstract_pheno_tree::AbstractPhenoTree;
 use log::warn;
+use std::fs;
+use std::path::{Path, PathBuf};
 
 pub struct Phenolint {
     context: LinterContext,
@@ -25,10 +28,28 @@ impl Phenolint {
             router: NodeRouter::new(rule_ids, report_registry, patch_registry),
         }
     }
-    pub fn lint(&mut self, phenobytes: &[u8], patch: bool, quit: bool) -> LintResult {
+
+    fn emit(&mut self, phenostr: &str, report: &LintReport) {
+        for (info, report_specs) in report
+            .findings()
+            .iter()
+            .filter_map(|info| info.report().map(|rs| (info, rs)))
+        {
+            if ReportParser::emit(report_specs, phenostr).is_err() {
+                warn!(
+                    "Unable to parse and emit report for: '{}'",
+                    info.violation().rule_id()
+                );
+            }
+        }
+    }
+}
+
+impl Lint<str> for Phenolint {
+    fn lint(&mut self, phenostr: &str, patch: bool, quit: bool) -> LintResult {
         let mut report = LintReport::default();
 
-        let apt: AbstractPhenoTree = match PhenopacketParser::to_tree(phenobytes) {
+        let apt: AbstractPhenoTree = match PhenopacketParser::to_tree(phenostr) {
             Ok(t) => t,
             Err(err) => return LintResult::err(LinterError::ParsingError(err)),
         };
@@ -39,34 +60,37 @@ impl Phenolint {
         }
 
         if !quit {
-            self.emit(phenobytes, &report);
+            self.emit(phenostr, &report);
         }
 
         // TODO: Apply patches here if patch=True
 
         LintResult::ok(report)
     }
+}
 
-    fn emit(&mut self, phenobytes: &[u8], report: &LintReport) {
-        let phenostr = match PhenopacketParser::to_string(phenobytes) {
-            Ok(s) => s,
+impl Lint<PathBuf> for Phenolint {
+    fn lint(&mut self, phenopath: &PathBuf, patch: bool, quit: bool) -> LintResult {
+        let phenodata = match fs::read(phenopath) {
+            Ok(phenodata) => phenodata,
             Err(err) => {
-                warn!("Unable to parse phenopacket data into String: '{}'", err);
-                return;
+                return LintResult::err(LinterError::InitError(InitError::IO(err)));
             }
         };
 
-        for (info, report_specs) in report
-            .findings()
-            .iter()
-            .filter_map(|info| info.report().map(|rs| (info, rs)))
-        {
-            if ReportParser::emit(report_specs, &phenostr).is_err() {
-                warn!(
-                    "Unable to parse and emit report for: '{}'",
-                    info.violation().rule_id()
-                );
+        self.lint(phenodata.as_slice(), patch, quit)
+    }
+}
+
+impl Lint<[u8]> for Phenolint {
+    fn lint(&mut self, phenodata: &[u8], patch: bool, quit: bool) -> LintResult {
+        let phenostr = match PhenopacketParser::to_string(phenodata) {
+            Ok(phenostr) => phenostr,
+            Err(err) => {
+                return LintResult::err(LinterError::ParsingError(err));
             }
-        }
+        };
+
+        Self::lint(self, phenostr.as_str(), patch, quit)
     }
 }
