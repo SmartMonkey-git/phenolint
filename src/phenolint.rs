@@ -1,13 +1,9 @@
-#![allow(unused)]
-
 use crate::LinterContext;
 use crate::diagnostics::LintReport;
 use crate::diagnostics::enums::PhenopacketData;
 use crate::enums::InputTypes;
 use crate::error::{InitError, LintResult, LinterError, ParsingError};
 use crate::parsing::phenopacket_parser::PhenopacketParser;
-use crate::patches::error::PatchingError;
-use crate::patches::patch::Patch;
 use crate::patches::patch_engine::PatchEngine;
 use crate::patches::patch_registry::PatchRegistry;
 use crate::report::parser::ReportParser;
@@ -15,27 +11,20 @@ use crate::report::report_registry::ReportRegistry;
 use crate::router::NodeRouter;
 use crate::traits::Lint;
 use crate::tree::abstract_pheno_tree::AbstractTreeTraversal;
-use crate::tree::pointer::Pointer;
-use codespan_reporting::term::termcolor::Buffer;
 use log::{error, warn};
 use phenopackets::schema::v2::Phenopacket;
 use prost::Message;
-use prost::bytes::{Buf, BufMut};
 use serde_json::Value;
-use std::collections::HashMap;
 use std::fs;
-use std::ops::Range;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 pub struct Phenolint {
     context: LinterContext,
     router: NodeRouter,
-    patcher: PatchEngine,
+    patch_engine: PatchEngine,
 }
 
 impl Phenolint {
-    fn inner_lint(tree: Value, spans: HashMap<Pointer, Range<usize>>, patch: bool, quit: bool) {}
-
     pub fn new(context: LinterContext, rule_ids: Vec<String>) -> Self {
         let report_registry = ReportRegistry::with_enabled_reports(rule_ids.as_slice(), &context);
         let patch_registry = PatchRegistry::with_enabled_patches(rule_ids.as_slice(), &context);
@@ -43,7 +32,7 @@ impl Phenolint {
         Phenolint {
             context,
             router: NodeRouter::new(rule_ids, report_registry, patch_registry),
-            patcher: PatchEngine,
+            patch_engine: PatchEngine,
         }
     }
 
@@ -61,23 +50,13 @@ impl Phenolint {
             }
         }
     }
-
-    fn patch(
-        mut values: &mut Value,
-        patches: Vec<&Patch>,
-        input_types: &InputTypes,
-    ) -> Result<Value, PatchingError> {
-        let patched_pp = PatchEngine.patch(values, patches)?;
-
-        Ok(patched_pp)
-    }
 }
 
 impl Lint<str> for Phenolint {
     fn lint(&mut self, phenostr: &str, patch: bool, quit: bool) -> LintResult {
         let mut report = LintReport::default();
 
-        let (mut values, spans, input_type) = match PhenopacketParser::to_abstract_tree(phenostr) {
+        let (values, spans, input_type) = match PhenopacketParser::to_abstract_tree(phenostr) {
             Ok((values, spans, input_type)) => (values, spans, input_type),
             Err(err) => return LintResult::err(LinterError::ParsingError(err)),
         };
@@ -93,7 +72,7 @@ impl Lint<str> for Phenolint {
         }
 
         if patch && report.has_patches() {
-            match Self::patch(&mut values, report.patches(), &input_type) {
+            match self.patch_engine.patch(&values, report.patches()) {
                 Ok(patched_phenopacket) => {
                     match convert_phenopacket_to_input_type_str(&patched_phenopacket, input_type) {
                         Ok(phenostr) => {
@@ -137,7 +116,7 @@ impl Lint<[u8]> for Phenolint {
         };
         let mut lint_result = self.lint(phenostr.as_str(), patch, quit);
 
-        convert_phenopacket_to_input_type_u8(&mut lint_result, phenostr.as_str(), input_type);
+        convert_phenopacket_to_input_type_u8(&mut lint_result, input_type);
 
         lint_result
     }
@@ -161,11 +140,7 @@ fn convert_phenopacket_to_input_type_str(
     }
 }
 
-fn convert_phenopacket_to_input_type_u8(
-    lint_result: &mut LintResult,
-    phenostr: &str,
-    input_type: InputTypes,
-) {
+fn convert_phenopacket_to_input_type_u8(lint_result: &mut LintResult, input_type: InputTypes) {
     if let Some(patched_phenopacket) = lint_result.report.patched_phenopacket.take() {
         let new_data = match patched_phenopacket {
             PhenopacketData::Text(phenotext) => match input_type {
