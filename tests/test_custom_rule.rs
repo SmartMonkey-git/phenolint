@@ -1,3 +1,5 @@
+use crate::common::construction::linter;
+use crate::common::paths::assets_dir;
 use phenolint::LinterContext;
 use phenolint::diagnostics::LintViolation;
 use phenolint::diagnostics::enums::PhenopacketData;
@@ -17,13 +19,9 @@ use std::process::exit;
 use std::sync::Arc;
 use std::sync::OnceLock;
 
-pub fn assets_dir() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("tests")
-        .join("assets")
-}
+mod common;
 
-#[register_rule(id = "CURIE002")]
+#[register_rule(id = "CUST001")]
 struct SomeRule;
 
 impl RuleFromContext for SomeRule {
@@ -48,23 +46,14 @@ impl RuleCheck for SomeRule {
 }
 
 #[rstest]
-fn test() {
-    let context = LinterContext::new(None);
-    let mut l = Phenolint::new(
-        context,
-        vec![
-            "CURIE001".to_string(),
-            "DUMMY001".to_string(),
-            "CURIE002".to_string(),
-        ],
-    );
+fn test_custom_rule(assets_dir: PathBuf) {
+    let mut linter = linter(vec!["CUST001"]);
 
-    let test_pp = assets_dir().join("phenopacket.json");
+    let test_pp = assets_dir.join("phenopacket.json");
 
     let pp = fs::read_to_string(test_pp).unwrap();
-    let res = l.lint(pp.as_str(), true, false);
+    let res = linter.lint(pp.as_str(), true, false);
 
-    //eprintln!("res: {:?}", res);
     if let Some(pp) = res.report.patched_phenopacket {
         match pp {
             PhenopacketData::Text(pp_t) => {

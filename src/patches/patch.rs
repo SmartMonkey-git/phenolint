@@ -1,6 +1,6 @@
 use crate::patches::enums::PatchInstruction;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq)]
 pub struct Patch {
     pub instructions: Vec<PatchInstruction>,
 }
