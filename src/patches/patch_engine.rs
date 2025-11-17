@@ -1,22 +1,17 @@
-#![allow(unused)]
 use crate::patches::enums::PatchInstruction;
 use crate::patches::error::PatchingError;
 use crate::patches::patch::Patch;
-use serde::Deserialize;
-use serde_json::{Value, json};
+use serde_json::Value;
 use std::cmp::Ordering;
 
 #[derive(Debug, Default)]
 pub struct PatchEngine;
 
 impl PatchEngine {
-    pub fn patch(
-        &self,
-        mut values: &mut Value,
-        patches: Vec<&Patch>,
-    ) -> Result<String, PatchingError> {
-        let patch_instructions = Self::resolve_patches(patches, values)?;
-        Self::apply(values, patch_instructions)
+    pub fn patch(&self, values: &Value, patches: Vec<&Patch>) -> Result<Value, PatchingError> {
+        let patched_value = values.clone();
+        let patch_instructions = Self::resolve_patches(patches, &patched_value)?;
+        Self::apply(patched_value, patch_instructions)
     }
 
     /// Resolves high-level patch operations into primitive operations.
@@ -118,16 +113,12 @@ impl PatchEngine {
         });
     }
 
-    fn apply(
-        mut values: &mut Value,
-        patches: Vec<PatchInstruction>,
-    ) -> Result<String, PatchingError> {
+    fn apply(mut values: Value, patches: Vec<PatchInstruction>) -> Result<Value, PatchingError> {
         for patch in patches {
             let patch = patch.to_json_patch();
-            json_patch::patch(values, &patch)?;
+            json_patch::patch(&mut values, &patch)?;
         }
-        println!("{}", values.to_string());
-        Ok(values.to_string())
+        Ok(values)
     }
 }
 
@@ -190,10 +181,9 @@ mod patcher_tests {
         };
 
         let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
-        let result_json: Value = serde_json::from_str(&result).unwrap();
 
-        assert!(result_json.get("metaData").is_some());
-        assert_eq!(result_json["metaData"]["created"], "2024-01-01");
+        assert!(result.get("metaData").is_some());
+        assert_eq!(result["metaData"]["created"], "2024-01-01");
     }
 
     #[test]
@@ -210,10 +200,9 @@ mod patcher_tests {
         };
 
         let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
-        let result_json: Value = serde_json::from_str(&result).unwrap();
 
-        assert!(result_json["subject"]["timeAtLastEncounter"].is_object());
-        assert_eq!(result_json["subject"]["timeAtLastEncounter"]["age"], "P30Y");
+        assert!(result["subject"]["timeAtLastEncounter"].is_object());
+        assert_eq!(result["subject"]["timeAtLastEncounter"]["age"], "P30Y");
     }
 
     #[test]
@@ -229,9 +218,8 @@ mod patcher_tests {
         };
 
         let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
-        let result_json: Value = serde_json::from_str(&result).unwrap();
 
-        assert!(result_json["subject"]["dateOfBirth"].is_null());
+        assert!(result["subject"]["dateOfBirth"].is_null());
     }
 
     #[test]
@@ -247,10 +235,9 @@ mod patcher_tests {
         };
 
         let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
-        let result_json: Value = serde_json::from_str(&result).unwrap();
 
-        assert!(result_json["diseases"][0]["onset"].is_null());
-        assert!(result_json["diseases"][0]["term"].is_object());
+        assert!(result["diseases"][0]["onset"].is_null());
+        assert!(result["diseases"][0]["term"].is_object());
     }
 
     #[test]
@@ -267,10 +254,9 @@ mod patcher_tests {
         };
 
         let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
-        let result_json: Value = serde_json::from_str(&result).unwrap();
 
-        assert!(result_json["subject"]["dateOfBirth"].is_null());
-        assert_eq!(result_json["subject"]["birthDate"], "1990-01-01");
+        assert!(result["subject"]["dateOfBirth"].is_null());
+        assert_eq!(result["subject"]["birthDate"], "1990-01-01");
     }
 
     #[test]
@@ -287,10 +273,9 @@ mod patcher_tests {
         };
 
         let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
-        let result_json: Value = serde_json::from_str(&result).unwrap();
 
-        assert!(result_json["diseases"][0]["onset"].is_null());
-        assert_eq!(result_json["ageOfOnset"]["age"], "P10Y");
+        assert!(result["diseases"][0]["onset"].is_null());
+        assert_eq!(result["ageOfOnset"]["age"], "P10Y");
     }
 
     #[test]
@@ -307,10 +292,9 @@ mod patcher_tests {
         };
 
         let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
-        let result_json: Value = serde_json::from_str(&result).unwrap();
 
-        assert_eq!(result_json["subject"]["id"], "patient.1");
-        assert_eq!(result_json["subject"]["patientId"], "patient.1");
+        assert_eq!(result["subject"]["id"], "patient.1");
+        assert_eq!(result["subject"]["patientId"], "patient.1");
     }
 
     #[test]
@@ -327,11 +311,10 @@ mod patcher_tests {
         };
 
         let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
-        let result_json: Value = serde_json::from_str(&result).unwrap();
 
-        assert_eq!(result_json["diseases"][0]["term"]["id"], "OMIM:123456");
-        assert_eq!(result_json["diagnosisTerm"]["id"], "OMIM:123456");
-        assert_eq!(result_json["diagnosisTerm"]["label"], "Example Disease");
+        assert_eq!(result["diseases"][0]["term"]["id"], "OMIM:123456");
+        assert_eq!(result["diagnosisTerm"]["id"], "OMIM:123456");
+        assert_eq!(result["diagnosisTerm"]["label"], "Example Disease");
     }
 
     #[test]
@@ -354,10 +337,9 @@ mod patcher_tests {
         };
 
         let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
-        let result_json: Value = serde_json::from_str(&result).unwrap();
 
-        assert_eq!(result_json["subject"]["karyotypicSex"], "XY");
-        assert_eq!(result_json["subject"]["taxonomy"]["id"], "NCBITaxon:9606");
+        assert_eq!(result["subject"]["karyotypicSex"], "XY");
+        assert_eq!(result["subject"]["taxonomy"]["id"], "NCBITaxon:9606");
     }
 
     #[test]
@@ -383,12 +365,11 @@ mod patcher_tests {
         };
 
         let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
-        let result_json: Value = serde_json::from_str(&result).unwrap();
 
-        assert!(result_json["metaData"].is_object());
-        assert!(result_json["subject"]["dateOfBirth"].is_null());
-        assert!(result_json["subject"]["sex"].is_null());
-        assert_eq!(result_json["subject"]["gender"], "MALE");
+        assert!(result["metaData"].is_object());
+        assert!(result["subject"]["dateOfBirth"].is_null());
+        assert!(result["subject"]["sex"].is_null());
+        assert_eq!(result["subject"]["gender"], "MALE");
     }
 
     #[test]
@@ -410,10 +391,9 @@ mod patcher_tests {
         };
 
         let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
-        let result_json: Value = serde_json::from_str(&result).unwrap();
 
-        assert!(result_json["subject"]["sex"].is_null());
-        assert_eq!(result_json["subject"]["gender"], "MALE");
+        assert!(result["subject"]["sex"].is_null());
+        assert_eq!(result["subject"]["gender"], "MALE");
     }
 
     #[test]
@@ -436,10 +416,9 @@ mod patcher_tests {
         };
 
         let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
-        let result_json: Value = serde_json::from_str(&result).unwrap();
 
-        assert_eq!(result_json["primaryDiagnosis"]["term"]["id"], "OMIM:123456");
-        assert_eq!(result_json["primaryDiagnosis"]["confirmed"], json!(true));
+        assert_eq!(result["primaryDiagnosis"]["term"]["id"], "OMIM:123456");
+        assert_eq!(result["primaryDiagnosis"]["confirmed"], json!(true));
     }
 
     #[test]
@@ -450,7 +429,7 @@ mod patcher_tests {
         let patches: Vec<&Patch> = vec![];
         let result = patcher.patch(&mut phenostr, patches).unwrap();
 
-        assert_json_eq(&result, &phenostr.to_string());
+        assert_eq!(&result, &phenostr);
     }
 
     #[test]
@@ -467,9 +446,8 @@ mod patcher_tests {
         };
 
         let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
-        let result_json: Value = serde_json::from_str(&result).unwrap();
 
-        assert_eq!(result_json["schemaVersion"], json!(2.0));
+        assert_eq!(result["schemaVersion"], json!(2.0));
     }
 
     #[test]
@@ -491,12 +469,11 @@ mod patcher_tests {
         };
 
         let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
-        let result_json: Value = serde_json::from_str(&result).unwrap();
 
         // Backup should have original data
-        assert_eq!(result_json["backup"]["dateOfBirth"], "1990-01-01");
+        assert_eq!(result["backup"]["dateOfBirth"], "1990-01-01");
         // Original should be modified
-        assert!(result_json["subject"]["dateOfBirth"].is_null());
+        assert!(result["subject"]["dateOfBirth"].is_null());
     }
 
     #[test]
@@ -513,10 +490,9 @@ mod patcher_tests {
         };
 
         let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
-        let result_json: Value = serde_json::from_str(&result).unwrap();
 
         assert_eq!(
-            result_json["phenotypicFeatures"][0]["severity"]["label"],
+            result["phenotypicFeatures"][0]["severity"]["label"],
             "severe"
         );
     }
@@ -528,17 +504,16 @@ mod patcher_tests {
 
         let patch = Patch {
             instructions: [PatchInstruction::Add {
-                at: Pointer::new("/diseases/0/onset/iso8601/iso8601duration"),
-                value: Value::String("P10Y".to_string()),
+                at: Pointer::new("/diseases/0/onset/iso8601"),
+                value: json!({"iso8601duration": "P10Y"}),
             }]
             .to_vec(),
         };
 
         let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
-        let result_json: Value = serde_json::from_str(&result).unwrap();
 
         assert_eq!(
-            result_json["diseases"][0]["onset"]["iso8601"]["iso8601duration"],
+            result["diseases"][0]["onset"]["iso8601"]["iso8601duration"],
             "P10Y"
         );
     }
@@ -559,9 +534,8 @@ mod patcher_tests {
         };
 
         let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
-        let result_json: Value = serde_json::from_str(&result).unwrap();
 
-        assert!(result_json["notes"].as_str().unwrap().contains("complex"));
+        assert!(result["notes"].as_str().unwrap().contains("complex"));
     }
 
     #[test]
@@ -584,12 +558,11 @@ mod patcher_tests {
         };
 
         let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
-        let result_json: Value = serde_json::from_str(&result).unwrap();
 
-        assert!(result_json["subject"]["sex"].is_null());
-        assert!(result_json["subject"]["id"].is_null());
-        assert_eq!(result_json["subject"]["biologicalSex"], "MALE");
-        assert_eq!(result_json["patientIdentifier"], "patient.1");
+        assert!(result["subject"]["sex"].is_null());
+        assert!(result["subject"]["id"].is_null());
+        assert_eq!(result["subject"]["biologicalSex"], "MALE");
+        assert_eq!(result["patientIdentifier"], "patient.1");
     }
 
     #[test]
@@ -611,11 +584,8 @@ mod patcher_tests {
         };
 
         let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
-        let result_json: Value = serde_json::from_str(&result).unwrap();
 
-        // Add should happen first due to sorting, then remove
-        // This tests the sorting behavior
-        assert!(result_json["subject"]["sex"].is_null());
+        assert!(result["subject"]["sex"].is_null());
     }
 
     #[test]
@@ -632,9 +602,8 @@ mod patcher_tests {
         };
 
         let result = patcher.patch(&mut minimal, vec![&patch]).unwrap();
-        let result_json: Value = serde_json::from_str(&result).unwrap();
 
-        assert_eq!(result_json["id"], "test");
-        assert_eq!(result_json["subject"]["id"], "patient.1");
+        assert_eq!(result["id"], "test");
+        assert_eq!(result["subject"]["id"], "patient.1");
     }
 }
