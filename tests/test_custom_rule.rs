@@ -4,7 +4,6 @@ use phenolint::LinterContext;
 use phenolint::diagnostics::LintViolation;
 use phenolint::diagnostics::enums::PhenopacketData;
 use phenolint::error::FromContextError;
-use phenolint::phenolint::Phenolint;
 use phenolint::rules::rule_registry::LintingPolicy;
 use phenolint::rules::traits::{BoxedRuleCheck, LintRule};
 use phenolint::rules::traits::{RuleCheck, RuleFromContext};

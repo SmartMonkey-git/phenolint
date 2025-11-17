@@ -4,7 +4,7 @@ use gag::BufferRedirect;
 use phenolint::traits::Lint;
 use phenopackets::schema::v2::Phenopacket;
 use std::io::Read;
-
+#[allow(dead_code)]
 pub fn run_rule_test(
     rule_id: &str,
     input: &Phenopacket,
