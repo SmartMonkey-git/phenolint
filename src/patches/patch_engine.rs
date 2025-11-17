@@ -129,14 +129,7 @@ mod patcher_tests {
     use crate::patches::patch_engine::PatchEngine;
     use crate::tree::pointer::Pointer;
     use rstest::rstest;
-    use serde_json::{Number, Value, json, to_vec};
-
-    // Helper function to parse and compare JSON strings
-    fn assert_json_eq(actual: &str, expected: &str) {
-        let actual_json: Value = serde_json::from_str(actual).expect("Invalid actual JSON");
-        let expected_json: Value = serde_json::from_str(expected).expect("Invalid expected JSON");
-        assert_eq!(actual_json, expected_json);
-    }
+    use serde_json::{Number, Value, json};
 
     // Helper to create a sample phenopacket-like structure
     fn sample_phenopacket() -> Value {
@@ -171,7 +164,7 @@ mod patcher_tests {
     #[rstest]
     fn test_add_single_field() {
         let patcher = PatchEngine;
-        let mut phenostr = sample_phenopacket();
+        let phenostr = sample_phenopacket();
         let patch = Patch {
             instructions: [PatchInstruction::Add {
                 at: Pointer::new("/metaData"),
@@ -180,7 +173,7 @@ mod patcher_tests {
             .to_vec(),
         };
 
-        let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
+        let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
         assert!(result.get("metaData").is_some());
         assert_eq!(result["metaData"]["created"], "2024-01-01");
@@ -189,7 +182,7 @@ mod patcher_tests {
     #[test]
     fn test_add_nested_field() {
         let patcher = PatchEngine;
-        let mut phenostr = sample_phenopacket();
+        let phenostr = sample_phenopacket();
 
         let patch = Patch {
             instructions: [PatchInstruction::Add {
@@ -199,7 +192,7 @@ mod patcher_tests {
             .to_vec(),
         };
 
-        let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
+        let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
         assert!(result["subject"]["timeAtLastEncounter"].is_object());
         assert_eq!(result["subject"]["timeAtLastEncounter"]["age"], "P30Y");
@@ -208,7 +201,7 @@ mod patcher_tests {
     #[test]
     fn test_remove_field() {
         let patcher = PatchEngine;
-        let mut phenostr = sample_phenopacket();
+        let phenostr = sample_phenopacket();
 
         let patch = Patch {
             instructions: [PatchInstruction::Remove {
@@ -217,7 +210,7 @@ mod patcher_tests {
             .to_vec(),
         };
 
-        let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
+        let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
         assert!(result["subject"]["dateOfBirth"].is_null());
     }
@@ -225,7 +218,7 @@ mod patcher_tests {
     #[test]
     fn test_remove_nested_object() {
         let patcher = PatchEngine;
-        let mut phenostr = sample_phenopacket();
+        let phenostr = sample_phenopacket();
 
         let patch = Patch {
             instructions: [PatchInstruction::Remove {
@@ -234,7 +227,7 @@ mod patcher_tests {
             .to_vec(),
         };
 
-        let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
+        let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
         assert!(result["diseases"][0]["onset"].is_null());
         assert!(result["diseases"][0]["term"].is_object());
@@ -243,7 +236,7 @@ mod patcher_tests {
     #[test]
     fn test_move_field() {
         let patcher = PatchEngine;
-        let mut phenostr = sample_phenopacket();
+        let phenostr = sample_phenopacket();
 
         let patch = Patch {
             instructions: [PatchInstruction::Move {
@@ -253,7 +246,7 @@ mod patcher_tests {
             .to_vec(),
         };
 
-        let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
+        let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
         assert!(result["subject"]["dateOfBirth"].is_null());
         assert_eq!(result["subject"]["birthDate"], "1990-01-01");
@@ -262,7 +255,7 @@ mod patcher_tests {
     #[test]
     fn test_move_nested_object() {
         let patcher = PatchEngine;
-        let mut phenostr = sample_phenopacket();
+        let phenostr = sample_phenopacket();
 
         let patch = Patch {
             instructions: [PatchInstruction::Move {
@@ -272,7 +265,7 @@ mod patcher_tests {
             .to_vec(),
         };
 
-        let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
+        let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
         assert!(result["diseases"][0]["onset"].is_null());
         assert_eq!(result["ageOfOnset"]["age"], "P10Y");
@@ -281,7 +274,7 @@ mod patcher_tests {
     #[test]
     fn test_duplicate_field() {
         let patcher = PatchEngine;
-        let mut phenostr = sample_phenopacket();
+        let phenostr = sample_phenopacket();
 
         let patch = Patch {
             instructions: [PatchInstruction::Duplicate {
@@ -291,7 +284,7 @@ mod patcher_tests {
             .to_vec(),
         };
 
-        let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
+        let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
         assert_eq!(result["subject"]["id"], "patient.1");
         assert_eq!(result["subject"]["patientId"], "patient.1");
@@ -300,7 +293,7 @@ mod patcher_tests {
     #[test]
     fn test_duplicate_complex_object() {
         let patcher = PatchEngine;
-        let mut phenostr = sample_phenopacket();
+        let phenostr = sample_phenopacket();
 
         let patch = Patch {
             instructions: [PatchInstruction::Duplicate {
@@ -310,7 +303,7 @@ mod patcher_tests {
             .to_vec(),
         };
 
-        let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
+        let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
         assert_eq!(result["diseases"][0]["term"]["id"], "OMIM:123456");
         assert_eq!(result["diagnosisTerm"]["id"], "OMIM:123456");
@@ -320,7 +313,7 @@ mod patcher_tests {
     #[test]
     fn test_multiple_patches_same_type() {
         let patcher = PatchEngine;
-        let mut phenostr = sample_phenopacket();
+        let phenostr = sample_phenopacket();
 
         let patch = Patch {
             instructions: [
@@ -336,7 +329,7 @@ mod patcher_tests {
             .to_vec(),
         };
 
-        let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
+        let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
         assert_eq!(result["subject"]["karyotypicSex"], "XY");
         assert_eq!(result["subject"]["taxonomy"]["id"], "NCBITaxon:9606");
@@ -345,7 +338,7 @@ mod patcher_tests {
     #[test]
     fn test_multiple_patches_mixed_types() {
         let patcher = PatchEngine;
-        let mut phenostr = sample_phenopacket();
+        let phenostr = sample_phenopacket();
 
         let patch = Patch {
             instructions: [
@@ -364,7 +357,7 @@ mod patcher_tests {
             .to_vec(),
         };
 
-        let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
+        let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
         assert!(result["metaData"].is_object());
         assert!(result["subject"]["dateOfBirth"].is_null());
@@ -375,7 +368,7 @@ mod patcher_tests {
     #[test]
     fn test_patch_ordering_add_before_remove() {
         let patcher = PatchEngine;
-        let mut phenostr = sample_phenopacket();
+        let phenostr = sample_phenopacket();
 
         let patch = Patch {
             instructions: [
@@ -390,7 +383,7 @@ mod patcher_tests {
             .to_vec(),
         };
 
-        let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
+        let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
         assert!(result["subject"]["sex"].is_null());
         assert_eq!(result["subject"]["gender"], "MALE");
@@ -399,7 +392,7 @@ mod patcher_tests {
     #[test]
     fn test_complex_move_and_add_scenario() {
         let patcher = PatchEngine;
-        let mut phenostr = sample_phenopacket();
+        let phenostr = sample_phenopacket();
 
         let patch = Patch {
             instructions: [
@@ -415,7 +408,7 @@ mod patcher_tests {
             .to_vec(),
         };
 
-        let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
+        let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
         assert_eq!(result["primaryDiagnosis"]["term"]["id"], "OMIM:123456");
         assert_eq!(result["primaryDiagnosis"]["confirmed"], json!(true));
@@ -424,10 +417,10 @@ mod patcher_tests {
     #[test]
     fn test_empty_patches() {
         let patcher = PatchEngine;
-        let mut phenostr = sample_phenopacket();
+        let phenostr = sample_phenopacket();
 
         let patches: Vec<&Patch> = vec![];
-        let result = patcher.patch(&mut phenostr, patches).unwrap();
+        let result = patcher.patch(&phenostr, patches).unwrap();
 
         assert_eq!(&result, &phenostr);
     }
@@ -435,7 +428,7 @@ mod patcher_tests {
     #[test]
     fn test_add_to_root_level() {
         let patcher = PatchEngine;
-        let mut phenostr = sample_phenopacket();
+        let phenostr = sample_phenopacket();
 
         let patch = Patch {
             instructions: [PatchInstruction::Add {
@@ -445,7 +438,7 @@ mod patcher_tests {
             .to_vec(),
         };
 
-        let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
+        let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
         assert_eq!(result["schemaVersion"], json!(2.0));
     }
@@ -453,7 +446,7 @@ mod patcher_tests {
     #[test]
     fn test_duplicate_and_modify_pattern() {
         let patcher = PatchEngine;
-        let mut phenostr = sample_phenopacket();
+        let phenostr = sample_phenopacket();
 
         let patch = Patch {
             instructions: [
@@ -468,7 +461,7 @@ mod patcher_tests {
             .to_vec(),
         };
 
-        let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
+        let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
         // Backup should have original data
         assert_eq!(result["backup"]["dateOfBirth"], "1990-01-01");
@@ -479,7 +472,7 @@ mod patcher_tests {
     #[test]
     fn test_array_element_operations() {
         let patcher = PatchEngine;
-        let mut phenostr = sample_phenopacket();
+        let phenostr = sample_phenopacket();
 
         let patch = Patch {
             instructions: [PatchInstruction::Add {
@@ -489,7 +482,7 @@ mod patcher_tests {
             .to_vec(),
         };
 
-        let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
+        let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
         assert_eq!(
             result["phenotypicFeatures"][0]["severity"]["label"],
@@ -500,7 +493,7 @@ mod patcher_tests {
     #[test]
     fn test_deeply_nested_add() {
         let patcher = PatchEngine;
-        let mut phenostr = sample_phenopacket();
+        let phenostr = sample_phenopacket();
 
         let patch = Patch {
             instructions: [PatchInstruction::Add {
@@ -510,7 +503,7 @@ mod patcher_tests {
             .to_vec(),
         };
 
-        let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
+        let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
         assert_eq!(
             result["diseases"][0]["onset"]["iso8601"]["iso8601duration"],
@@ -521,7 +514,7 @@ mod patcher_tests {
     #[test]
     fn test_patch_with_special_characters_in_value() {
         let patcher = PatchEngine;
-        let mut phenostr = sample_phenopacket();
+        let phenostr = sample_phenopacket();
 
         let patch = Patch {
             instructions: [PatchInstruction::Add {
@@ -533,7 +526,7 @@ mod patcher_tests {
             .to_vec(),
         };
 
-        let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
+        let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
         assert!(result["notes"].as_str().unwrap().contains("complex"));
     }
@@ -541,7 +534,7 @@ mod patcher_tests {
     #[test]
     fn test_multiple_moves_chained() {
         let patcher = PatchEngine;
-        let mut phenostr = sample_phenopacket();
+        let phenostr = sample_phenopacket();
 
         let patch = Patch {
             instructions: [
@@ -557,7 +550,7 @@ mod patcher_tests {
             .to_vec(),
         };
 
-        let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
+        let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
         assert!(result["subject"]["sex"].is_null());
         assert!(result["subject"]["id"].is_null());
@@ -568,7 +561,7 @@ mod patcher_tests {
     #[test]
     fn test_remove_then_add_same_path() {
         let patcher = PatchEngine;
-        let mut phenostr = sample_phenopacket();
+        let phenostr = sample_phenopacket();
 
         let patch = Patch {
             instructions: [
@@ -583,7 +576,7 @@ mod patcher_tests {
             .to_vec(),
         };
 
-        let result = patcher.patch(&mut phenostr, vec![&patch]).unwrap();
+        let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
         assert!(result["subject"]["sex"].is_null());
     }
@@ -591,7 +584,7 @@ mod patcher_tests {
     #[test]
     fn test_minimal_phenopacket() {
         let patcher = PatchEngine;
-        let mut minimal = json!({"id": "test"});
+        let minimal = json!({"id": "test"});
 
         let patch = Patch {
             instructions: [PatchInstruction::Add {
@@ -601,7 +594,7 @@ mod patcher_tests {
             .to_vec(),
         };
 
-        let result = patcher.patch(&mut minimal, vec![&patch]).unwrap();
+        let result = patcher.patch(&minimal, vec![&patch]).unwrap();
 
         assert_eq!(result["id"], "test");
         assert_eq!(result["subject"]["id"], "patient.1");

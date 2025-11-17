@@ -67,7 +67,7 @@ impl Phenolint {
         patches: Vec<&Patch>,
         input_types: &InputTypes,
     ) -> Result<Value, PatchingError> {
-        let patched_pp = PatchEngine.patch(&values, patches)?;
+        let patched_pp = PatchEngine.patch(values, patches)?;
 
         Ok(patched_pp)
     }
