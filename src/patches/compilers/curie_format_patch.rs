@@ -6,6 +6,7 @@ use crate::error::FromContextError;
 use crate::patches::enums::PatchInstruction;
 use crate::patches::patch::Patch;
 use crate::patches::patch_registration;
+use crate::patches::patch_registration::PatchRegistration;
 use crate::patches::traits::RulePatch;
 use crate::patches::traits::{CompilePatches, PatchFromContext, RegisterablePatch};
 use crate::tree::node::Node;

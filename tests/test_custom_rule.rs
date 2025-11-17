@@ -1,67 +1,105 @@
-use crate::common::construction::linter;
-use crate::common::paths::assets_dir;
+use crate::common::asserts::LintResultAssertSettings;
+use crate::common::assets::json_phenopacket;
+use phenolint::patches::patch_registration::PatchRegistration;
+use phenolint::report::report_registration::ReportRegistration;
+
+use crate::common::test_functions::run_rule_test;
+use codespan_reporting::diagnostic::{LabelStyle, Severity};
 use phenolint::LinterContext;
 use phenolint::diagnostics::LintViolation;
-use phenolint::diagnostics::enums::PhenopacketData;
 use phenolint::error::FromContextError;
+use phenolint::patches::enums::PatchInstruction;
+use phenolint::patches::patch::Patch;
+use phenolint::patches::traits::{CompilePatches, PatchFromContext, RegisterablePatch, RulePatch};
+use phenolint::report::specs::{DiagnosticSpec, LabelSpecs, ReportSpecs};
+use phenolint::report::traits::{CompileReport, RegisterableReport, ReportFromContext, RuleReport};
 use phenolint::rules::rule_registry::LintingPolicy;
 use phenolint::rules::traits::{BoxedRuleCheck, LintRule};
 use phenolint::rules::traits::{RuleCheck, RuleFromContext};
-use phenolint::traits::Lint;
 use phenolint::tree::node::Node;
-use phenolint_macros::register_rule;
-use phenopackets::schema::v2::core::OntologyClass;
+use phenolint::tree::pointer::Pointer;
+use phenolint_macros::{register_patch, register_report, register_rule};
+use phenopackets::schema::v2::Phenopacket;
 use rstest::rstest;
-use std::fs;
-use std::path::PathBuf;
-use std::process::exit;
 use std::sync::Arc;
 use std::sync::OnceLock;
 
 mod common;
 
 #[register_rule(id = "CUST001")]
-struct SomeRule;
+struct CustomRule;
 
-impl RuleFromContext for SomeRule {
-    type CheckType = OntologyClass;
+impl RuleFromContext for CustomRule {
+    type CheckType = Phenopacket;
 
     fn from_context(
         _: &LinterContext,
     ) -> Result<BoxedRuleCheck<Self::CheckType>, FromContextError> {
-        Ok(Box::new(SomeRule))
+        Ok(Box::new(CustomRule))
     }
 }
 
-impl RuleCheck for SomeRule {
-    type CheckType = OntologyClass;
+impl RuleCheck for CustomRule {
+    type CheckType = Phenopacket;
 
-    fn check(&self, _: &Self::CheckType, _: &Node) -> Vec<LintViolation> {
-        //println!("Checking node: {:?}", parsed_node);
-        //println!("Reached: {}", Self::RULE_ID);
+    fn check(&self, _: &Self::CheckType, node: &Node) -> Vec<LintViolation> {
+        vec![LintViolation::new(
+            Self::RULE_ID,
+            Pointer::new(node.pointer.clone().down("id").position()),
+        )]
+    }
+}
 
-        vec![]
+#[register_patch(id = "CUST001")]
+struct CustomRulePatchCompiler;
+
+impl PatchFromContext for CustomRulePatchCompiler {
+    fn from_context(_: &LinterContext) -> Result<Box<dyn RegisterablePatch>, FromContextError> {
+        Ok(Box::new(CustomRulePatchCompiler))
+    }
+}
+
+impl CompilePatches for CustomRulePatchCompiler {
+    fn compile_patches(&self, node: &Node, _: &LintViolation) -> Vec<Patch> {
+        vec![Patch::new(vec![PatchInstruction::Remove {
+            at: node.pointer.clone().down("id").clone(),
+        }])]
+    }
+}
+
+#[register_report(id = "CUST001")]
+struct CustomRuleReportCompiler;
+
+impl ReportFromContext for CustomRuleReportCompiler {
+    fn from_context(_: &LinterContext) -> Result<Box<dyn RegisterableReport>, FromContextError> {
+        Ok(Box::new(CustomRuleReportCompiler))
+    }
+}
+
+impl CompileReport for CustomRuleReportCompiler {
+    fn compile_report(&self, node: &Node, _: &LintViolation) -> ReportSpecs {
+        ReportSpecs::new(DiagnosticSpec {
+            severity: Severity::Help,
+            code: Self::RULE_ID.to_string(),
+            message: "This is a custom violation".to_string(),
+            labels: vec![LabelSpecs {
+                style: LabelStyle::Primary,
+                range: node.span(&node.pointer).unwrap().clone(),
+                message: "Error was here".to_string(),
+            }],
+            notes: vec![],
+        })
     }
 }
 
 #[rstest]
-fn test_custom_rule(assets_dir: PathBuf) {
-    let mut linter = linter(vec!["CUST001"]);
+fn test_custom_rule(json_phenopacket: Phenopacket) {
+    let settings = LintResultAssertSettings::builder("CUST001")
+        .one_violation()
+        .patch(Patch::new(vec![PatchInstruction::Remove {
+            at: Pointer::new("/id"),
+        }]))
+        .build();
 
-    let test_pp = assets_dir.join("phenopacket.json");
-
-    let pp = fs::read_to_string(test_pp).unwrap();
-    let res = linter.lint(pp.as_str(), true, false);
-
-    if let Some(pp) = res.report.patched_phenopacket {
-        match pp {
-            PhenopacketData::Text(pp_t) => {
-                eprintln!("{}", pp_t);
-            }
-            PhenopacketData::Binary(_) => {}
-        }
-    } else if let Err(ref e) = res.into_result() {
-        eprintln!("{}", e);
-        exit(1);
-    }
+    run_rule_test("CUST001", &json_phenopacket, settings);
 }

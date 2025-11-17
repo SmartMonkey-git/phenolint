@@ -5,4 +5,4 @@ pub mod patch;
 pub mod patch_engine;
 pub mod patch_registration;
 pub mod patch_registry;
-mod traits;
+pub mod traits;

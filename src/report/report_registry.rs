@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use crate::report::report_registration::ReportRegistration;

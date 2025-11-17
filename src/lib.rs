@@ -9,7 +9,7 @@ pub use linter_context::LinterContext;
 pub(crate) mod parsing;
 pub mod patches;
 pub mod phenolint;
-mod report;
+pub mod report;
 mod router;
 #[cfg(test)]
 pub(crate) mod test_utils;

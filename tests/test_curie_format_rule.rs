@@ -9,11 +9,12 @@ use rstest::rstest;
 #[rstest]
 fn test_curie_format_rule() {
     let pp = Phenopacket {
+        id: "24".to_string(),
         phenotypic_features: vec![
             PhenotypicFeature {
                 r#type: Some(OntologyClass {
                     id: "invalid_id:31nm".to_string(),
-                    label: "some label".to_string(),
+                    label: "some pf".to_string(),
                 }),
                 ..Default::default()
             },
