@@ -5,7 +5,7 @@ use crate::patches::patch_registry::PatchRegistry;
 use crate::report::report_registry::ReportRegistry;
 use crate::rules::rule_registry::LintingPolicy;
 use crate::tree::node::Node;
-use log::warn;
+use log::{error, warn};
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
 
@@ -35,6 +35,10 @@ impl NodeRouter {
         } else if let Some(pf) = Phenopacket::parse(node) {
             self.route_to_rules(node, &pf, context)
         } else {
+            error!(
+                "Unable to parse node at '{}'. Phenopacket schema might be invalid.",
+                node.pointer
+            );
             vec![]
         }
     }
