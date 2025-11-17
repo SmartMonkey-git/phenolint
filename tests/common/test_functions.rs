@@ -24,7 +24,6 @@ pub fn run_rule_test(
     drop(stdout_buf);
     drop(stderr_buf);
 
-    // Use whichever output stream contains your data
     let output = if !stderr_output.is_empty() {
         stderr_output
     } else {
