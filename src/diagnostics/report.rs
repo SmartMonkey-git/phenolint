@@ -1,12 +1,7 @@
 use crate::diagnostics::LintViolation;
+use crate::diagnostics::enums::PhenopacketData;
 use crate::diagnostics::finding::LintFinding;
 use crate::patches::patch::Patch;
-
-#[derive(Debug)]
-pub enum PhenopacketData {
-    Text(String),
-    Binary(Vec<u8>),
-}
 
 #[derive(Debug, Default)]
 pub struct LintReport {

@@ -1,4 +1,5 @@
 use crate::diagnostics::LintReport;
+use crate::patches::error::PatchingError;
 use config::ConfigError;
 use prost::{DecodeError, EncodeError};
 use saphyr::ScanError;
@@ -44,7 +45,7 @@ impl LintResult {
 #[derive(Error, Debug)]
 pub enum LinterError {
     #[error("Can't patch Phenopacket {0}")]
-    PatchingError(ParsingError),
+    PatchingError(#[from] PatchingError),
     #[error(transparent)]
     InitError(#[from] InitError),
     #[error(transparent)]

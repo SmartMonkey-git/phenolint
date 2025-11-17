@@ -4,14 +4,17 @@ use serde_json::Value;
 use std::collections::{HashMap, VecDeque};
 use std::ops::Range;
 
-pub struct AbstractPhenoTree {
+pub struct AbstractTreeTraversal {
     tree: Value,
     spans: HashMap<Pointer, Range<usize>>,
 }
 
-impl AbstractPhenoTree {
-    pub fn new(tree: Value, spans: HashMap<Pointer, Range<usize>>) -> AbstractPhenoTree {
-        AbstractPhenoTree { tree, spans }
+impl AbstractTreeTraversal {
+    pub fn new(tree: &Value, spans: &HashMap<Pointer, Range<usize>>) -> AbstractTreeTraversal {
+        AbstractTreeTraversal {
+            tree: tree.clone(),
+            spans: spans.clone(),
+        }
     }
 
     pub fn traverse<'s>(&'s self) -> Box<dyn Iterator<Item = Node> + 's> {
