@@ -1,4 +1,4 @@
-pub enum InputTypes {
+pub(crate) enum InputTypes {
     Json,
     Yaml,
     Protobuf,

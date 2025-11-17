@@ -32,7 +32,7 @@ impl CompileReport for CurieFormatReport {
             labels: vec![LabelSpecs {
                 style: LabelStyle::Primary,
                 range: node.span(&node.pointer).unwrap().clone(),
-                message: "".to_string(),
+                message: String::default(),
             }],
             notes: vec![],
         })
