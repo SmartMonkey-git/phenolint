@@ -6,6 +6,7 @@ use crate::report::report_registry::ReportRegistry;
 use crate::rules::rule_registry::LintingPolicy;
 use crate::tree::node::Node;
 use log::warn;
+use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
 
 pub(crate) struct NodeRouter {
@@ -30,6 +31,8 @@ impl NodeRouter {
         if let Some(oc) = OntologyClass::parse(node) {
             self.route_to_rules(node, &oc, context)
         } else if let Some(pf) = PhenotypicFeature::parse(node) {
+            self.route_to_rules(node, &pf, context)
+        } else if let Some(pf) = Phenopacket::parse(node) {
             self.route_to_rules(node, &pf, context)
         } else {
             vec![]

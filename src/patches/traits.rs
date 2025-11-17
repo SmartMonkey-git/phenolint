@@ -31,5 +31,5 @@ pub trait RulePatch: PatchFromContext + RegisterablePatch + CompilePatches {
 
 /// Tries to compile patches for a given rule.
 pub trait CompilePatches: Send + Sync {
-    fn compile_patches(&self, value: &Node, lint_violation: &LintViolation) -> Vec<Patch>;
+    fn compile_patches(&self, node: &Node, lint_violation: &LintViolation) -> Vec<Patch>;
 }

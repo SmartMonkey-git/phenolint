@@ -2,6 +2,7 @@
 use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
+use crate::report::report_registration::ReportRegistration;
 use crate::report::specs::{DiagnosticSpec, LabelSpecs, ReportSpecs};
 use crate::report::traits::{CompileReport, RegisterableReport, ReportFromContext, RuleReport};
 use crate::tree::node::Node;

@@ -1,5 +1,6 @@
 use crate::parsing::traits::ParsableNode;
 use crate::tree::node::Node;
+use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
 use serde_json::Value;
 
@@ -26,6 +27,21 @@ impl ParsableNode<PhenotypicFeature> for PhenotypicFeature {
                 serde_json::from_value::<PhenotypicFeature>(node.value.clone())
         {
             Some(phenotypic_feature)
+        } else {
+            None
+        }
+    }
+}
+
+impl ParsableNode<Phenopacket> for Phenopacket {
+    fn parse(node: &Node) -> Option<Phenopacket> {
+        if let Value::Object(map) = &node.value
+            && map.contains_key("id")
+            && map.contains_key("metaData")
+            && node.pointer.is_root()
+            && let Ok(pp) = serde_json::from_value::<Phenopacket>(node.value.clone())
+        {
+            Some(pp)
         } else {
             None
         }

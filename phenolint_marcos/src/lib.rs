@@ -66,7 +66,7 @@ pub fn register_patch(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
 
         ::inventory::submit! {
-            crate::patches::patch_registration::PatchRegistration {
+            PatchRegistration {
                 rule_id: #rule_id,
                 factory: |context: &LinterContext| {
                     #name::from_context(context)
@@ -95,7 +95,7 @@ pub fn register_report(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
 
         ::inventory::submit! {
-            crate::report::report_registration::ReportRegistration {
+            ReportRegistration {
                 rule_id: #rule_id,
                 factory: |context: &LinterContext| {
                     #name::from_context(context)
