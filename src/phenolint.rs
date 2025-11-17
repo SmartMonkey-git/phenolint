@@ -1,42 +1,42 @@
-#![allow(unused)]
-
 use crate::LinterContext;
 use crate::diagnostics::LintReport;
-use crate::diagnostics::report::PhenopacketData;
+use crate::diagnostics::enums::PhenopacketData;
 use crate::enums::InputTypes;
 use crate::error::{InitError, LintResult, LinterError, ParsingError};
 use crate::parsing::phenopacket_parser::PhenopacketParser;
+use crate::patches::patch_engine::PatchEngine;
 use crate::patches::patch_registry::PatchRegistry;
 use crate::report::parser::ReportParser;
 use crate::report::report_registry::ReportRegistry;
 use crate::router::NodeRouter;
 use crate::traits::Lint;
-use crate::tree::abstract_pheno_tree::AbstractPhenoTree;
-use codespan_reporting::term::termcolor::Buffer;
+use crate::tree::abstract_pheno_tree::AbstractTreeTraversal;
 use log::{error, warn};
 use phenopackets::schema::v2::Phenopacket;
 use prost::Message;
-use prost::bytes::{Buf, BufMut};
 use serde_json::Value;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 pub struct Phenolint {
     context: LinterContext,
     router: NodeRouter,
+    patch_engine: PatchEngine,
 }
 
 impl Phenolint {
     pub fn new(context: LinterContext, rule_ids: Vec<String>) -> Self {
         let report_registry = ReportRegistry::with_enabled_reports(rule_ids.as_slice(), &context);
         let patch_registry = PatchRegistry::with_enabled_patches(rule_ids.as_slice(), &context);
+
         Phenolint {
             context,
             router: NodeRouter::new(rule_ids, report_registry, patch_registry),
+            patch_engine: PatchEngine,
         }
     }
 
-    fn emit(&mut self, phenostr: &str, report: &LintReport) {
+    fn emit(phenostr: &str, report: &LintReport) {
         for (info, report_specs) in report
             .findings()
             .iter()
@@ -56,24 +56,39 @@ impl Lint<str> for Phenolint {
     fn lint(&mut self, phenostr: &str, patch: bool, quit: bool) -> LintResult {
         let mut report = LintReport::default();
 
-        let apt: AbstractPhenoTree = match PhenopacketParser::to_tree(phenostr) {
-            Ok(t) => t,
+        let (values, spans, input_type) = match PhenopacketParser::to_abstract_tree(phenostr) {
+            Ok((values, spans, input_type)) => (values, spans, input_type),
             Err(err) => return LintResult::err(LinterError::ParsingError(err)),
         };
 
+        let apt = AbstractTreeTraversal::new(&values, &spans);
         for node in apt.traverse() {
             let findings = self.router.lint_node(&node, &mut self.context);
             report.extend_finding(findings);
         }
 
         if !quit {
-            self.emit(phenostr, &report);
+            Self::emit(phenostr, &report);
         }
 
-        // TODO: Apply patches here if patch=True
-        let a: Value = serde_json::from_str(phenostr).unwrap();
+        if patch && report.has_patches() {
+            match self.patch_engine.patch(&values, report.patches()) {
+                Ok(patched_phenopacket) => {
+                    match convert_phenopacket_to_input_type_str(&patched_phenopacket, input_type) {
+                        Ok(phenostr) => {
+                            report.patched_phenopacket = Some(phenostr);
+                        }
+                        Err(err) => {
+                            return LintResult::partial(report, LinterError::ParsingError(err));
+                        }
+                    }
+                }
+                Err(err) => {
+                    return LintResult::partial(report, LinterError::PatchingError(err));
+                }
+            };
+        }
 
-        report.patched_phenopacket = Some(PhenopacketData::Text(a.to_string()));
         LintResult::ok(report)
     }
 }
@@ -101,17 +116,31 @@ impl Lint<[u8]> for Phenolint {
         };
         let mut lint_result = self.lint(phenostr.as_str(), patch, quit);
 
-        convert_phenopacket_to_input_type(&mut lint_result, phenostr.as_str(), input_type);
+        convert_phenopacket_to_input_type_u8(&mut lint_result, input_type);
 
         lint_result
     }
 }
 
-fn convert_phenopacket_to_input_type(
-    lint_result: &mut LintResult,
-    phenostr: &str,
+fn convert_phenopacket_to_input_type_str(
+    patched_phenopacket: &Value,
     input_type: InputTypes,
-) {
+) -> Result<PhenopacketData, ParsingError> {
+    match input_type {
+        InputTypes::Json | InputTypes::Protobuf => {
+            match serde_json::to_string_pretty(&patched_phenopacket) {
+                Ok(patched_phenostr) => Ok(PhenopacketData::Text(patched_phenostr)),
+                Err(err) => Err(ParsingError::JsonError(err)),
+            }
+        }
+        InputTypes::Yaml => match serde_yaml::to_string(&patched_phenopacket) {
+            Ok(patched_phenostr) => Ok(PhenopacketData::Text(patched_phenostr)),
+            Err(err) => Err(ParsingError::YamlError(err)),
+        },
+    }
+}
+
+fn convert_phenopacket_to_input_type_u8(lint_result: &mut LintResult, input_type: InputTypes) {
     if let Some(patched_phenopacket) = lint_result.report.patched_phenopacket.take() {
         let new_data = match patched_phenopacket {
             PhenopacketData::Text(phenotext) => match input_type {

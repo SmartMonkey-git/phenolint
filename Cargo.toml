@@ -12,6 +12,7 @@ phenopackets = { version = "0.2.2-post2", features = ["serde"] }
 serde = "1.0.228"
 serde_json = "1.0.145"
 serde_yaml = "0.9.34+deprecated"
+json-patch = "4.1.0"
 ontolius = "0.7.0"
 regex = "1.12.2"
 config = "0.15.18"

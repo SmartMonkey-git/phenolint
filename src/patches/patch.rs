@@ -1,7 +1,12 @@
 use crate::patches::enums::PatchInstruction;
 
 #[derive(Debug, Default)]
-#[allow(unused)]
 pub struct Patch {
-    actions: Vec<PatchInstruction>,
+    pub instructions: Vec<PatchInstruction>,
+}
+
+impl Patch {
+    pub fn new(instructions: Vec<PatchInstruction>) -> Self {
+        Self { instructions }
+    }
 }

@@ -1,4 +1,5 @@
 use crate::diagnostics::LintReport;
+use crate::patches::error::PatchingError;
 use config::ConfigError;
 use prost::{DecodeError, EncodeError};
 use saphyr::ScanError;
@@ -12,21 +13,28 @@ use thiserror::Error;
 /// Unlike the standard `Result` type, `LintResult` allows carrying both a
 /// report and an error simultaneously, which is useful when you want to
 /// return diagnostic information even in the presence of errors.
+#[derive(Debug)]
 pub struct LintResult {
     pub report: LintReport,
     pub error: Option<LinterError>,
 }
 
 impl LintResult {
-    pub fn partial(report: LintReport, error: Option<LinterError>) -> Self {
-        Self { report, error }
+    pub fn partial(report: LintReport, error: LinterError) -> Self {
+        Self {
+            report,
+            error: Some(error),
+        }
     }
 
     pub fn ok(report: LintReport) -> Self {
-        Self::partial(report, None)
+        Self {
+            report,
+            error: None,
+        }
     }
     pub fn err(error: LinterError) -> Self {
-        Self::partial(LintReport::default(), Some(error))
+        Self::partial(LintReport::default(), error)
     }
 
     pub fn report(&self) -> &LintReport {
@@ -44,7 +52,7 @@ impl LintResult {
 #[derive(Error, Debug)]
 pub enum LinterError {
     #[error("Can't patch Phenopacket {0}")]
-    PatchingError(ParsingError),
+    PatchingError(#[from] PatchingError),
     #[error(transparent)]
     InitError(#[from] InitError),
     #[error(transparent)]
