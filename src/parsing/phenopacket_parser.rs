@@ -15,7 +15,7 @@ pub struct PhenopacketParser;
 impl PhenopacketParser {
     pub fn to_abstract_tree(
         phenostr: &str,
-    ) -> Result<(Value, HashMap<Pointer, Range<usize>>), ParsingError> {
+    ) -> Result<(Value, HashMap<Pointer, Range<usize>>, InputTypes), ParsingError> {
         //TODO: Better error reporting
         if let Ok(json) = Self::try_to_json_tree(phenostr) {
             return Ok(json);
@@ -30,33 +30,33 @@ impl PhenopacketParser {
 
     fn try_to_json_tree(
         phenostr: &str,
-    ) -> Result<(Value, HashMap<Pointer, Range<usize>>), ParsingError> {
+    ) -> Result<(Value, HashMap<Pointer, Range<usize>>, InputTypes), ParsingError> {
         if let Ok(json) = serde_json::from_str(phenostr)
             && let Ok(spans) = collect_json_spans(phenostr)
         {
-            return Ok((json, spans));
+            return Ok((json, spans, InputTypes::Json));
         }
         Err(ParsingError::Unparseable)
     }
 
     fn try_to_yaml_tree(
         phenostr: &str,
-    ) -> Result<(Value, HashMap<Pointer, Range<usize>>), ParsingError> {
+    ) -> Result<(Value, HashMap<Pointer, Range<usize>>, InputTypes), ParsingError> {
         if let Ok(yaml) = serde_yaml::from_str(phenostr)
             && let Ok(spans) = collect_yaml_spans(phenostr)
         {
-            return Ok((yaml, spans));
+            return Ok((yaml, spans, InputTypes::Yaml));
         }
         Err(ParsingError::Unparseable)
     }
 
     fn try_to_protobuf_tree(
         phenostr: &str,
-    ) -> Result<(Value, HashMap<Pointer, Range<usize>>), ParsingError> {
+    ) -> Result<(Value, HashMap<Pointer, Range<usize>>, InputTypes), ParsingError> {
         if let Ok(json) = serde_json::from_str(phenostr)
             && let Ok(spans) = collect_json_spans(phenostr)
         {
-            return Ok((json, spans));
+            return Ok((json, spans, InputTypes::Protobuf));
         }
         Err(ParsingError::Unparseable)
     }

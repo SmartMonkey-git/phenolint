@@ -1,5 +1,6 @@
 use phenolint::LinterContext;
 use phenolint::diagnostics::LintViolation;
+use phenolint::diagnostics::enums::PhenopacketData;
 use phenolint::error::FromContextError;
 use phenolint::phenolint::Phenolint;
 use phenolint::rules::rule_registry::LintingPolicy;
@@ -58,12 +59,20 @@ fn test() {
         ],
     );
 
-    let test_pp = assets_dir().join("phenopacket.pb");
+    let test_pp = assets_dir().join("phenopacket.json");
 
-    let pp = fs::read(test_pp).unwrap();
-    let res = l.lint(pp.as_slice(), false, false);
+    let pp = fs::read_to_string(test_pp).unwrap();
+    let res = l.lint(pp.as_str(), true, false);
 
-    if let Err(ref e) = res.into_result() {
+    //eprintln!("res: {:?}", res);
+    if let Some(pp) = res.report.patched_phenopacket {
+        match pp {
+            PhenopacketData::Text(pp_t) => {
+                eprintln!("{}", pp_t);
+            }
+            PhenopacketData::Binary(_) => {}
+        }
+    } else if let Err(ref e) = res.into_result() {
         eprintln!("{}", e);
         exit(1);
     }

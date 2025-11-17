@@ -1,7 +1,9 @@
 #![allow(unused)]
+
 use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
+use crate::patches::enums::PatchInstruction;
 use crate::patches::patch::Patch;
 use crate::patches::patch_registration;
 use crate::patches::traits::RulePatch;
