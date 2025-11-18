@@ -32,10 +32,10 @@ impl RuleCheck for CurieFormatRule {
     fn check(&self, pared_node: &OntologyClass, node: &Node) -> Vec<LintViolation> {
         let mut violations = vec![];
 
-        let mut ptr = node.pointer.clone();
-        ptr.down("id");
-
         if !self.regex.is_match(&pared_node.id) {
+            let mut ptr = node.pointer.clone();
+            ptr.down("id");
+
             violations.push(LintViolation::new(Self::RULE_ID, ptr))
         }
         violations
