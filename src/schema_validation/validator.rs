@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 use jsonschema::{Registry, Resource, ValidationError, Validator};
 use serde_json::Value;
 use std::collections::HashMap;
