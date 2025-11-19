@@ -92,7 +92,7 @@ mod tests {
         type CheckType = OntologyClass;
 
         fn from_context(
-            context: &LinterContext,
+            _: &LinterContext,
         ) -> Result<Box<dyn RuleCheck<CheckType = Self::CheckType>>, FromContextError> {
             todo!()
         }
@@ -100,7 +100,7 @@ mod tests {
     impl RuleCheck for TestRule {
         type CheckType = OntologyClass;
 
-        fn check(&self, parsed_node: &Self::CheckType, node: &Node) -> Vec<LintViolation> {
+        fn check(&self, _: &Self::CheckType, _: &Node) -> Vec<LintViolation> {
             todo!()
         }
     }
