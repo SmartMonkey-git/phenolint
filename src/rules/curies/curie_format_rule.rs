@@ -9,7 +9,13 @@ use phenopackets::schema::v2::core::OntologyClass;
 use regex::Regex;
 use std::sync::Arc;
 use std::sync::OnceLock;
-
+/// # CURIE001
+/// ## What it does
+/// Identifies CURIE ID that are not formatted correctly.
+///
+/// ## Why is this bad?
+/// Matching incorrectly formatted ID's back to their original sources can cause problems, when
+/// computationally using the phenopacket.
 #[derive(Debug)]
 #[register_rule(id = "CURIE001")]
 pub struct CurieFormatRule {
