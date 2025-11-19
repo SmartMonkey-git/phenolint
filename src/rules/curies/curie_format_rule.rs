@@ -24,8 +24,6 @@ pub struct CurieFormatRule {
 }
 
 impl RuleFromContext for CurieFormatRule {
-    type CheckType = OntologyClass;
-
     fn from_context(_: &LinterContext) -> Result<BoxedRuleCheck<OntologyClass>, FromContextError> {
         Ok(Box::new(CurieFormatRule {
             regex: Regex::new("^[A-Z][A-Z0-9_]+:[A-Za-z0-9_]+$").expect("Invalid regex"),

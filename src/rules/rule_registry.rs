@@ -89,8 +89,6 @@ mod tests {
     struct TestRule;
 
     impl RuleFromContext for TestRule {
-        type CheckType = OntologyClass;
-
         fn from_context(
             _: &LinterContext,
         ) -> Result<Box<dyn RuleCheck<CheckType = Self::CheckType>>, FromContextError> {

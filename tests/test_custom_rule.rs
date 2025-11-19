@@ -35,8 +35,6 @@ mod common;
 struct CustomRule;
 
 impl RuleFromContext for CustomRule {
-    type CheckType = Phenopacket;
-
     fn from_context(
         _: &LinterContext,
     ) -> Result<BoxedRuleCheck<Self::CheckType>, FromContextError> {

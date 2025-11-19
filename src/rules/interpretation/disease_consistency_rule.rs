@@ -21,8 +21,6 @@ use phenopackets::schema::v2::Phenopacket;
 pub struct DiseaseConsistencyRule;
 
 impl RuleFromContext for DiseaseConsistencyRule {
-    type CheckType = Phenopacket;
-
     fn from_context(_: &LinterContext) -> Result<BoxedRuleCheck<Phenopacket>, FromContextError> {
         Ok(Box::new(Self))
     }
