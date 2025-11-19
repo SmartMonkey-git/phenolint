@@ -12,6 +12,10 @@ pub(crate) fn assets_dir() -> PathBuf {
         .join("assets")
 }
 
+pub(crate) fn json_phenopacket_dir() -> PathBuf {
+    assets_dir().join("phenopacket.json")
+}
+
 pub(crate) static HPO: Lazy<Arc<FullCsrOntology>> =
     Lazy::new(|| init_ontolius(assets_dir().join("hp.toy.json")));
 
