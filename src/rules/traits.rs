@@ -7,8 +7,7 @@ pub trait LintRule: RuleCheck + RuleFromContext {
     const RULE_ID: &'static str;
 }
 
-pub trait RuleFromContext {
-    type CheckType;
+pub trait RuleFromContext: RuleCheck {
     fn from_context(
         context: &LinterContext,
     ) -> Result<Box<dyn RuleCheck<CheckType = Self::CheckType>>, FromContextError>;
