@@ -9,6 +9,7 @@ use crate::patches::patch_registry::PatchRegistry;
 use crate::report::parser::ReportParser;
 use crate::report::report_registry::ReportRegistry;
 use crate::router::NodeRouter;
+use crate::rules::rule_registry::check_duplicate_rule_ids;
 use crate::schema_validation::validator::PhenopacketSchemaValidator;
 use crate::traits::Lint;
 use crate::tree::abstract_pheno_tree::AbstractTreeTraversal;
@@ -27,6 +28,8 @@ pub struct Phenolint {
 
 impl Phenolint {
     pub fn new(context: LinterContext, rule_ids: Vec<String>) -> Self {
+        check_duplicate_rule_ids();
+
         let report_registry = ReportRegistry::with_enabled_reports(rule_ids.as_slice(), &context);
         let patch_registry = PatchRegistry::with_enabled_patches(rule_ids.as_slice(), &context);
 

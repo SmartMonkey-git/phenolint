@@ -34,8 +34,6 @@ impl NodeRouter {
             self.route_to_rules(node, &pf, context)
         } else if let Some(pf) = Phenopacket::parse(node) {
             self.route_to_rules(node, &pf, context)
-        } else if let Some(pf) = Phenopacket::parse(node) {
-            self.route_to_rules(node, &pf, context)
         } else {
             error!(
                 "Unable to parse node at '{}'. Phenopacket schema might be invalid.",
