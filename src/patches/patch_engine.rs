@@ -123,7 +123,7 @@ impl PatchEngine {
 }
 
 #[cfg(test)]
-mod patcher_tests {
+mod tests {
     use crate::patches::enums::PatchInstruction;
     use crate::patches::patch::Patch;
     use crate::patches::patch_engine::PatchEngine;

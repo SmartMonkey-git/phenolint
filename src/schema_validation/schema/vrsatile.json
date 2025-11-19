@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://www.ga4gh.org/phenopackets/vrsatile",
+  "title": "VRS Added Tools for Interoperable Loquacious Exchange",
+  "description": "VRSATILE: A set of proposed extensions for GA4GH's Variation Representation Specification (VRS) to enable interoperable exchange of common descriptive data alongside variation concepts",
+  "type": "object",
+  "definitions": {
+    "extension": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "Name of an Extension attribute",
+          "type": "string"
+        },
+        "value": {
+          "description": "Value of the attribute",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "expression": {
+      "type": "object",
+      "properties": {
+        "syntax" : {
+          "description": "Name of an nomenclature/syntax (e.g., HGVS or ISCN)",
+          "type": "string"
+        },
+        "value": {
+          "description": "An expression in the indicated syntax, e.g., an HGVS string",
+          "type": "string"
+        },
+        "version": {
+          "description": "Version of the nomenclature/syntax ",
+          "type": "string"
+        }
+      },
+      "required": [
+        "syntax",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "vcfRecord": {
+      "type": "object",
+      "properties": {
+        "genomeAssembly": {
+          "description": "genome version, e.g. hg19, GRCh38",
+          "type": "string"
+        },
+        "chrom" : {
+          "description": "chromosome",
+          "type": "string"
+        },
+        "pos" : {
+          "description": "position on the chromosome (VCF convention)",
+          "type": "string",
+          "pattern": "^[1-9][0-9]*$"
+        },
+        "id" : {
+          "description": "identifier as used in VCF line",
+          "type": "string"
+        },
+        "ref" : {
+          "description": "reference sequence",
+          "type": "string"
+        },
+        "alt" : {
+          "description": "alternate sequence",
+          "type": "string"
+        },
+        "qual" : {
+          "description": "PHRED quality of the variant",
+          "type": "string"
+        },
+        "filter" : {
+          "description": "filter (as per VCF specification)",
+          "type": "string"
+        },
+        "info" : {
+          "description": "information field of VCF line",
+          "type": "string"
+        }
+      },
+      "required": [
+        "genomeAssembly", "chrom", "pos", "ref", "alt"
+      ],
+      "additionalProperties": false
+    },
+    "variationDescriptor": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "variation": {
+          "$ref": "classpath:/org/phenopackets/phenopackettools/validator/jsonschema/vrs-variation-adapter.json",
+          "description": "An adapter for the VRS Variation representation that is embedded into Phenopacket schema. Note that the adapter does not map 1:1 to VRS Variation."
+        },
+        "label": {
+          "type": "string",
+          "description": "A primary label for the variation"
+        },
+        "description": {
+          "type": "string",
+          "description": "A free-text description of the variation"
+        },
+        "geneContext": {
+          "$ref": "#/definitions/geneDescriptor",
+          "description": "A specific gene context that applies to this variant"
+        },
+        "expressions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/expression"
+          }
+        },
+        "vcfRecord": {
+          "$ref": "#/definitions/vcfRecord"
+        },
+        "xrefs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "alternateLabels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "extensions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/extension"
+          }
+        },
+        "moleculeContext": {
+          "enum": [
+            "unspecified_molecule_context",
+            "genomic",
+            "transcript",
+            "protein"
+          ]
+        },
+        "structuralType" : {
+          "$ref": "classpath:/org/phenopackets/phenopackettools/validator/jsonschema/v2/base.json#/definitions/ontologyClass",
+          "description": "The structural variant type associated with this variant, such as a substitution, deletion, or fusion. We RECOMMEND using a descendent term of SO:0001537."
+        },
+        "vrsRefAlleleSeq": {
+          "type": "string",
+          "description": "A Sequence corresponding to a \"ref allele\", describing the sequence expected at a SequenceLocation reference"
+        },
+        "allelicState" :  {
+          "$ref": "classpath:/org/phenopackets/phenopackettools/validator/jsonschema/v2/base.json#/definitions/ontologyClass"
+        }
+      },
+      "required": [
+        "id", "moleculeContext"
+      ],
+      "additionalProperties": false
+    },
+    "geneDescriptor" : {
+      "type": "object",
+      "properties": {
+        "valueId": {
+          "type": "string",
+          "description": "The official gene identifier as designated by the organism gene nomenclature committee e.g. HGNC:3477 or MGI:2385071"
+        },
+        "symbol": {
+          "type": "string",
+          "description": "The primary gene symbol"
+        },
+        "description": {
+          "type": "string",
+          "description": "Free-text description of the gene"
+        },
+        "alternateIds" : {
+          "type": "array",
+          "description": "Alternative identifier(s) of the gene",
+          "items": {
+            "type": "string"
+          }
+        },
+        "xrefs" : {
+          "type": "array",
+          "description": "Related concept IDs (e.g. gene ortholog IDs) may be placed in xrefs",
+          "items": {
+            "type": "string"
+          }
+        },
+        "alternateSymbols" : {
+          "type": "array",
+          "description": "Alternative symbol(s) of the gene",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "valueId", "symbol"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
