@@ -1,5 +1,7 @@
+mod doc_string;
 mod utils;
 
+use crate::doc_string::{check_rule_docs_format, extract_doc_string};
 use crate::utils::extract_rule_id;
 use convert_case::{Case, Casing};
 use proc_macro::TokenStream;
@@ -10,15 +12,16 @@ use syn::{Item, ItemStruct, parse_macro_input};
 #[proc_macro_attribute]
 pub fn register_rule(attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as Item);
-
-    let struct_name = match &input {
-        Item::Struct(item_struct) => &item_struct.ident,
-        _ => panic!("register_rule can only be applied to structs"),
-    };
-
+    let doc_string = extract_doc_string(&input);
     let rule_id = match extract_rule_id(&attr) {
         Ok(rule_id) => rule_id,
         Err(err) => panic!("{}", err),
+    };
+
+    check_rule_docs_format(&doc_string, &rule_id);
+    let struct_name = match &input {
+        Item::Struct(item_struct) => &item_struct.ident,
+        _ => panic!("register_rule can only be applied to structs"),
     };
 
     let upper_snake_case_struct_name = struct_name.to_string().to_case(Case::Snake).to_uppercase();

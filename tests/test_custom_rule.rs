@@ -25,7 +25,12 @@ use std::sync::Arc;
 use std::sync::OnceLock;
 
 mod common;
-
+/// # CUST001
+/// ## What it does
+/// Nothing really. It's here to check if custom implementations work.
+///
+/// ## Why is this bad?
+/// Don't know. Ask Deep Thought.
 #[register_rule(id = "CUST001")]
 struct CustomRule;
 

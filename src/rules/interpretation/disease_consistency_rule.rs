@@ -1,4 +1,3 @@
-#![allow(unused)]
 use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use std::sync::Arc;
@@ -12,28 +11,12 @@ use phenolint_macros::register_rule;
 use phenopackets::schema::v2::Phenopacket;
 
 #[derive(Debug, Default)]
-/// Validates that diseases in interpretations are also present in the diseases list.
+/// # INTER001
+/// ## What it does
+/// Checks if all diseases found in the interpretation section are also present in the diseases section.
 ///
-/// This rule implements the linting check `INTER001`, which ensures consistency between
-/// the diseases mentioned in interpretations and those listed in the top-level diseases
-/// field of a phenopacket. When a disease is diagnosed in an interpretation, it should
-/// also appear in the phenopacket's diseases list for proper data consistency and
-/// completeness.
-///
-/// # Rule Logic
-///
-/// 1. Extracts all disease terms from interpretation diagnoses
-/// 2. Extracts all disease terms from the top-level diseases field
-/// 3. Identifies diseases that appear in interpretations but not in the diseases list
-/// 4. Reports a `DiseaseConsistency` violation for each missing disease
-/// 5. Suggests a `Duplicate` fix action to copy the disease to the diseases list
-///
-/// # Example
-///
-/// If an interpretation contains a diagnosis of "Marfan syndrome" (OMIM:154700) but
-/// this disease does not appear in the phenopacket's diseases field, the rule will
-/// flag this inconsistency. The disease should be added to both locations to maintain
-/// data integrity across the phenopacket structure.
+/// ## Why is this bad?
+/// It is expected that the disease section contains all diseases associated with a patient.
 #[register_rule(id = "INTER001")]
 pub struct DiseaseConsistencyRule;
 
@@ -48,7 +31,7 @@ impl RuleFromContext for DiseaseConsistencyRule {
 impl RuleCheck for DiseaseConsistencyRule {
     type CheckType = Phenopacket;
 
-    fn check(&self, parsed_node: &Phenopacket, node: &Node) -> Vec<LintViolation> {
+    fn check(&self, _: &Phenopacket, _: &Node) -> Vec<LintViolation> {
         todo!()
     }
 }
