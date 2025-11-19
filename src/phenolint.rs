@@ -2,13 +2,14 @@ use crate::LinterContext;
 use crate::diagnostics::LintReport;
 use crate::diagnostics::enums::PhenopacketData;
 use crate::enums::InputTypes;
-use crate::error::{InitError, LintResult, LinterError, ParsingError};
+use crate::error::{InitError, LintResult, LinterError, ParsingError, validation_error_to_string};
 use crate::parsing::phenopacket_parser::PhenopacketParser;
 use crate::patches::patch_engine::PatchEngine;
 use crate::patches::patch_registry::PatchRegistry;
 use crate::report::parser::ReportParser;
 use crate::report::report_registry::ReportRegistry;
 use crate::router::NodeRouter;
+use crate::schema_validation::validator::PhenopacketSchemaValidator;
 use crate::traits::Lint;
 use crate::tree::abstract_pheno_tree::AbstractTreeTraversal;
 use log::{error, warn};
@@ -60,6 +61,15 @@ impl Lint<str> for Phenolint {
             Ok((values, spans, input_type)) => (values, spans, input_type),
             Err(err) => return LintResult::err(LinterError::ParsingError(err)),
         };
+
+        let validator = PhenopacketSchemaValidator::default();
+
+        if let Err(err) = validator.validate_phenopacket(&values) {
+            return LintResult::err(LinterError::InvalidPhenopacket {
+                path: err.instance_path.to_string(),
+                reason: validation_error_to_string(&err.kind),
+            });
+        }
 
         let apt = AbstractTreeTraversal::new(&values, &spans);
         for node in apt.traverse() {

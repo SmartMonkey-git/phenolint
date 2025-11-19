@@ -1,1 +1,1 @@
-pub mod curie_format_report;
+pub(crate) mod curies;
