@@ -3,6 +3,7 @@ use crate::linter_context::LinterContext;
 use crate::rules::traits::BoxedRuleCheck;
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
+use std::collections::HashSet;
 use std::sync::Arc;
 
 pub type RuleFactory<T> = fn(context: &LinterContext) -> RuleCheckResult<T>;
@@ -13,37 +14,100 @@ pub struct LintingPolicy<T> {
     pub factory: RuleFactory<T>,
 }
 
-inventory::collect!(LintingPolicy<OntologyClass>);
-inventory::collect!(LintingPolicy<Phenopacket>);
-inventory::collect!(LintingPolicy<PhenotypicFeature>);
+macro_rules! register_linting_policies {
+    ($($type:ty),+ $(,)?) => {
+        $(
+            inventory::collect!(LintingPolicy<$type>);
+        )+
+
+        pub fn all_rule_ids() -> Vec<&'static str> {
+            let mut rule_ids = Vec::new();
+
+            fn gather<T>(seen_ids: &mut Vec<&'static str>, type_name: &str)
+            where
+                LintingPolicy<T>: inventory::Collect,
+            {
+                for r in inventory::iter::<LintingPolicy<T>>() {
+                    if seen_ids.contains(&r.rule_id) {
+                        panic!(
+                            "rule {} already registered (found in {})",
+                            r.rule_id, type_name
+                        );
+                    }
+                    seen_ids.push(r.rule_id);
+                }
+            }
+
+            $(
+                gather::<$type>(&mut rule_ids, stringify!($type));
+            )+
+
+            rule_ids
+        }
+    };
+}
+
+register_linting_policies!(OntologyClass, Phenopacket, PhenotypicFeature);
+
+pub(crate) fn check_duplicate_rule_ids() {
+    let all_rule_ids = all_rule_ids();
+
+    let mut seen_rule_ids = HashSet::new();
+
+    for rule_id in all_rule_ids {
+        if seen_rule_ids.contains(&rule_id) {
+            panic!("rule '{rule_id}' registered twice");
+        }
+        seen_rule_ids.insert(rule_id);
+    }
+}
 
 #[cfg(test)]
 mod tests {
+    use crate::LinterContext;
+    use crate::diagnostics::LintViolation;
+    use crate::rules::rule_registry::Arc;
+    use crate::rules::rule_registry::FromContextError;
     use crate::rules::rule_registry::LintingPolicy;
-    use inventory;
+    use crate::rules::rule_registry::check_duplicate_rule_ids;
+    use crate::rules::traits::LintRule;
+    use crate::rules::traits::RuleCheck;
+    use crate::rules::traits::{BoxedRuleCheck, RuleFromContext};
+    use crate::tree::node::Node;
+    use phenolint_macros::register_rule;
     use phenopackets::schema::v2::core::OntologyClass;
     use rstest::rstest;
-    use std::collections::HashSet;
+    use std::sync::OnceLock;
 
-    #[rstest]
-    fn test_rule_id_uniqueness() {
-        let mut seen_ids = HashSet::new();
+    /// # CURIE001
+    /// ## What it does
+    /// Is here to trigger the panic.
+    ///
+    /// ## Why is this bad?
+    /// Because having duplicate rule ID's will lead to confusion.
+    #[register_rule(id = "CURIE001")]
+    struct TestRule;
 
-        inventory::iter::<LintingPolicy<OntologyClass>>().for_each(|r| {
-            if seen_ids.contains(&r.rule_id) {
-                panic!("rule {} already registered", r.rule_id);
-            }
-            seen_ids.insert(r.rule_id);
-        });
+    impl RuleFromContext for TestRule {
+        type CheckType = OntologyClass;
+
+        fn from_context(
+            context: &LinterContext,
+        ) -> Result<Box<dyn RuleCheck<CheckType = Self::CheckType>>, FromContextError> {
+            todo!()
+        }
+    }
+    impl RuleCheck for TestRule {
+        type CheckType = OntologyClass;
+
+        fn check(&self, parsed_node: &Self::CheckType, node: &Node) -> Vec<LintViolation> {
+            todo!()
+        }
     }
 
-    /*
     #[rstest]
-    fn test_rule_format() {
-        let regex = Regex::new("[A-Z]{1,5}[0-9]{3}").unwrap();
-
-        inventory::iter::<RuleRegistration>().for_each(|r| {
-            regex.is_match(r.rule_id);
-        });
-    }*/
+    #[should_panic(expected = "rule")]
+    fn test_rule_id_uniqueness() {
+        check_duplicate_rule_ids();
+    }
 }
