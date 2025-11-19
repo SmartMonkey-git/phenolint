@@ -24,6 +24,7 @@ pub struct Phenolint {
     context: LinterContext,
     router: NodeRouter,
     patch_engine: PatchEngine,
+    validator: PhenopacketSchemaValidator,
 }
 
 impl Phenolint {
@@ -37,6 +38,7 @@ impl Phenolint {
             context,
             router: NodeRouter::new(rule_ids, report_registry, patch_registry),
             patch_engine: PatchEngine,
+            validator: PhenopacketSchemaValidator::default(),
         }
     }
 
@@ -65,9 +67,7 @@ impl Lint<str> for Phenolint {
             Err(err) => return LintResult::err(LinterError::ParsingError(err)),
         };
 
-        let validator = PhenopacketSchemaValidator::default();
-
-        if let Err(err) = validator.validate_phenopacket(&values) {
+        if let Err(err) = self.validator.validate_phenopacket(&values) {
             return LintResult::err(LinterError::InvalidPhenopacket {
                 path: err.instance_path.to_string(),
                 reason: validation_error_to_string(&err.kind),
