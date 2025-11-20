@@ -48,7 +48,7 @@ impl RuleCheck for CustomRule {
     fn check(&self, _: &Self::CheckType, node: &Node) -> Vec<LintViolation> {
         vec![LintViolation::new(
             Self::RULE_ID,
-            Pointer::new(node.pointer.clone().down("id").position()),
+            vec![Pointer::new(node.pointer.clone().down("id").position())],
         )]
     }
 }
@@ -80,14 +80,22 @@ impl ReportFromContext for CustomRuleReportCompiler {
 }
 
 impl CompileReport for CustomRuleReportCompiler {
-    fn compile_report(&self, node: &Node, _: &LintViolation) -> ReportSpecs {
+    fn compile_report(&self, node: &Node, violation: &LintViolation) -> ReportSpecs {
         ReportSpecs::new(DiagnosticSpec {
             severity: Severity::Help,
             code: Self::RULE_ID.to_string(),
             message: "This is a custom violation".to_string(),
             labels: vec![LabelSpecs {
                 style: LabelStyle::Primary,
-                range: node.span(&node.pointer).unwrap().clone(),
+                range: node
+                    .span(
+                        violation
+                            .at()
+                            .first()
+                            .expect("Pointer should have been there."),
+                    )
+                    .unwrap()
+                    .clone(),
                 message: "Error was here".to_string(),
             }],
             notes: vec![],

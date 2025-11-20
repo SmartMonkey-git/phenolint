@@ -3,8 +3,9 @@ use crate::common::construction::linter;
 use gag::BufferRedirect;
 use phenolint::traits::Lint;
 use phenopackets::schema::v2::Phenopacket;
+use std::env;
 use std::io::Read;
-#[allow(dead_code)]
+
 pub fn run_rule_test(
     rule_id: &str,
     input: &Phenopacket,
@@ -29,6 +30,10 @@ pub fn run_rule_test(
     } else {
         stdout_output
     };
+
+    if env::var("CI").is_err() {
+        eprintln!("{}", output);
+    }
 
     assert_lint_result(res, assert_settings, output);
 }

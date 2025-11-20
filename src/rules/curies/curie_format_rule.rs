@@ -41,7 +41,7 @@ impl RuleCheck for CurieFormatRule {
             let mut ptr = node.pointer.clone();
             ptr.down("id");
 
-            violations.push(LintViolation::new(Self::RULE_ID, ptr))
+            violations.push(LintViolation::new(Self::RULE_ID, vec![ptr]))
         }
         violations
     }

@@ -127,6 +127,7 @@ impl Lint<[u8]> for Phenolint {
                 return LintResult::err(LinterError::ParsingError(err));
             }
         };
+
         let mut lint_result = self.lint(phenostr.as_str(), patch, quit);
 
         convert_phenopacket_to_input_type_u8(&mut lint_result, input_type);
