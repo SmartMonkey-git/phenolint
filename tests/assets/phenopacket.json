@@ -21,7 +21,7 @@
     },
     "vitalStatus": {
       "status": "ALIVE",
-      "cause_of_death": {
+      "causeOfDeath": {
         "id": "HP:0001875",
         "label": "Neutropenia"
       },
