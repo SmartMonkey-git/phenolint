@@ -54,7 +54,6 @@ impl ParsableNode<VitalStatus> for VitalStatus {
             && map.contains_key("status")
             && let Ok(pp) = serde_json::from_value::<VitalStatus>(node.value.clone())
         {
-            println!("Parsed vital status at {}", node.pointer);
             Some(pp)
         } else {
             None
