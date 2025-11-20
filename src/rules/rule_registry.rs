@@ -79,7 +79,7 @@ mod tests {
     use rstest::rstest;
     use std::sync::OnceLock;
 
-    /// # CURIE001
+    /// ### CURIE001
     /// ## What it does
     /// Is here to trigger the panic.
     ///

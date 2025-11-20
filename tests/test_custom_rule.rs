@@ -25,7 +25,7 @@ use std::sync::Arc;
 use std::sync::OnceLock;
 
 mod common;
-/// # CUST001
+/// ### CUST001
 /// ## What it does
 /// Nothing really. It's here to check if custom implementations work.
 ///

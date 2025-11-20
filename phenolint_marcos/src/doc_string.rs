@@ -29,7 +29,7 @@ pub(crate) fn check_rule_docs_format(docs: &str, rule_id: &str) {
     if doc_lines.len() < 3 {
         panic!("Rule doc string needs at least 3 lines");
     }
-    let expected_first_line = format!("# {rule_id}");
+    let expected_first_line = format!("### {rule_id}");
     let expected_headers = vec!["## What it does", "## Why is this bad?"];
 
     #[allow(clippy::collapsible_if)]
