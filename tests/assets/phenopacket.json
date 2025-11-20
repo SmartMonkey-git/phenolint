@@ -18,6 +18,14 @@
     "taxonomy": {
       "id": "NCBITaxon:9606",
       "label": "homo sapiens"
+    },
+    "vitalStatus": {
+      "status": "ALIVE",
+      "cause_of_death": {
+        "id": "HP:0001875",
+        "label": "Neutropenia"
+      },
+      "survivalTimeInDays": 3
     }
   },
   "phenotypicFeatures": [

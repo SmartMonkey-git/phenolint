@@ -1,5 +1,5 @@
 use crate::common::asserts::{LintResultAssertSettings, assert_lint_result};
-use crate::common::construction::linter;
+use crate::common::construction::build_linter;
 use gag::BufferRedirect;
 use phenolint::traits::Lint;
 use phenopackets::schema::v2::Phenopacket;
@@ -18,7 +18,7 @@ pub fn run_rule_test(
         let mut stdout_buf = BufferRedirect::stdout().unwrap();
         let mut stderr_buf = BufferRedirect::stderr().unwrap();
 
-        let mut linter = linter(vec![rule_id]);
+        let mut linter = build_linter(vec![rule_id]);
         let res;
         if format == "json" {
             res = linter.lint(
@@ -47,8 +47,8 @@ pub fn run_rule_test(
         };
 
         if env::var("CI").is_err() {
-            println!("Testing {format}");
-            println!("----");
+            eprintln!("Testing {format}");
+            eprintln!("----");
             eprintln!("{}", output);
         }
 
