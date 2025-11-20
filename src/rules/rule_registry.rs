@@ -2,7 +2,7 @@ use crate::error::FromContextError;
 use crate::linter_context::LinterContext;
 use crate::rules::traits::BoxedRuleCheck;
 use phenopackets::schema::v2::Phenopacket;
-use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
+use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature, VitalStatus};
 use std::collections::HashSet;
 use std::sync::Arc;
 
@@ -47,7 +47,7 @@ macro_rules! register_linting_policies {
     };
 }
 
-register_linting_policies!(OntologyClass, Phenopacket, PhenotypicFeature);
+register_linting_policies!(OntologyClass, Phenopacket, PhenotypicFeature, VitalStatus);
 
 pub(crate) fn check_duplicate_rule_ids() {
     let all_rule_ids = all_rule_ids();

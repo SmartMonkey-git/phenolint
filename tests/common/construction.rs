@@ -4,7 +4,7 @@ use phenolint::phenolint::Phenolint;
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::MetaData;
 
-pub fn linter(rules: Vec<&str>) -> Phenolint {
+pub fn build_linter(rules: Vec<&str>) -> Phenolint {
     let context = LinterContext::new(Some(hpo_dir(assets_dir())));
     let rules: Vec<String> = rules.into_iter().map(|s| s.to_string()).collect();
     Phenolint::new(context, rules)
