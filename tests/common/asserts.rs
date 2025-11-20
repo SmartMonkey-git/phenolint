@@ -123,7 +123,7 @@ impl<'a> LintResultAssertSettingsBuilder<'a> {
 
 pub fn assert_lint_result(
     lint_result: LintResult,
-    assert_settings: LintResultAssertSettings,
+    assert_settings: &LintResultAssertSettings,
     console_messages: String,
 ) {
     if let Some(err) = lint_result.error {
