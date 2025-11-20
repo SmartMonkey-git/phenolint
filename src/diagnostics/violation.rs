@@ -4,14 +4,13 @@ use crate::tree::pointer::Pointer;
 pub struct LintViolation {
     // TODO: Add level of violation (Error, Warning ...)
     rule_id: String,
-    at: Pointer,
+    at: Vec<Pointer>,
 }
 
 impl LintViolation {
-    pub fn new(rule_id: &str, at: Pointer) -> LintViolation {
+    pub fn new(rule_id: &str, at: Vec<Pointer>) -> LintViolation {
         Self {
             rule_id: rule_id.to_string(),
-
             at,
         }
     }
@@ -20,7 +19,7 @@ impl LintViolation {
         &self.rule_id
     }
 
-    pub fn at(&self) -> &Pointer {
+    pub fn at(&self) -> &[Pointer] {
         &self.at
     }
 }

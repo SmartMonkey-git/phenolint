@@ -11,7 +11,7 @@ use phenolint_macros::register_rule;
 use phenopackets::schema::v2::Phenopacket;
 
 #[derive(Debug, Default)]
-/// # INTER001
+/// ### INTER001
 /// ## What it does
 /// Checks if all diseases found in the interpretation section are also present in the diseases section.
 ///

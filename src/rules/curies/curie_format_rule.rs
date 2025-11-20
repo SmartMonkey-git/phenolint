@@ -10,7 +10,7 @@ use regex::Regex;
 use std::sync::Arc;
 use std::sync::OnceLock;
 
-/// # CURIE001
+/// ### CURIE001
 /// ## What it does
 /// Identifies CURIE ID that are not formatted correctly.
 ///
@@ -41,7 +41,7 @@ impl RuleCheck for CurieFormatRule {
             let mut ptr = node.pointer.clone();
             ptr.down("id");
 
-            violations.push(LintViolation::new(Self::RULE_ID, ptr))
+            violations.push(LintViolation::new(Self::RULE_ID, vec![ptr]))
         }
         violations
     }
