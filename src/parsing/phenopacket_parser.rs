@@ -72,7 +72,7 @@ impl PhenopacketParser {
     }
 
     fn try_from_yaml(phenobytes: &[u8]) -> Result<String, ParsingError> {
-        Ok(String::from_utf8(phenobytes.to_vec())?)
+        Ok(serde_yaml::from_slice(phenobytes)?)
     }
 
     fn try_from_protobuf(phenobytes: &[u8]) -> Result<String, ParsingError> {
