@@ -2,11 +2,13 @@ use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
 use crate::linter_context::LinterContext;
 use crate::rules::rule_registry::LintingPolicy;
-use crate::rules::traits::{BoxedRuleCheck, LintRule, RuleCheck, RuleFromContext};
-use crate::tree::node::Node;
+use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext, SupplyRule};
+use crate::tree::pointer::Pointer;
 use phenolint_macros::register_rule;
 use phenopackets::schema::v2::core::OntologyClass;
 use regex::Regex;
+use std::any::Any;
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::OnceLock;
 
@@ -18,31 +20,40 @@ use std::sync::OnceLock;
 /// Matching incorrectly formatted ID's back to their original sources can cause problems, when
 /// computationally using the phenopacket.
 #[derive(Debug)]
-#[register_rule(id = "CURIE001")]
+#[register_rule(id = "CURIE001",  tagets=[OntologyClass])]
 pub struct CurieFormatRule {
     regex: Regex,
+    targets: HashMap<Pointer, OntologyClass>,
 }
 
 impl RuleFromContext for CurieFormatRule {
-    fn from_context(_: &LinterContext) -> Result<BoxedRuleCheck<OntologyClass>, FromContextError> {
+    fn from_context(_: &LinterContext) -> Result<Box<dyn LintRule>, FromContextError> {
         Ok(Box::new(CurieFormatRule {
             regex: Regex::new("^[A-Z][A-Z0-9_]+:[A-Za-z0-9_]+$").expect("Invalid regex"),
+            targets: HashMap::new(),
         }))
     }
 }
 
-impl RuleCheck for CurieFormatRule {
-    type CheckType = OntologyClass;
+impl SupplyRule<OntologyClass> for CurieFormatRule {
+    fn supply_rule(&mut self, pointer: &Pointer, node: &OntologyClass) {
+        self.targets.insert(pointer.clone(), node.clone());
+    }
+}
 
-    fn check(&self, pared_node: &OntologyClass, node: &Node) -> Vec<LintViolation> {
+impl RuleCheck for CurieFormatRule {
+    fn check(&self) -> Vec<LintViolation> {
         let mut violations = vec![];
 
-        if !self.regex.is_match(&pared_node.id) {
-            let mut ptr = node.pointer.clone();
-            ptr.down("id");
+        for (ptr, oc) in self.targets.iter() {
+            if !self.regex.is_match(&oc.id) {
+                let mut ptr = ptr.clone();
+                ptr.down("id");
 
-            violations.push(LintViolation::new(Self::RULE_ID, vec![ptr]))
+                violations.push(LintViolation::new(self.rule_id(), vec![ptr]))
+            }
         }
+
         violations
     }
 }

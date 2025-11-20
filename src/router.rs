@@ -1,10 +1,13 @@
 use crate::LinterContext;
 use crate::diagnostics::LintFinding;
+use crate::error::FromContextError;
 use crate::parsing::traits::ParsableNode;
 use crate::patches::patch_registry::PatchRegistry;
 use crate::report::report_registry::ReportRegistry;
 use crate::rules::rule_registry::LintingPolicy;
+use crate::rules::traits::LintRule;
 use crate::tree::node::Node;
+use crate::tree::pointer::Pointer;
 use log::{error, warn};
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature, VitalStatus};
@@ -45,6 +48,15 @@ impl NodeRouter {
         }
     }
 
+    fn supply_rules<N>(&self, parsed_node: &N, pointer: Pointer, context: &mut LinterContext) {
+        for rule in inventory::iter::<LintingPolicy>() {
+            match (rule.factory)(context).lock() {
+                Ok(rule) => rule.supply_node_any(parsed_node, &pointer),
+                Err(err) => warn!("From Context Error: {}", err),
+            }
+        }
+    }
+
     fn route_to_rules<N>(
         &self,
         node: &Node,
@@ -52,14 +64,14 @@ impl NodeRouter {
         context: &mut LinterContext,
     ) -> Vec<LintFinding>
     where
-        LintingPolicy<N>: inventory::Collect,
+        LintingPolicy: inventory::Collect,
     {
         let mut findings = vec![];
-        for rule_res in inventory::iter::<LintingPolicy<N>>() {
+        for rule_res in inventory::iter::<LintingPolicy>() {
             if self.enabled_rules.iter().any(|s| s == rule_res.rule_id) {
                 match (rule_res.factory)(context).as_ref() {
                     Ok(rule) => {
-                        let violations = rule.check(parsed_node, node);
+                        let violations = rule.check();
 
                         for violation in violations {
                             let patches = self.patch_registry.get_patches_for(

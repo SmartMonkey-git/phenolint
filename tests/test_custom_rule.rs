@@ -2,6 +2,7 @@ use crate::common::asserts::LintResultAssertSettings;
 use crate::common::assets::json_phenopacket;
 use phenolint::patches::patch_registration::PatchRegistration;
 use phenolint::report::report_registration::ReportRegistration;
+use std::any::Any;
 
 use crate::common::test_functions::run_rule_test;
 use codespan_reporting::diagnostic::{LabelStyle, Severity};
@@ -35,21 +36,14 @@ mod common;
 struct CustomRule;
 
 impl RuleFromContext for CustomRule {
-    fn from_context(
-        _: &LinterContext,
-    ) -> Result<BoxedRuleCheck<Self::CheckType>, FromContextError> {
+    fn from_context(_: &LinterContext) -> Result<Box<dyn LintRule>, FromContextError> {
         Ok(Box::new(CustomRule))
     }
 }
 
 impl RuleCheck for CustomRule {
-    type CheckType = Phenopacket;
-
-    fn check(&self, _: &Self::CheckType, node: &Node) -> Vec<LintViolation> {
-        vec![LintViolation::new(
-            Self::RULE_ID,
-            vec![Pointer::new(node.pointer.clone().down("id").position())],
-        )]
+    fn check(&self) -> Vec<LintViolation> {
+        vec![LintViolation::new(self.rule_id(), vec![Pointer::at_root()])]
     }
 }
 
