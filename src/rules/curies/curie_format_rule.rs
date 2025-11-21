@@ -6,7 +6,7 @@ use crate::rules::traits::RuleMetaData;
 use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
 use crate::tree::node_repository::List;
 use phenolint_macros::register_rule;
-use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
+use phenopackets::schema::v2::core::OntologyClass;
 use regex::Regex;
 
 /// ### CURIE001
@@ -31,7 +31,7 @@ impl RuleFromContext for CurieFormatRule {
 }
 
 impl RuleCheck for CurieFormatRule {
-    type Data<'a> = (List<'a, OntologyClass>, List<'a, PhenotypicFeature>);
+    type Data<'a> = List<'a, OntologyClass>;
 
     fn check(&self, data: Self::Data<'_>) -> Vec<LintViolation> {
         let mut violations = vec![];
