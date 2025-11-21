@@ -76,7 +76,6 @@ where
     }
 }
 
-// Implement for a tuple of 3 items
 impl<'a, A, B, C> LintData<'a> for (A, B, C)
 where
     A: LintData<'a>,
