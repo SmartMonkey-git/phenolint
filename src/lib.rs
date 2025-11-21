@@ -6,11 +6,11 @@ pub mod rules;
 
 pub mod linter_context;
 pub use linter_context::LinterContext;
+mod materializer;
 pub(crate) mod parsing;
 pub mod patches;
 pub mod phenolint;
 pub mod report;
-mod router;
 mod schema_validation;
 #[cfg(test)]
 pub(crate) mod test_utils;

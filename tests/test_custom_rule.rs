@@ -2,6 +2,8 @@ use crate::common::asserts::LintResultAssertSettings;
 use crate::common::assets::json_phenopacket;
 use phenolint::patches::patch_registration::PatchRegistration;
 use phenolint::report::report_registration::ReportRegistration;
+use phenolint::rules::rule_registration::RuleRegistration;
+use phenolint::rules::traits::RuleMetaData;
 
 use crate::common::test_functions::run_rule_test;
 use codespan_reporting::diagnostic::{LabelStyle, Severity};
@@ -13,16 +15,15 @@ use phenolint::patches::patch::Patch;
 use phenolint::patches::traits::{CompilePatches, PatchFromContext, RegisterablePatch, RulePatch};
 use phenolint::report::specs::{DiagnosticSpec, LabelSpecs, ReportSpecs};
 use phenolint::report::traits::{CompileReport, RegisterableReport, ReportFromContext, RuleReport};
-use phenolint::rules::rule_registry::LintingPolicy;
-use phenolint::rules::traits::{BoxedRuleCheck, LintRule};
+use phenolint::rules::traits::LintRule;
 use phenolint::rules::traits::{RuleCheck, RuleFromContext};
-use phenolint::tree::node::Node;
+use phenolint::tree::node::DynamicNode;
+use phenolint::tree::node_repository::List;
 use phenolint::tree::pointer::Pointer;
 use phenolint_macros::{register_patch, register_report, register_rule};
 use phenopackets::schema::v2::Phenopacket;
+use phenopackets::schema::v2::core::OntologyClass;
 use rstest::rstest;
-use std::sync::Arc;
-use std::sync::OnceLock;
 
 mod common;
 /// ### CUST001
@@ -35,20 +36,18 @@ mod common;
 struct CustomRule;
 
 impl RuleFromContext for CustomRule {
-    fn from_context(
-        _: &LinterContext,
-    ) -> Result<BoxedRuleCheck<Self::CheckType>, FromContextError> {
+    fn from_context(_: &LinterContext) -> Result<Box<dyn LintRule>, FromContextError> {
         Ok(Box::new(CustomRule))
     }
 }
 
 impl RuleCheck for CustomRule {
-    type CheckType = Phenopacket;
+    type Data<'a> = List<'a, OntologyClass>;
 
-    fn check(&self, _: &Self::CheckType, node: &Node) -> Vec<LintViolation> {
+    fn check(&self, _: Self::Data<'_>) -> Vec<LintViolation> {
         vec![LintViolation::new(
-            Self::RULE_ID,
-            vec![Pointer::new(node.pointer.clone().down("id").position())],
+            LintRule::rule_id(self),
+            vec![Pointer::at_root().down("id").clone()],
         )]
     }
 }
@@ -63,7 +62,7 @@ impl PatchFromContext for CustomRulePatchCompiler {
 }
 
 impl CompilePatches for CustomRulePatchCompiler {
-    fn compile_patches(&self, node: &Node, _: &LintViolation) -> Vec<Patch> {
+    fn compile_patches(&self, node: &DynamicNode, _: &LintViolation) -> Vec<Patch> {
         vec![Patch::new(vec![PatchInstruction::Remove {
             at: node.pointer.clone().down("id").clone(),
         }])]
@@ -80,21 +79,21 @@ impl ReportFromContext for CustomRuleReportCompiler {
 }
 
 impl CompileReport for CustomRuleReportCompiler {
-    fn compile_report(&self, node: &Node, violation: &LintViolation) -> ReportSpecs {
+    fn compile_report(&self, full_node: &DynamicNode, violation: &LintViolation) -> ReportSpecs {
+        let ptr = violation
+            .at()
+            .first()
+            .expect("Pointer should have been there.");
         ReportSpecs::new(DiagnosticSpec {
             severity: Severity::Help,
             code: Self::RULE_ID.to_string(),
             message: "This is a custom violation".to_string(),
             labels: vec![LabelSpecs {
                 style: LabelStyle::Primary,
-                range: node
-                    .span(
-                        violation
-                            .at()
-                            .first()
-                            .expect("Pointer should have been there."),
-                    )
-                    .unwrap()
+                range: full_node
+                    .spans
+                    .get(ptr)
+                    .unwrap_or_else(|| panic!("Span should have been at '{}' there", ptr))
                     .clone(),
                 message: "Error was here".to_string(),
             }],

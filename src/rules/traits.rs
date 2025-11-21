@@ -1,21 +1,47 @@
 use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
-use crate::tree::node::Node;
+use crate::tree::node_repository::NodeRepository;
 
-pub trait LintRule: RuleCheck + RuleFromContext {
-    const RULE_ID: &'static str;
+pub trait LintRule: RuleFromContext + Send + Sync {
+    fn rule_id(&self) -> &str;
+
+    fn check_erased(&self, board: &NodeRepository) -> Vec<LintViolation>;
 }
 
-pub trait RuleFromContext: RuleCheck {
-    fn from_context(
-        context: &LinterContext,
-    ) -> Result<Box<dyn RuleCheck<CheckType = Self::CheckType>>, FromContextError>;
+pub trait RuleMetaData: Send + Sync {
+    fn rule_id(&self) -> &str;
 }
 
-pub trait RuleCheck: Send + Sync {
-    type CheckType;
-    fn check(&self, parsed_node: &Self::CheckType, node: &Node) -> Vec<LintViolation>;
+pub trait RuleFromContext {
+    fn from_context(context: &LinterContext) -> Result<Box<dyn LintRule>, FromContextError>
+    where
+        Self: Sized;
 }
 
-pub type BoxedRuleCheck<N> = Box<dyn RuleCheck<CheckType = N>>;
+pub trait RuleCheck: Send + Sync + 'static {
+    type Data<'a>: LintData<'a> + ?Sized;
+    fn check(&self, data: Self::Data<'_>) -> Vec<LintViolation>;
+}
+
+impl<T> LintRule for T
+where
+    T: RuleCheck + RuleFromContext + RuleMetaData,
+    for<'a> <T as RuleCheck>::Data<'a>: Sized,
+{
+    fn rule_id(&self) -> &str {
+        self.rule_id()
+    }
+
+    fn check_erased(&self, board: &NodeRepository) -> Vec<LintViolation> {
+        let data = <Self as RuleCheck>::Data::fetch(board);
+
+        self.check(data)
+    }
+}
+
+pub trait LintData<'a> {
+    fn fetch(board: &'a NodeRepository) -> Self
+    where
+        Self: Sized;
+}

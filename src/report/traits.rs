@@ -3,19 +3,19 @@ use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
 use crate::report::specs::ReportSpecs;
-use crate::tree::node::Node;
+use crate::tree::node::DynamicNode;
 
 pub trait RuleReport: ReportFromContext + RegisterableReport + CompileReport {
     const RULE_ID: &'static str;
 }
 
 pub trait RegisterableReport {
-    fn compile_report(&self, value: &Node, lint_violation: &LintViolation) -> ReportSpecs;
+    fn compile_report(&self, value: &DynamicNode, lint_violation: &LintViolation) -> ReportSpecs;
     fn rule_id(&self) -> String;
 }
 
 impl<T: CompileReport + Send + RuleReport> RegisterableReport for T {
-    fn compile_report(&self, value: &Node, lint_violation: &LintViolation) -> ReportSpecs {
+    fn compile_report(&self, value: &DynamicNode, lint_violation: &LintViolation) -> ReportSpecs {
         CompileReport::compile_report(self, value, lint_violation)
     }
 
@@ -25,7 +25,11 @@ impl<T: CompileReport + Send + RuleReport> RegisterableReport for T {
 }
 
 pub trait CompileReport {
-    fn compile_report(&self, node: &Node, lint_violation: &LintViolation) -> ReportSpecs;
+    fn compile_report(
+        &self,
+        full_node: &DynamicNode,
+        lint_violation: &LintViolation,
+    ) -> ReportSpecs;
 }
 
 pub trait ReportFromContext {

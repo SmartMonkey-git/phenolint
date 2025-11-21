@@ -1,5 +1,5 @@
-use crate::tree::node::Node;
+use crate::tree::node::DynamicNode;
 
 pub trait ParsableNode<N> {
-    fn parse(node: &Node) -> Option<N>;
+    fn parse(node: &DynamicNode) -> Option<N>;
 }

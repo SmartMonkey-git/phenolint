@@ -1,14 +1,12 @@
 use crate::LinterContext;
 use crate::diagnostics::LintViolation;
-use std::sync::Arc;
-use std::sync::OnceLock;
-
 use crate::error::FromContextError;
-use crate::rules::rule_registry::LintingPolicy;
-use crate::rules::traits::{BoxedRuleCheck, LintRule, RuleCheck, RuleFromContext};
-use crate::tree::node::Node;
+use crate::rules::rule_registration::RuleRegistration;
+use crate::rules::traits::RuleMetaData;
+use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
+use crate::tree::node_repository::List;
 use phenolint_macros::register_rule;
-use phenopackets::schema::v2::Phenopacket;
+use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
 
 #[derive(Debug, Default)]
 /// ### INTER001
@@ -21,15 +19,15 @@ use phenopackets::schema::v2::Phenopacket;
 pub struct DiseaseConsistencyRule;
 
 impl RuleFromContext for DiseaseConsistencyRule {
-    fn from_context(_: &LinterContext) -> Result<BoxedRuleCheck<Phenopacket>, FromContextError> {
+    fn from_context(_: &LinterContext) -> Result<Box<dyn LintRule>, FromContextError> {
         Ok(Box::new(Self))
     }
 }
 
 impl RuleCheck for DiseaseConsistencyRule {
-    type CheckType = Phenopacket;
+    type Data<'a> = (List<'a, OntologyClass>, List<'a, PhenotypicFeature>);
 
-    fn check(&self, _: &Phenopacket, _: &Node) -> Vec<LintViolation> {
+    fn check(&self, _: Self::Data<'_>) -> Vec<LintViolation> {
         todo!()
     }
 }

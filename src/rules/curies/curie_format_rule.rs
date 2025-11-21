@@ -1,14 +1,13 @@
 use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
 use crate::linter_context::LinterContext;
-use crate::rules::rule_registry::LintingPolicy;
-use crate::rules::traits::{BoxedRuleCheck, LintRule, RuleCheck, RuleFromContext};
-use crate::tree::node::Node;
+use crate::rules::rule_registration::RuleRegistration;
+use crate::rules::traits::RuleMetaData;
+use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
+use crate::tree::node_repository::List;
 use phenolint_macros::register_rule;
-use phenopackets::schema::v2::core::OntologyClass;
+use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
 use regex::Regex;
-use std::sync::Arc;
-use std::sync::OnceLock;
 
 /// ### CURIE001
 /// ## What it does
@@ -24,7 +23,7 @@ pub struct CurieFormatRule {
 }
 
 impl RuleFromContext for CurieFormatRule {
-    fn from_context(_: &LinterContext) -> Result<BoxedRuleCheck<OntologyClass>, FromContextError> {
+    fn from_context(_: &LinterContext) -> Result<Box<dyn LintRule>, FromContextError> {
         Ok(Box::new(CurieFormatRule {
             regex: Regex::new("^[A-Z][A-Z0-9_]+:[A-Za-z0-9_]+$").expect("Invalid regex"),
         }))
@@ -32,17 +31,20 @@ impl RuleFromContext for CurieFormatRule {
 }
 
 impl RuleCheck for CurieFormatRule {
-    type CheckType = OntologyClass;
+    type Data<'a> = (List<'a, OntologyClass>, List<'a, PhenotypicFeature>);
 
-    fn check(&self, pared_node: &OntologyClass, node: &Node) -> Vec<LintViolation> {
+    fn check(&self, data: Self::Data<'_>) -> Vec<LintViolation> {
         let mut violations = vec![];
 
-        if !self.regex.is_match(&pared_node.id) {
-            let mut ptr = node.pointer.clone();
-            ptr.down("id");
+        for node in data.0.iter() {
+            if !self.regex.is_match(&node.materialized_node.id) {
+                let mut ptr = node.pointer.clone();
+                ptr.down("id");
 
-            violations.push(LintViolation::new(Self::RULE_ID, vec![ptr]))
+                violations.push(LintViolation::new(LintRule::rule_id(self), vec![ptr]))
+            }
         }
+
         violations
     }
 }

@@ -1,53 +1,59 @@
-use crate::error::FromContextError;
 use crate::linter_context::LinterContext;
-use crate::rules::traits::BoxedRuleCheck;
-use phenopackets::schema::v2::Phenopacket;
-use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature, VitalStatus};
-use std::collections::HashSet;
-use std::sync::Arc;
+use crate::rules::rule_registration::{RuleRegistration, all_rule_ids};
+use crate::rules::traits::LintRule;
+use log::warn;
+use std::collections::{HashMap, HashSet};
 
-pub type RuleFactory<T> = fn(context: &LinterContext) -> RuleCheckResult<T>;
-pub type RuleCheckResult<T> = Arc<Result<BoxedRuleCheck<T>, FromContextError>>;
-
-pub struct LintingPolicy<T> {
-    pub rule_id: &'static str,
-    pub factory: RuleFactory<T>,
+#[derive(Default)]
+pub struct RuleRegistry {
+    rules: HashMap<String, Box<dyn LintRule>>,
 }
 
-macro_rules! register_linting_policies {
-    ($($type:ty),+ $(,)?) => {
-        $(
-            inventory::collect!(LintingPolicy<$type>);
-        )+
+impl RuleRegistry {
+    pub fn get(&self, rule_id: &str) -> Option<&dyn LintRule> {
+        self.rules.get(rule_id).map(|rule| &**rule)
+    }
 
-        pub fn all_rule_ids() -> Vec<&'static str> {
-            let mut rule_ids = Vec::new();
+    pub fn get_mut(&mut self, rule_id: &str) -> Option<&mut Box<dyn LintRule>> {
+        self.rules.get_mut(rule_id)
+    }
 
-            fn gather<T>(seen_ids: &mut Vec<&'static str>, type_name: &str)
-            where
-                LintingPolicy<T>: inventory::Collect,
+    pub fn with_enabled_rules(enabled_rules: &[String], context: &LinterContext) -> Self {
+        let mut registry = HashMap::new();
+
+        for registration in inventory::iter::<RuleRegistration> {
+            if enabled_rules
+                .iter()
+                .any(|r_id| r_id == registration.rule_id)
             {
-                for r in inventory::iter::<LintingPolicy<T>>() {
-                    if seen_ids.contains(&r.rule_id) {
-                        panic!(
-                            "rule {} already registered (found in {})",
-                            r.rule_id, type_name
-                        );
+                match (registration.factory)(context) {
+                    Ok(rule) => {
+                        registry.insert(registration.rule_id.to_string(), rule);
                     }
-                    seen_ids.push(r.rule_id);
+                    Err(err) => warn!("Failed to register patch: {}", err),
                 }
             }
-
-            $(
-                gather::<$type>(&mut rule_ids, stringify!($type));
-            )+
-
-            rule_ids
         }
-    };
-}
 
-register_linting_policies!(OntologyClass, Phenopacket, PhenotypicFeature, VitalStatus);
+        Self { rules: registry }
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&String, &Box<dyn LintRule>)> {
+        self.rules.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (&String, &mut Box<dyn LintRule>)> {
+        self.rules.iter_mut()
+    }
+
+    pub fn rules(&self) -> impl Iterator<Item = &Box<dyn LintRule>> {
+        self.rules.values()
+    }
+
+    pub fn rules_mut(&mut self) -> impl Iterator<Item = &mut Box<dyn LintRule>> {
+        self.rules.values_mut()
+    }
+}
 
 pub(crate) fn check_duplicate_rule_ids() {
     let all_rule_ids = all_rule_ids();
@@ -66,18 +72,17 @@ pub(crate) fn check_duplicate_rule_ids() {
 mod tests {
     use crate::LinterContext;
     use crate::diagnostics::LintViolation;
-    use crate::rules::rule_registry::Arc;
-    use crate::rules::rule_registry::FromContextError;
-    use crate::rules::rule_registry::LintingPolicy;
+    use crate::error::FromContextError;
+    use crate::rules::rule_registration::RuleRegistration;
     use crate::rules::rule_registry::check_duplicate_rule_ids;
     use crate::rules::traits::LintRule;
     use crate::rules::traits::RuleCheck;
-    use crate::rules::traits::{BoxedRuleCheck, RuleFromContext};
-    use crate::tree::node::Node;
+    use crate::rules::traits::RuleFromContext;
+    use crate::rules::traits::RuleMetaData;
+    use crate::tree::node_repository::List;
     use phenolint_macros::register_rule;
     use phenopackets::schema::v2::core::OntologyClass;
     use rstest::rstest;
-    use std::sync::OnceLock;
 
     /// ### CURIE001
     /// ## What it does
@@ -89,16 +94,14 @@ mod tests {
     struct TestRule;
 
     impl RuleFromContext for TestRule {
-        fn from_context(
-            _: &LinterContext,
-        ) -> Result<Box<dyn RuleCheck<CheckType = Self::CheckType>>, FromContextError> {
+        fn from_context(_: &LinterContext) -> Result<Box<dyn LintRule>, FromContextError> {
             todo!()
         }
     }
     impl RuleCheck for TestRule {
-        type CheckType = OntologyClass;
+        type Data<'a> = List<'a, OntologyClass>;
 
-        fn check(&self, _: &Self::CheckType, _: &Node) -> Vec<LintViolation> {
+        fn check(&self, _: Self::Data<'_>) -> Vec<LintViolation> {
             todo!()
         }
     }

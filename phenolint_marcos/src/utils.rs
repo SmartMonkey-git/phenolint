@@ -1,12 +1,12 @@
-use syn::Lit;
-
 use proc_macro::TokenStream;
 use regex::Regex;
 use syn::parse::Parser;
 
+use syn::Lit;
+
 static RULE_FORMAT: &str = "^[A-Z]{1,5}[0-9]{3}$";
 
-pub(crate) fn extract_rule_id(attr_tokens: &TokenStream) -> Result<String, String> {
+pub(crate) fn extract_rule_id(attr_tokens: &TokenStream) -> std::result::Result<String, String> {
     let mut rule_id = None;
 
     let attr_parser = syn::meta::parser(|meta| {
