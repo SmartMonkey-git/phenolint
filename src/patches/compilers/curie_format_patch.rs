@@ -9,7 +9,7 @@ use crate::patches::patch_registration;
 use crate::patches::patch_registration::PatchRegistration;
 use crate::patches::traits::RulePatch;
 use crate::patches::traits::{CompilePatches, PatchFromContext, RegisterablePatch};
-use crate::tree::node::Node;
+use crate::tree::node::DynamicNode;
 use phenolint_macros::register_patch;
 
 #[register_patch(id = "CURIE001")]
@@ -24,7 +24,7 @@ impl PatchFromContext for CurieFormatPatch {
 }
 
 impl CompilePatches for CurieFormatPatch {
-    fn compile_patches(&self, value: &Node, lint_violation: &LintViolation) -> Vec<Patch> {
+    fn compile_patches(&self, value: &DynamicNode, lint_violation: &LintViolation) -> Vec<Patch> {
         vec![]
     }
 }

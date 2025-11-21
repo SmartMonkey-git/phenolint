@@ -1,19 +1,12 @@
 use crate::LinterContext;
+use crate::blackboard::BlackBoard;
 use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
-use crate::tree::pointer::Pointer;
-use std::any::Any;
-pub trait LintRule: RuleCheck + RuleFromContext + Send + Sync {
+
+pub trait LintRule: RuleFromContext + Send + Sync {
     fn rule_id(&self) -> &str;
 
-    // Boilerplate to allow downcasting from dyn LintRule to ConcreteType
-    fn as_any(&self) -> &dyn Any;
-    fn as_any_mut(&mut self) -> &mut dyn Any;
-
-    fn supply_node_any(&mut self, _node: &dyn Any, _pointer: &Pointer);
-}
-pub trait SupplyRule<N> {
-    fn supply_rule(&mut self, pointer: &Pointer, node: &N);
+    fn check_erased(&self, board: &BlackBoard) -> Vec<LintViolation>;
 }
 
 pub trait RuleFromContext {
@@ -22,8 +15,28 @@ pub trait RuleFromContext {
         Self: Sized;
 }
 
-pub trait RuleCheck: Send + Sync {
-    fn check(&self) -> Vec<LintViolation>;
+pub trait RuleCheck: Send + Sync + 'static {
+    type Data<'a>: LintData<'a>;
+    fn check(&self, data: Self::Data<'_>) -> Vec<LintViolation>;
 }
 
-pub type BoxedRuleCheck = Box<dyn RuleCheck>;
+impl<T> LintRule for T
+where
+    T: RuleCheck + RuleFromContext,
+{
+    fn rule_id(&self) -> &str {
+        self.rule_id()
+    }
+
+    fn check_erased(&self, board: &BlackBoard) -> Vec<LintViolation> {
+        let data = <Self as RuleCheck>::Data::fetch::<T>(board);
+
+        self.check(data)
+    }
+}
+
+pub trait LintData<'a> {
+    fn fetch<T: 'static>(board: &'a BlackBoard) -> Self
+    where
+        Self: Sized;
+}

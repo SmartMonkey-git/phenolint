@@ -15,9 +15,9 @@ use phenolint::patches::patch::Patch;
 use phenolint::patches::traits::{CompilePatches, PatchFromContext, RegisterablePatch, RulePatch};
 use phenolint::report::specs::{DiagnosticSpec, LabelSpecs, ReportSpecs};
 use phenolint::report::traits::{CompileReport, RegisterableReport, ReportFromContext, RuleReport};
-use phenolint::rules::traits::{BoxedRuleCheck, LintRule};
+use phenolint::rules::traits::LintRule;
 use phenolint::rules::traits::{RuleCheck, RuleFromContext};
-use phenolint::tree::node::Node;
+use phenolint::tree::node::DynamicNode;
 use phenolint::tree::pointer::Pointer;
 use phenolint_macros::{register_patch, register_report, register_rule};
 use phenopackets::schema::v2::Phenopacket;
@@ -58,7 +58,7 @@ impl PatchFromContext for CustomRulePatchCompiler {
 }
 
 impl CompilePatches for CustomRulePatchCompiler {
-    fn compile_patches(&self, node: &Node, _: &LintViolation) -> Vec<Patch> {
+    fn compile_patches(&self, node: &DynamicNode, _: &LintViolation) -> Vec<Patch> {
         vec![Patch::new(vec![PatchInstruction::Remove {
             at: node.pointer.clone().down("id").clone(),
         }])]
@@ -75,7 +75,7 @@ impl ReportFromContext for CustomRuleReportCompiler {
 }
 
 impl CompileReport for CustomRuleReportCompiler {
-    fn compile_report(&self, full_node: &Node, violation: &LintViolation) -> ReportSpecs {
+    fn compile_report(&self, full_node: &DynamicNode, violation: &LintViolation) -> ReportSpecs {
         ReportSpecs::new(DiagnosticSpec {
             severity: Severity::Help,
             code: Self::RULE_ID.to_string(),

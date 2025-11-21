@@ -5,7 +5,7 @@ use crate::error::FromContextError;
 use crate::report::report_registration::ReportRegistration;
 use crate::report::specs::{DiagnosticSpec, LabelSpecs, ReportSpecs};
 use crate::report::traits::{CompileReport, RegisterableReport, ReportFromContext, RuleReport};
-use crate::tree::node::Node;
+use crate::tree::node::DynamicNode;
 use crate::tree::pointer::Pointer;
 use codespan_reporting::diagnostic::{LabelStyle, Severity};
 use phenolint_macros::register_report;
@@ -23,7 +23,7 @@ impl ReportFromContext for CurieFormatReport {
 
 impl CompileReport for CurieFormatReport {
     #[allow(unused)]
-    fn compile_report(&self, node: &Node, lint_violation: &LintViolation) -> ReportSpecs {
+    fn compile_report(&self, node: &DynamicNode, lint_violation: &LintViolation) -> ReportSpecs {
         let violation_ptr = lint_violation.at().first().unwrap().clone();
         let curie = node.value(&violation_ptr);
         ReportSpecs::new(DiagnosticSpec {

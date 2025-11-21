@@ -2,10 +2,14 @@ use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
 use crate::patches::patch::Patch;
-use crate::tree::node::Node;
+use crate::tree::node::DynamicNode;
 
 pub trait RegisterablePatch: Send + Sync {
-    fn compile_patches(&self, full_node: &Node, lint_violation: &LintViolation) -> Vec<Patch>;
+    fn compile_patches(
+        &self,
+        full_node: &DynamicNode,
+        lint_violation: &LintViolation,
+    ) -> Vec<Patch>;
     fn rule_id(&self) -> String;
 }
 
@@ -16,7 +20,7 @@ pub trait PatchFromContext {
 }
 
 impl<T: CompilePatches + Send + RulePatch> RegisterablePatch for T {
-    fn compile_patches(&self, value: &Node, lint_violation: &LintViolation) -> Vec<Patch> {
+    fn compile_patches(&self, value: &DynamicNode, lint_violation: &LintViolation) -> Vec<Patch> {
         CompilePatches::compile_patches(self, value, lint_violation)
     }
 
@@ -31,5 +35,5 @@ pub trait RulePatch: PatchFromContext + RegisterablePatch + CompilePatches {
 
 /// Tries to compile patches for a given rule.
 pub trait CompilePatches: Send + Sync {
-    fn compile_patches(&self, node: &Node, lint_violation: &LintViolation) -> Vec<Patch>;
+    fn compile_patches(&self, node: &DynamicNode, lint_violation: &LintViolation) -> Vec<Patch>;
 }

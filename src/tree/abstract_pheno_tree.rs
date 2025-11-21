@@ -1,4 +1,4 @@
-use crate::tree::node::Node;
+use crate::tree::node::DynamicNode;
 use crate::tree::pointer::Pointer;
 use serde_json::Value;
 use std::collections::{HashMap, VecDeque};
@@ -17,9 +17,9 @@ impl AbstractTreeTraversal {
         }
     }
 
-    pub fn traverse<'s>(&'s self) -> Box<dyn Iterator<Item = Node> + 's> {
+    pub fn traverse<'s>(&'s self) -> Box<dyn Iterator<Item = DynamicNode> + 's> {
         let mut queue = VecDeque::new();
-        let root_node = Node::new(&self.tree, &self.spans.clone(), Pointer::at_root());
+        let root_node = DynamicNode::new(&self.tree, &self.spans.clone(), Pointer::at_root());
         queue.push_back(root_node);
 
         Box::new(std::iter::from_fn(move || {
@@ -31,7 +31,7 @@ impl AbstractTreeTraversal {
                             let mut new_pointer = current_node.pointer().clone();
                             new_pointer.down(i);
 
-                            let next_node = Node::new(val, &self.spans.clone(), new_pointer);
+                            let next_node = DynamicNode::new(val, &self.spans.clone(), new_pointer);
 
                             queue.push_back(next_node);
                         }
@@ -41,7 +41,7 @@ impl AbstractTreeTraversal {
                             let mut new_pointer = current_node.pointer().clone();
                             new_pointer.down(key);
 
-                            let next_node = Node::new(val, &self.spans.clone(), new_pointer);
+                            let next_node = DynamicNode::new(val, &self.spans.clone(), new_pointer);
 
                             queue.push_back(next_node);
                         }

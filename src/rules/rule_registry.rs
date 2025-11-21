@@ -78,7 +78,7 @@ mod tests {
     use crate::rules::rule_registry::check_duplicate_rule_ids;
     use crate::rules::traits::LintRule;
     use crate::rules::traits::RuleCheck;
-    use crate::rules::traits::{BoxedRuleCheck, RuleFromContext};
+    use crate::rules::traits::RuleFromContext;
     use crate::tree::pointer::Pointer;
     use phenolint_macros::register_rule;
     use rstest::rstest;

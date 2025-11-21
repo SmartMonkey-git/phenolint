@@ -1,11 +1,11 @@
 use crate::parsing::traits::ParsableNode;
-use crate::tree::node::Node;
+use crate::tree::node::DynamicNode;
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature, VitalStatus};
 use serde_json::Value;
 
 impl ParsableNode<OntologyClass> for OntologyClass {
-    fn parse(node: &Node) -> Option<OntologyClass> {
+    fn parse(node: &DynamicNode) -> Option<OntologyClass> {
         if let Value::Object(map) = &node.value
             && map.keys().len() == 2
             && map.contains_key("label")
@@ -20,7 +20,7 @@ impl ParsableNode<OntologyClass> for OntologyClass {
 }
 
 impl ParsableNode<PhenotypicFeature> for PhenotypicFeature {
-    fn parse(node: &Node) -> Option<PhenotypicFeature> {
+    fn parse(node: &DynamicNode) -> Option<PhenotypicFeature> {
         if let Value::Object(map) = &node.value
             && map.contains_key("type")
             && let Ok(phenotypic_feature) =
@@ -34,7 +34,7 @@ impl ParsableNode<PhenotypicFeature> for PhenotypicFeature {
 }
 
 impl ParsableNode<Phenopacket> for Phenopacket {
-    fn parse(node: &Node) -> Option<Phenopacket> {
+    fn parse(node: &DynamicNode) -> Option<Phenopacket> {
         if let Value::Object(map) = &node.value
             && map.contains_key("id")
             && map.contains_key("metaData")
@@ -49,7 +49,7 @@ impl ParsableNode<Phenopacket> for Phenopacket {
 }
 
 impl ParsableNode<VitalStatus> for VitalStatus {
-    fn parse(node: &Node) -> Option<VitalStatus> {
+    fn parse(node: &DynamicNode) -> Option<VitalStatus> {
         if let Value::Object(map) = &node.value
             && map.contains_key("status")
             && let Ok(pp) = serde_json::from_value::<VitalStatus>(node.value.clone())

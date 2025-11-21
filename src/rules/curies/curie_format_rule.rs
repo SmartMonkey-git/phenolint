@@ -2,7 +2,7 @@ use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
 use crate::linter_context::LinterContext;
 use crate::rules::rule_registration::RuleRegistration;
-use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext, SupplyRule};
+use crate::rules::traits::{LintData, LintRule, RuleCheck, RuleFromContext};
 use crate::tree::pointer::Pointer;
 use phenolint_macros::register_rule;
 use phenopackets::schema::v2::core::OntologyClass;
@@ -18,7 +18,7 @@ use std::collections::HashMap;
 /// Matching incorrectly formatted ID's back to their original sources can cause problems, when
 /// computationally using the phenopacket.
 #[derive(Debug)]
-#[register_rule(id = "CURIE001",  tagets=[OntologyClass])]
+// #[register_rule(id = "CURIE001",  tagets=[OntologyClass])]
 pub struct CurieFormatRule {
     regex: Regex,
     targets: HashMap<Pointer, OntologyClass>,
@@ -33,13 +33,9 @@ impl RuleFromContext for CurieFormatRule {
     }
 }
 
-impl SupplyRule<OntologyClass> for CurieFormatRule {
-    fn supply_rule(&mut self, pointer: &Pointer, node: &OntologyClass) {
-        self.targets.insert(pointer.clone(), node.clone());
-    }
-}
-
 impl RuleCheck for CurieFormatRule {
+    type Data<'a> = dyn LintData<'a>;
+
     fn check(&self) -> Vec<LintViolation> {
         let mut violations = vec![];
 

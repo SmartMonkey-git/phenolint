@@ -3,8 +3,6 @@ use crate::diagnostics::LintViolation;
 use crate::rules::rule_registration::RuleRegistration;
 use crate::tree::pointer::Pointer;
 use std::any::Any;
-use std::sync::Arc;
-use std::sync::OnceLock;
 
 use crate::error::FromContextError;
 use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};

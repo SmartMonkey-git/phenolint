@@ -3,7 +3,7 @@ use crate::diagnostics::LintViolation;
 use crate::report::report_registration::ReportRegistration;
 use crate::report::specs::ReportSpecs;
 use crate::report::traits::{CompileReport, RegisterableReport, RuleReport};
-use crate::tree::node::Node;
+use crate::tree::node::DynamicNode;
 use log::warn;
 use std::collections::HashMap;
 
@@ -21,7 +21,7 @@ impl ReportRegistry {
     pub fn get_report_for(
         &self,
         rule_id: &str,
-        value: &Node,
+        value: &DynamicNode,
         violation: &LintViolation,
     ) -> Option<ReportSpecs> {
         self.report_compiler

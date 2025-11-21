@@ -3,7 +3,7 @@ use crate::diagnostics::LintViolation;
 use crate::patches::patch::Patch;
 use crate::patches::patch_registration::PatchRegistration;
 use crate::patches::traits::{CompilePatches, RegisterablePatch, RulePatch};
-use crate::tree::node::Node;
+use crate::tree::node::DynamicNode;
 use log::warn;
 use std::collections::HashMap;
 
@@ -20,7 +20,7 @@ impl PatchRegistry {
     pub fn get_patches_for(
         &self,
         rule_id: &str,
-        value: &Node,
+        value: &DynamicNode,
         violation: &LintViolation,
     ) -> Vec<Patch> {
         if let Some(patch_compiler) = self.patches.get(rule_id) {

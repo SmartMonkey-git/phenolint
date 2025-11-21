@@ -38,17 +38,6 @@ pub fn register_rule(attr: TokenStream, item: TokenStream) -> TokenStream {
 
             fn as_any_mut(&mut self) -> &mut dyn Any { self }
 
-            fn supply_node_any(&mut self, node: &dyn Any, pointer: &Pointer) {
-
-                #(
-                    if let Some(typed_node) = node.downcast_ref::<#targets>() {
-                        <Self as SupplyRule<#targets>>::supply_rule(self, pointer, typed_node);
-                        return;
-                    }
-                )*
-
-
-            }
         }
 
         inventory::submit! {

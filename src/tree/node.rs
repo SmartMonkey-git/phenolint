@@ -2,19 +2,20 @@
 
 use crate::tree::pointer::Pointer;
 use serde_json::Value;
+use std::any::Any;
 use std::collections::HashMap;
 use std::ops::Range;
 
 #[derive()]
-pub struct Node {
+pub struct DynamicNode {
     pub value: Value,
     pub spans: HashMap<Pointer, Range<usize>>,
     pub pointer: Pointer,
 }
 
-impl Node {
+impl DynamicNode {
     pub fn new(value: &Value, span: &HashMap<Pointer, Range<usize>>, pointer: Pointer) -> Self {
-        Node {
+        DynamicNode {
             value: value.clone(),
             spans: span.clone(),
             pointer,
@@ -31,4 +32,10 @@ impl Node {
     pub fn pointer(&self) -> Pointer {
         self.pointer.clone()
     }
+}
+
+pub struct MaterializedNode {
+    pub materialized_node: Box<dyn Any>,
+    pub spans: HashMap<Pointer, Range<usize>>,
+    pub pointer: Pointer,
 }

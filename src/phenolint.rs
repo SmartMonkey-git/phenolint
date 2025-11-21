@@ -1,4 +1,5 @@
 use crate::LinterContext;
+use crate::blackboard::BlackBoard;
 use crate::diagnostics::enums::PhenopacketData;
 use crate::diagnostics::{LintFinding, LintReport};
 use crate::enums::InputTypes;
@@ -13,12 +14,14 @@ use crate::schema_validation::validator::PhenopacketSchemaValidator;
 use crate::supplier::NodeSupplier;
 use crate::traits::Lint;
 use crate::tree::abstract_pheno_tree::AbstractTreeTraversal;
-use crate::tree::node::Node;
+use crate::tree::node::{DynamicNode, MaterializedNode};
 use crate::tree::pointer::Pointer;
 use log::{error, warn};
 use phenopackets::schema::v2::Phenopacket;
 use prost::Message;
 use serde_json::Value;
+use std::any::TypeId;
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
@@ -82,11 +85,15 @@ impl Lint<str> for Phenolint {
         }
 
         let apt = AbstractTreeTraversal::new(&values, &spans);
+        let mut blackboards: BlackBoard = BlackBoard::new();
+
         for node in apt.traverse() {
-            self.supplier.supply_rules(&node, &mut self.rule_registry);
+            if let Some(m_node) = self.supplier.supply_rules(&node) {
+                blackboards.insert(m_node);
+            }
         }
 
-        let root_node = Node {
+        let root_node = DynamicNode {
             value: values.clone(),
             spans,
             pointer: Pointer::at_root(),
@@ -94,7 +101,7 @@ impl Lint<str> for Phenolint {
 
         let mut findings = vec![];
         for rule in self.rule_registry.rules() {
-            let violations = rule.check();
+            let violations = rule.check_erased(&blackboards);
 
             for violation in violations {
                 let patches =
