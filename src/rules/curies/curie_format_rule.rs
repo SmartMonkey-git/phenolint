@@ -31,7 +31,7 @@ impl RuleFromContext for CurieFormatRule {
 }
 
 impl RuleCheck for CurieFormatRule {
-    type Data<'a> = (List<'a, OntologyClass>, List<'a, PhenotypicFeature>);
+    type Data<'a> = List<'a, OntologyClass>;
 
     fn check(&self, data: Self::Data<'_>) -> Vec<LintViolation> {
         let mut violations = vec![];

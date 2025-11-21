@@ -12,37 +12,38 @@ Add your implementation to: `src/rules`
 use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
 use crate::linter_context::LinterContext;
-use crate::rules::traits::{BoxedRuleCheck, RuleCheck, RuleFromContext};
-use crate::tree::node::Node;
-use crate::tree::pointer::Pointer;
+use crate::rules::rule_registration::RuleRegistration;
+use crate::rules::traits::RuleMetaData;
+use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
+use crate::tree::node_repository::List;
 use phenolint_macros::register_rule;
-use phenopackets::schema::v2::Phenopacket;
+use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
+use regex::Regex;
 
-/// # CUST001
+/// ### CUST001
 /// ## What it does
 /// Nothing really. It's here to check if custom implementations work.
 ///
 /// ## Why is this bad?
 /// Don't know. Ask Deep Thought.
-#[register_rule(id = "CUST001")] // TODO: Change the ID to a unique one.
+#[register_rule(id = "CUST001")] // <---- TODO: Set a unique Rule id here.
 struct CustomRule;
 
 impl RuleFromContext for CustomRule {
-    fn from_context(
-        _: &LinterContext,
-    ) -> Result<BoxedRuleCheck<Self::CheckType>, FromContextError> { // TODO: Think about if your rule needs any dependencies.
-        Ok(Box::new(CustomRule))
+    fn from_context(_: &LinterContext) -> Result<Box<dyn LintRule>, FromContextError> {
+        Ok(Box::new(CustomRule)) // <---- TODO: Think about how to instantiate your rule. Context contains dependencies some rules needs.
     }
 }
 
 impl RuleCheck for CustomRule {
-    type CheckType = Phenopacket; // <--- TODO: Choose which part of the phenopacket your rule should be linting.
+    type Data<'a> = (List<'a, OntologyClass>, List<'a, PhenotypicFeature>); //<--- TODO: Here you state the node types that your rule need. Can be up to three using a tuple notation 
 
-    // Checks whether the part of the phenopacket violates the rule or not. If it does, this should return a LintViolation for each transgression.
-    fn check(&self, _: &Self::CheckType, node: &Node) -> Vec<LintViolation> {
+    fn check(&self, data: Self::Data<'_>) -> Vec<LintViolation> {
+        data.0; //<--- Access OntologyClasses
+        data.1; //<--- Access PhenotypicFeatures
         vec![LintViolation::new(
-            Self::RULE_ID,
-            vec![Pointer::new(node.pointer.clone().down("id").position())],
+            LintRule::rule_id(self),
+            vec![Pointer::at_root().down("id").clone()],
         )]
     }
 }
@@ -76,7 +77,7 @@ impl PatchFromContext for CustomRulePatchCompiler {
 impl CompilePatches for CustomRulePatchCompiler {
     // This function should return one or multiple patches per violation.
     // It should only return several patches, if there is more than one way to fix the violation and both would lead to a different phenopacket. 
-    fn compile_patches(&self, node: &Node, _: &LintViolation) -> Vec<Patch> {
+    fn compile_patches(&self, full_node: &DynamicNode, violation: &LintViolation) -> Vec<Patch> {
         vec![Patch::new(vec![PatchInstruction::Remove {
             at: node.pointer.clone().down("id").clone(),
         }])]
@@ -100,7 +101,7 @@ impl ReportFromContext for CustomRuleReportCompiler {
 impl CompileReport for CustomRuleReportCompiler {
     // You probably want to try out some settings and configurations with this object to find out how your report is printed.
     // You just need to implement the ReportSpecs.
-    fn compile_report(&self, node: &Node, violation: &LintViolation) -> ReportSpecs {
+    fn compile_report(&self, full_node: &DynamicNode, violation: &LintViolation) -> ReportSpecs { // <-- TODO: Is currently receiving the full node. Later on will only receive violated nodes and their children. You can get the values and spans you need using the pointers in the violation.
         ReportSpecs::new(DiagnosticSpec {
             severity: Severity::Help,
             code: Self::RULE_ID.to_string(),
