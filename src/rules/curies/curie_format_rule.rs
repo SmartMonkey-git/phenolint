@@ -19,22 +19,15 @@ use std::collections::HashMap;
 /// Matching incorrectly formatted ID's back to their original sources can cause problems, when
 /// computationally using the phenopacket.
 #[derive(Debug)]
-// #[register_rule(id = "CURIE001",  tagets=[OntologyClass])]
+#[register_rule(id = "CURIE001")]
 pub struct CurieFormatRule {
     regex: Regex,
-    targets: HashMap<Pointer, OntologyClass>,
 }
 
-impl RuleMetaData for CurieFormatRule {
-    fn rule_id(&self) -> &str {
-        "CURIE001"
-    }
-}
 impl RuleFromContext for CurieFormatRule {
     fn from_context(_: &LinterContext) -> Result<Box<dyn LintRule>, FromContextError> {
         Ok(Box::new(CurieFormatRule {
             regex: Regex::new("^[A-Z][A-Z0-9_]+:[A-Za-z0-9_]+$").expect("Invalid regex"),
-            targets: HashMap::new(),
         }))
     }
 }
@@ -45,9 +38,9 @@ impl RuleCheck for CurieFormatRule {
     fn check(&self, data: Self::Data<'_>) -> Vec<LintViolation> {
         let mut violations = vec![];
 
-        for (ptr, oc) in self.targets.iter() {
-            if !self.regex.is_match(&oc.id) {
-                let mut ptr = ptr.clone();
+        for node in data.0.iter() {
+            if !self.regex.is_match(&node.materialized_node.id) {
+                let mut ptr = node.pointer.clone();
                 ptr.down("id");
 
                 violations.push(LintViolation::new(LintRule::rule_id(self), vec![ptr]))

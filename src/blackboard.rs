@@ -1,7 +1,9 @@
 use crate::rules::traits::LintData;
 use crate::tree::node::MaterializedNode;
+use crate::tree::pointer::Pointer;
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
+use std::ops::Deref;
 
 #[derive(Default)]
 pub struct BlackBoard {
@@ -31,17 +33,36 @@ impl BlackBoard {
             .unwrap()
             .push(node);
     }
+
+    pub fn node_by_pointer<T: 'static>(&self, ptr: &Pointer) -> Option<&MaterializedNode<T>> {
+        for nodes in self.board.values() {
+            let casted_node = nodes
+                .downcast_ref::<Vec<MaterializedNode<T>>>()
+                .expect("Should be downcastable");
+
+            for node in casted_node.iter() {
+                if &node.pointer == ptr {
+                    return Some(node);
+                }
+            }
+        }
+        None
+    }
 }
 
-pub struct List<'a, T: 'static>(pub Vec<&'a T>);
+pub struct List<'a, T: 'static>(pub &'a [MaterializedNode<T>]);
+
+impl<'a, T> Deref for List<'a, T> {
+    type Target = &'a [MaterializedNode<T>];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 impl<'a, T> LintData<'a> for List<'a, T> {
     fn fetch(board: &'a BlackBoard) -> Self {
-        let nodes = board.get_raw::<T>();
-
-        let a: Vec<&T> = nodes.iter().map(|node| &node.materialized_node).collect();
-
-        List(a)
+        List(board.get_raw::<T>())
     }
 }
 

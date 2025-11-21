@@ -43,10 +43,13 @@ impl RuleFromContext for CustomRule {
 }
 
 impl RuleCheck for CustomRule {
-    type Data<'a> = (List<'a, OntologyClass>);
+    type Data<'a> = List<'a, OntologyClass>;
 
     fn check(&self, data: Self::Data<'_>) -> Vec<LintViolation> {
-        vec![LintViolation::new(self.rule_id(), vec![Pointer::at_root()])]
+        vec![LintViolation::new(
+            LintRule::rule_id(self),
+            vec![Pointer::at_root()],
+        )]
     }
 }
 

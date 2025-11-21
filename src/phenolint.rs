@@ -14,14 +14,13 @@ use crate::schema_validation::validator::PhenopacketSchemaValidator;
 use crate::supplier::NodeSupplier;
 use crate::traits::Lint;
 use crate::tree::abstract_pheno_tree::AbstractTreeTraversal;
-use crate::tree::node::{DynamicNode, MaterializedNode};
+use crate::tree::node::DynamicNode;
 use crate::tree::pointer::Pointer;
 use log::{error, warn};
 use phenopackets::schema::v2::Phenopacket;
 use prost::Message;
 use serde_json::Value;
-use std::any::TypeId;
-use std::collections::HashMap;
+
 use std::fs;
 use std::path::PathBuf;
 
