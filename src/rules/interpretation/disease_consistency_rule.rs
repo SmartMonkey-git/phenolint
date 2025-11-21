@@ -1,12 +1,14 @@
 use crate::LinterContext;
+use crate::blackboard::List;
 use crate::diagnostics::LintViolation;
-use crate::rules::rule_registration::RuleRegistration;
-use crate::tree::pointer::Pointer;
-use std::any::Any;
-
 use crate::error::FromContextError;
+use crate::rules::rule_registration::RuleRegistration;
+use crate::rules::traits::RuleMetaData;
 use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
+use crate::tree::pointer::Pointer;
 use phenolint_macros::register_rule;
+use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
+use std::any::Any;
 
 #[derive(Debug, Default)]
 /// ### INTER001
@@ -25,7 +27,9 @@ impl RuleFromContext for DiseaseConsistencyRule {
 }
 
 impl RuleCheck for DiseaseConsistencyRule {
-    fn check(&self) -> Vec<LintViolation> {
+    type Data<'a> = (List<'a, OntologyClass>, List<'a, PhenotypicFeature>);
+
+    fn check(&self, data: Self::Data<'_>) -> Vec<LintViolation> {
         todo!()
     }
 }

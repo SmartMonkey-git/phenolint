@@ -12,12 +12,13 @@ use syn::{Item, ItemStruct, parse_macro_input};
 #[proc_macro_attribute]
 pub fn register_rule(attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as Item);
-    let args = parse_macro_input!(attr as RuleArgs);
     let doc_string = extract_doc_string(&input);
+    let rule_id = match extract_rule_id(&attr) {
+        Ok(rule_id) => rule_id,
+        Err(err) => panic!("{}", err),
+    };
 
-    eprintln!("{:?}", args.id);
-    eprintln!("{:?}", args.targets);
-    check_rule_docs_format(&doc_string, &args.id);
+    check_rule_docs_format(&doc_string, &rule_id);
     let struct_name = match &input {
         Item::Struct(item_struct) => &item_struct.ident,
         _ => panic!("register_rule can only be applied to structs"),
@@ -25,19 +26,12 @@ pub fn register_rule(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let upper_snake_case_struct_name = struct_name.to_string().to_case(Case::Snake).to_uppercase();
     let upper_snake_case_struct = Ident2::new(&upper_snake_case_struct_name, Span2::call_site());
-    let rule_id = args.id.clone();
-    let targets = &args.targets;
 
     let expanded = quote! {
         #input
 
-        impl LintRule for #struct_name {
+        impl RuleMetaData for #struct_name {
             fn rule_id(&self) -> &str { #rule_id }
-
-            fn as_any(&self) -> &dyn Any { self }
-
-            fn as_any_mut(&mut self) -> &mut dyn Any { self }
-
         }
 
         inventory::submit! {

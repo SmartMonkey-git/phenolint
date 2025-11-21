@@ -1,5 +1,4 @@
 use crate::LinterContext;
-use crate::report::traits::RuleReport;
 use crate::rules::rule_registration::{RuleRegistration, all_rule_ids};
 use crate::rules::traits::LintRule;
 use log::warn;
@@ -72,6 +71,7 @@ pub(crate) fn check_duplicate_rule_ids() {
 #[cfg(test)]
 mod tests {
     use crate::LinterContext;
+    use crate::blackboard::List;
     use crate::diagnostics::LintViolation;
     use crate::error::FromContextError;
     use crate::rules::rule_registration::RuleRegistration;
@@ -79,8 +79,10 @@ mod tests {
     use crate::rules::traits::LintRule;
     use crate::rules::traits::RuleCheck;
     use crate::rules::traits::RuleFromContext;
+    use crate::rules::traits::RuleMetaData;
     use crate::tree::pointer::Pointer;
     use phenolint_macros::register_rule;
+    use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
     use rstest::rstest;
     use std::any::Any;
     use std::sync::OnceLock;
@@ -100,7 +102,9 @@ mod tests {
         }
     }
     impl RuleCheck for TestRule {
-        fn check(&self) -> Vec<LintViolation> {
+        type Data<'a> = (List<'a, OntologyClass>);
+
+        fn check(&self, data: Self::Data<'_>) -> Vec<LintViolation> {
             todo!()
         }
     }

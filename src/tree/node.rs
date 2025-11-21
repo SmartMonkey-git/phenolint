@@ -34,8 +34,8 @@ impl DynamicNode {
     }
 }
 
-pub struct MaterializedNode {
-    pub materialized_node: Box<dyn Any>,
+pub struct MaterializedNode<T> {
+    pub materialized_node: T,
     pub spans: HashMap<Pointer, Range<usize>>,
     pub pointer: Pointer,
 }

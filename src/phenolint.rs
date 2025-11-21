@@ -88,9 +88,7 @@ impl Lint<str> for Phenolint {
         let mut blackboards: BlackBoard = BlackBoard::new();
 
         for node in apt.traverse() {
-            if let Some(m_node) = self.supplier.supply_rules(&node) {
-                blackboards.insert(m_node);
-            }
+            self.supplier.supply_rules(&node, &mut blackboards)
         }
 
         let root_node = DynamicNode {

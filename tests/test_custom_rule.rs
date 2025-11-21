@@ -3,11 +3,13 @@ use crate::common::assets::json_phenopacket;
 use phenolint::patches::patch_registration::PatchRegistration;
 use phenolint::report::report_registration::ReportRegistration;
 use phenolint::rules::rule_registration::RuleRegistration;
+use phenolint::rules::traits::RuleMetaData;
 use std::any::Any;
 
 use crate::common::test_functions::run_rule_test;
 use codespan_reporting::diagnostic::{LabelStyle, Severity};
 use phenolint::LinterContext;
+use phenolint::blackboard::List;
 use phenolint::diagnostics::LintViolation;
 use phenolint::error::FromContextError;
 use phenolint::patches::enums::PatchInstruction;
@@ -21,6 +23,7 @@ use phenolint::tree::node::DynamicNode;
 use phenolint::tree::pointer::Pointer;
 use phenolint_macros::{register_patch, register_report, register_rule};
 use phenopackets::schema::v2::Phenopacket;
+use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
 use rstest::rstest;
 
 mod common;
@@ -40,11 +43,10 @@ impl RuleFromContext for CustomRule {
 }
 
 impl RuleCheck for CustomRule {
-    fn check(&self) -> Vec<LintViolation> {
-        vec![LintViolation::new(
-            self.rule_id(),
-            vec![Pointer::new("/id")],
-        )]
+    type Data<'a> = (List<'a, OntologyClass>);
+
+    fn check(&self, data: Self::Data<'_>) -> Vec<LintViolation> {
+        vec![LintViolation::new(self.rule_id(), vec![Pointer::at_root()])]
     }
 }
 

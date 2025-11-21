@@ -1,11 +1,12 @@
+use crate::blackboard::{BlackBoard, List};
 use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
 use crate::linter_context::LinterContext;
 use crate::rules::rule_registration::RuleRegistration;
-use crate::rules::traits::{LintData, LintRule, RuleCheck, RuleFromContext};
+use crate::rules::traits::{LintData, LintRule, RuleCheck, RuleFromContext, RuleMetaData};
 use crate::tree::pointer::Pointer;
 use phenolint_macros::register_rule;
-use phenopackets::schema::v2::core::OntologyClass;
+use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
 use regex::Regex;
 use std::any::Any;
 use std::collections::HashMap;
@@ -24,6 +25,11 @@ pub struct CurieFormatRule {
     targets: HashMap<Pointer, OntologyClass>,
 }
 
+impl RuleMetaData for CurieFormatRule {
+    fn rule_id(&self) -> &str {
+        "CURIE001"
+    }
+}
 impl RuleFromContext for CurieFormatRule {
     fn from_context(_: &LinterContext) -> Result<Box<dyn LintRule>, FromContextError> {
         Ok(Box::new(CurieFormatRule {
@@ -34,9 +40,9 @@ impl RuleFromContext for CurieFormatRule {
 }
 
 impl RuleCheck for CurieFormatRule {
-    type Data<'a> = dyn LintData<'a>;
+    type Data<'a> = (List<'a, OntologyClass>, List<'a, PhenotypicFeature>);
 
-    fn check(&self) -> Vec<LintViolation> {
+    fn check(&self, data: Self::Data<'_>) -> Vec<LintViolation> {
         let mut violations = vec![];
 
         for (ptr, oc) in self.targets.iter() {
@@ -44,7 +50,7 @@ impl RuleCheck for CurieFormatRule {
                 let mut ptr = ptr.clone();
                 ptr.down("id");
 
-                violations.push(LintViolation::new(self.rule_id(), vec![ptr]))
+                violations.push(LintViolation::new(LintRule::rule_id(self), vec![ptr]))
             }
         }
 
