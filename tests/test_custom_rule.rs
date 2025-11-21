@@ -2,6 +2,7 @@ use crate::common::asserts::LintResultAssertSettings;
 use crate::common::assets::json_phenopacket;
 use phenolint::patches::patch_registration::PatchRegistration;
 use phenolint::report::report_registration::ReportRegistration;
+use phenolint::rules::rule_registration::RuleRegistration;
 use std::any::Any;
 
 use crate::common::test_functions::run_rule_test;
@@ -14,7 +15,6 @@ use phenolint::patches::patch::Patch;
 use phenolint::patches::traits::{CompilePatches, PatchFromContext, RegisterablePatch, RulePatch};
 use phenolint::report::specs::{DiagnosticSpec, LabelSpecs, ReportSpecs};
 use phenolint::report::traits::{CompileReport, RegisterableReport, ReportFromContext, RuleReport};
-use phenolint::rules::rule_registry::LintingPolicy;
 use phenolint::rules::traits::{BoxedRuleCheck, LintRule};
 use phenolint::rules::traits::{RuleCheck, RuleFromContext};
 use phenolint::tree::node::Node;
@@ -22,8 +22,6 @@ use phenolint::tree::pointer::Pointer;
 use phenolint_macros::{register_patch, register_report, register_rule};
 use phenopackets::schema::v2::Phenopacket;
 use rstest::rstest;
-use std::sync::Arc;
-use std::sync::OnceLock;
 
 mod common;
 /// ### CUST001
@@ -43,7 +41,10 @@ impl RuleFromContext for CustomRule {
 
 impl RuleCheck for CustomRule {
     fn check(&self) -> Vec<LintViolation> {
-        vec![LintViolation::new(self.rule_id(), vec![Pointer::at_root()])]
+        vec![LintViolation::new(
+            self.rule_id(),
+            vec![Pointer::new("/id")],
+        )]
     }
 }
 
@@ -74,14 +75,14 @@ impl ReportFromContext for CustomRuleReportCompiler {
 }
 
 impl CompileReport for CustomRuleReportCompiler {
-    fn compile_report(&self, node: &Node, violation: &LintViolation) -> ReportSpecs {
+    fn compile_report(&self, full_node: &Node, violation: &LintViolation) -> ReportSpecs {
         ReportSpecs::new(DiagnosticSpec {
             severity: Severity::Help,
             code: Self::RULE_ID.to_string(),
             message: "This is a custom violation".to_string(),
             labels: vec![LabelSpecs {
                 style: LabelStyle::Primary,
-                range: node
+                range: full_node
                     .span(
                         violation
                             .at()

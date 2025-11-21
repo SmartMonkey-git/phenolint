@@ -5,7 +5,7 @@ use crate::patches::patch::Patch;
 use crate::tree::node::Node;
 
 pub trait RegisterablePatch: Send + Sync {
-    fn compile_patches(&self, value: &Node, lint_violation: &LintViolation) -> Vec<Patch>;
+    fn compile_patches(&self, full_node: &Node, lint_violation: &LintViolation) -> Vec<Patch>;
     fn rule_id(&self) -> String;
 }
 

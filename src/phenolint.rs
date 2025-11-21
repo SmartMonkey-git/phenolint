@@ -1,6 +1,6 @@
 use crate::LinterContext;
-use crate::diagnostics::LintReport;
 use crate::diagnostics::enums::PhenopacketData;
+use crate::diagnostics::{LintFinding, LintReport};
 use crate::enums::InputTypes;
 use crate::error::{InitError, LintResult, LinterError, ParsingError, validation_error_to_string};
 use crate::parsing::phenopacket_parser::PhenopacketParser;
@@ -8,11 +8,13 @@ use crate::patches::patch_engine::PatchEngine;
 use crate::patches::patch_registry::PatchRegistry;
 use crate::report::parser::ReportParser;
 use crate::report::report_registry::ReportRegistry;
-use crate::router::NodeRouter;
-use crate::rules::rule_registry::check_duplicate_rule_ids;
+use crate::rules::rule_registry::{RuleRegistry, check_duplicate_rule_ids};
 use crate::schema_validation::validator::PhenopacketSchemaValidator;
+use crate::supplier::NodeSupplier;
 use crate::traits::Lint;
 use crate::tree::abstract_pheno_tree::AbstractTreeTraversal;
+use crate::tree::node::Node;
+use crate::tree::pointer::Pointer;
 use log::{error, warn};
 use phenopackets::schema::v2::Phenopacket;
 use prost::Message;
@@ -21,8 +23,10 @@ use std::fs;
 use std::path::PathBuf;
 
 pub struct Phenolint {
-    context: LinterContext,
-    router: NodeRouter,
+    rule_registry: RuleRegistry,
+    patch_registry: PatchRegistry,
+    report_registry: ReportRegistry,
+    supplier: NodeSupplier,
     patch_engine: PatchEngine,
     validator: PhenopacketSchemaValidator,
 }
@@ -31,12 +35,15 @@ impl Phenolint {
     pub fn new(context: LinterContext, rule_ids: Vec<String>) -> Self {
         check_duplicate_rule_ids();
 
+        let rule_registry = RuleRegistry::with_enabled_rules(rule_ids.as_slice(), &context);
         let report_registry = ReportRegistry::with_enabled_reports(rule_ids.as_slice(), &context);
         let patch_registry = PatchRegistry::with_enabled_patches(rule_ids.as_slice(), &context);
 
         Phenolint {
-            context,
-            router: NodeRouter::new(rule_ids, report_registry, patch_registry),
+            rule_registry,
+            report_registry,
+            patch_registry,
+            supplier: NodeSupplier,
             patch_engine: PatchEngine,
             validator: PhenopacketSchemaValidator::default(),
         }
@@ -76,15 +83,38 @@ impl Lint<str> for Phenolint {
 
         let apt = AbstractTreeTraversal::new(&values, &spans);
         for node in apt.traverse() {
-            let findings = self.router.lint_node(&node, &mut self.context);
-            report.extend_finding(findings);
+            self.supplier.supply_rules(&node, &mut self.rule_registry);
         }
+
+        let root_node = Node {
+            value: values.clone(),
+            spans,
+            pointer: Pointer::at_root(),
+        };
+
+        let mut findings = vec![];
+        for rule in self.rule_registry.rules() {
+            let violations = rule.check();
+
+            for violation in violations {
+                let patches =
+                    self.patch_registry
+                        .get_patches_for(rule.rule_id(), &root_node, &violation);
+
+                let report =
+                    self.report_registry
+                        .get_report_for(rule.rule_id(), &root_node, &violation);
+
+                findings.push(LintFinding::new(violation, report, patches));
+            }
+        }
+        report.extend_finding(findings);
 
         if !quit {
             Self::emit(phenostr, &report);
         }
 
-        if patch && report.has_patches() {
+        if patch & report.has_patches() {
             match self.patch_engine.patch(&values, report.patches()) {
                 Ok(patched_phenopacket) => {
                     match convert_phenopacket_to_input_type_str(&patched_phenopacket, input_type) {

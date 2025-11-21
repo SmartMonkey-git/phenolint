@@ -10,8 +10,8 @@ pub(crate) mod parsing;
 pub mod patches;
 pub mod phenolint;
 pub mod report;
-mod router;
 mod schema_validation;
+mod supplier;
 #[cfg(test)]
 pub(crate) mod test_utils;
 pub mod traits;

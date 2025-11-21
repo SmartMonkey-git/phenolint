@@ -25,7 +25,7 @@ impl<T: CompileReport + Send + RuleReport> RegisterableReport for T {
 }
 
 pub trait CompileReport {
-    fn compile_report(&self, node: &Node, lint_violation: &LintViolation) -> ReportSpecs;
+    fn compile_report(&self, full_node: &Node, lint_violation: &LintViolation) -> ReportSpecs;
 }
 
 pub trait ReportFromContext {

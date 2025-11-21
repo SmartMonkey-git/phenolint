@@ -24,14 +24,15 @@ impl ReportFromContext for CurieFormatReport {
 impl CompileReport for CurieFormatReport {
     #[allow(unused)]
     fn compile_report(&self, node: &Node, lint_violation: &LintViolation) -> ReportSpecs {
-        let curie = node.value(Pointer::new("id"));
+        let violation_ptr = lint_violation.at().first().unwrap().clone();
+        let curie = node.value(&violation_ptr);
         ReportSpecs::new(DiagnosticSpec {
             severity: Severity::Error,
             code: Self::RULE_ID.to_string(),
             message: format!("CURIE formatted wrong: {}", curie),
             labels: vec![LabelSpecs {
                 style: LabelStyle::Primary,
-                range: node.span(&node.pointer).unwrap().clone(),
+                range: node.span(&violation_ptr).unwrap().clone(),
                 message: String::default(),
             }],
             notes: vec![],

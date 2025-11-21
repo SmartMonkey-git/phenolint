@@ -1,47 +1,60 @@
-use crate::error::FromContextError;
-use crate::linter_context::LinterContext;
+use crate::LinterContext;
+use crate::report::traits::RuleReport;
+use crate::rules::rule_registration::{RuleRegistration, all_rule_ids};
 use crate::rules::traits::LintRule;
-use std::collections::HashSet;
-use std::sync::Arc;
+use log::warn;
+use std::collections::{HashMap, HashSet};
 
-pub type RuleFactory = fn(context: &LinterContext) -> Rule;
-pub type Rule = Arc<Result<Box<dyn LintRule>, FromContextError>>;
-
-pub struct LintingPolicy {
-    pub rule_id: &'static str,
-    pub factory: RuleFactory,
+#[derive(Default)]
+pub struct RuleRegistry {
+    rules: HashMap<String, Box<dyn LintRule>>,
 }
 
-macro_rules! register_linting_policies {
-    () => {
-        inventory::collect!(LintingPolicy);
+impl RuleRegistry {
+    pub fn get(&self, rule_id: &str) -> Option<&Box<dyn LintRule>> {
+        self.rules.get(rule_id)
+    }
 
-        pub fn all_rule_ids() -> Vec<&'static str> {
-            let mut rule_ids = Vec::new();
+    pub fn get_mut(&mut self, rule_id: &str) -> Option<&mut Box<dyn LintRule>> {
+        self.rules.get_mut(rule_id)
+    }
 
-            fn gather(seen_ids: &mut Vec<&'static str>, type_name: &str)
-            where
-                LintingPolicy: inventory::Collect,
+    pub fn with_enabled_rules(enabled_rules: &[String], context: &LinterContext) -> Self {
+        let mut registry = HashMap::new();
+
+        for registration in inventory::iter::<RuleRegistration> {
+            if enabled_rules
+                .iter()
+                .any(|r_id| r_id == registration.rule_id)
             {
-                for r in inventory::iter::<LintingPolicy>() {
-                    if seen_ids.contains(&r.rule_id) {
-                        panic!(
-                            "rule {} already registered (found in {})",
-                            r.rule_id, type_name
-                        );
+                match (registration.factory)(context) {
+                    Ok(rule) => {
+                        registry.insert(registration.rule_id.to_string(), rule);
                     }
-                    seen_ids.push(r.rule_id);
+                    Err(err) => warn!("Failed to register patch: {}", err),
                 }
             }
-
-            gather(&mut rule_ids, stringify!($type));
-
-            rule_ids
         }
-    };
-}
 
-register_linting_policies!();
+        Self { rules: registry }
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&String, &Box<dyn LintRule>)> {
+        self.rules.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (&String, &mut Box<dyn LintRule>)> {
+        self.rules.iter_mut()
+    }
+
+    pub fn rules(&self) -> impl Iterator<Item = &Box<dyn LintRule>> {
+        self.rules.values()
+    }
+
+    pub fn rules_mut(&mut self) -> impl Iterator<Item = &mut Box<dyn LintRule>> {
+        self.rules.values_mut()
+    }
+}
 
 pub(crate) fn check_duplicate_rule_ids() {
     let all_rule_ids = all_rule_ids();
@@ -60,9 +73,8 @@ pub(crate) fn check_duplicate_rule_ids() {
 mod tests {
     use crate::LinterContext;
     use crate::diagnostics::LintViolation;
-    use crate::rules::rule_registry::Arc;
-    use crate::rules::rule_registry::FromContextError;
-    use crate::rules::rule_registry::LintingPolicy;
+    use crate::error::FromContextError;
+    use crate::rules::rule_registration::RuleRegistration;
     use crate::rules::rule_registry::check_duplicate_rule_ids;
     use crate::rules::traits::LintRule;
     use crate::rules::traits::RuleCheck;

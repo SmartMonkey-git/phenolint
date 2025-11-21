@@ -51,15 +51,11 @@ pub fn register_rule(attr: TokenStream, item: TokenStream) -> TokenStream {
             }
         }
 
-        static #upper_snake_case_struct: OnceLock<Arc<Result<Box<dyn LintRule>, FromContextError>>> = OnceLock::new();
-
         inventory::submit! {
-            LintingPolicy {
+            RuleRegistration {
                 rule_id: #rule_id,
                 factory: |context: &LinterContext| {
-                    Arc::clone(#upper_snake_case_struct.get_or_init(|| {
-                        Arc::new(#struct_name::from_context(context))
-                    }))
+                    #struct_name::from_context(context)
                 },
             }
         }

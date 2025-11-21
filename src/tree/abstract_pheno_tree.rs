@@ -25,7 +25,7 @@ impl AbstractTreeTraversal {
         Box::new(std::iter::from_fn(move || {
             #[allow(clippy::never_loop)]
             while let Some(current_node) = queue.pop_front() {
-                match current_node.value(Pointer::at_root()) {
+                match current_node.value(&Pointer::at_root()) {
                     Value::Array(ref list) => {
                         for (i, val) in list.iter().enumerate() {
                             let mut new_pointer = current_node.pointer().clone();

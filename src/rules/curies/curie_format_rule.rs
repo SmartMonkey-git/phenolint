@@ -1,7 +1,7 @@
 use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
 use crate::linter_context::LinterContext;
-use crate::rules::rule_registry::LintingPolicy;
+use crate::rules::rule_registration::RuleRegistration;
 use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext, SupplyRule};
 use crate::tree::pointer::Pointer;
 use phenolint_macros::register_rule;
@@ -9,8 +9,6 @@ use phenopackets::schema::v2::core::OntologyClass;
 use regex::Regex;
 use std::any::Any;
 use std::collections::HashMap;
-use std::sync::Arc;
-use std::sync::OnceLock;
 
 /// ### CURIE001
 /// ## What it does

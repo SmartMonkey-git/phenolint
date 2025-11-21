@@ -20,7 +20,7 @@ impl Node {
             pointer,
         }
     }
-    pub fn value(&self, ptr: Pointer) -> Value {
+    pub fn value(&self, ptr: &Pointer) -> Value {
         self.value.pointer(ptr.position()).unwrap().clone()
     }
 
