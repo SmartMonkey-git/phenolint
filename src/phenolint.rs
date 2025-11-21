@@ -1,9 +1,9 @@
 use crate::LinterContext;
-use crate::blackboard::BlackBoard;
 use crate::diagnostics::enums::PhenopacketData;
 use crate::diagnostics::{LintFinding, LintReport};
 use crate::enums::InputTypes;
 use crate::error::{InitError, LintResult, LinterError, ParsingError, validation_error_to_string};
+use crate::materializer::NodeMaterializer;
 use crate::parsing::phenopacket_parser::PhenopacketParser;
 use crate::patches::patch_engine::PatchEngine;
 use crate::patches::patch_registry::PatchRegistry;
@@ -11,10 +11,10 @@ use crate::report::parser::ReportParser;
 use crate::report::report_registry::ReportRegistry;
 use crate::rules::rule_registry::{RuleRegistry, check_duplicate_rule_ids};
 use crate::schema_validation::validator::PhenopacketSchemaValidator;
-use crate::supplier::NodeSupplier;
 use crate::traits::Lint;
 use crate::tree::abstract_pheno_tree::AbstractTreeTraversal;
 use crate::tree::node::DynamicNode;
+use crate::tree::node_repository::NodeRepository;
 use crate::tree::pointer::Pointer;
 use log::{error, warn};
 use phenopackets::schema::v2::Phenopacket;
@@ -28,7 +28,7 @@ pub struct Phenolint {
     rule_registry: RuleRegistry,
     patch_registry: PatchRegistry,
     report_registry: ReportRegistry,
-    supplier: NodeSupplier,
+    node_materializer: NodeMaterializer,
     patch_engine: PatchEngine,
     validator: PhenopacketSchemaValidator,
 }
@@ -45,7 +45,7 @@ impl Phenolint {
             rule_registry,
             report_registry,
             patch_registry,
-            supplier: NodeSupplier,
+            node_materializer: NodeMaterializer,
             patch_engine: PatchEngine,
             validator: PhenopacketSchemaValidator::default(),
         }
@@ -84,10 +84,11 @@ impl Lint<str> for Phenolint {
         }
 
         let apt = AbstractTreeTraversal::new(&values, &spans);
-        let mut blackboards: BlackBoard = BlackBoard::new();
+        let mut node_repo: NodeRepository = NodeRepository::new();
 
         for node in apt.traverse() {
-            self.supplier.supply_rules(&node, &mut blackboards)
+            self.node_materializer
+                .materialize_nodes(&node, &mut node_repo)
         }
 
         let root_node = DynamicNode {
@@ -98,7 +99,7 @@ impl Lint<str> for Phenolint {
 
         let mut findings = vec![];
         for rule in self.rule_registry.rules() {
-            let violations = rule.check_erased(&blackboards);
+            let violations = rule.check_erased(&node_repo);
 
             for violation in violations {
                 let patches =

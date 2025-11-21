@@ -1,32 +1,31 @@
-use crate::blackboard::BlackBoard;
 use crate::parsing::traits::ParsableNode;
 use crate::tree::node::{DynamicNode, MaterializedNode};
+use crate::tree::node_repository::NodeRepository;
 use log::error;
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature, VitalStatus};
-use std::any::{Any, TypeId};
 
-pub(crate) struct NodeSupplier;
+pub(crate) struct NodeMaterializer;
 
-impl NodeSupplier {
-    pub fn supply_rules(&mut self, dyn_node: &DynamicNode, mut board: &mut BlackBoard) {
+impl NodeMaterializer {
+    pub fn materialize_nodes(&mut self, dyn_node: &DynamicNode, repo: &mut NodeRepository) {
         if let Some(oc) = OntologyClass::parse(dyn_node) {
-            Self::insert_into_board(oc, dyn_node, &mut board);
+            Self::push_to_repo(oc, dyn_node, repo);
         } else if let Some(pf) = PhenotypicFeature::parse(dyn_node) {
-            Self::insert_into_board(pf, dyn_node, &mut board);
+            Self::push_to_repo(pf, dyn_node, repo);
         } else if let Some(pp) = Phenopacket::parse(dyn_node) {
-            Self::insert_into_board(pp, dyn_node, &mut board);
+            Self::push_to_repo(pp, dyn_node, repo);
         } else if let Some(vt) = VitalStatus::parse(dyn_node) {
-            Self::insert_into_board(vt, dyn_node, &mut board);
+            Self::push_to_repo(vt, dyn_node, repo);
         } else {
             error!("Unable to parse node at '{}'.", dyn_node.pointer);
         };
     }
 
-    fn insert_into_board<T: 'static>(
+    fn push_to_repo<T: 'static>(
         materialized: T,
         dyn_node: &DynamicNode,
-        board: &mut BlackBoard,
+        board: &mut NodeRepository,
     ) {
         let node = MaterializedNode {
             materialized_node: materialized,

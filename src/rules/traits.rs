@@ -1,12 +1,12 @@
 use crate::LinterContext;
-use crate::blackboard::BlackBoard;
 use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
+use crate::tree::node_repository::NodeRepository;
 
 pub trait LintRule: RuleFromContext + Send + Sync {
     fn rule_id(&self) -> &str;
 
-    fn check_erased(&self, board: &BlackBoard) -> Vec<LintViolation>;
+    fn check_erased(&self, board: &NodeRepository) -> Vec<LintViolation>;
 }
 
 pub trait RuleMetaData: Send + Sync {
@@ -33,7 +33,7 @@ where
         self.rule_id()
     }
 
-    fn check_erased(&self, board: &BlackBoard) -> Vec<LintViolation> {
+    fn check_erased(&self, board: &NodeRepository) -> Vec<LintViolation> {
         let data = <Self as RuleCheck>::Data::fetch(board);
 
         self.check(data)
@@ -41,7 +41,7 @@ where
 }
 
 pub trait LintData<'a> {
-    fn fetch(board: &'a BlackBoard) -> Self
+    fn fetch(board: &'a NodeRepository) -> Self
     where
         Self: Sized;
 }

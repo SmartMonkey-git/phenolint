@@ -6,13 +6,13 @@ use std::collections::HashMap;
 use std::ops::Deref;
 
 #[derive(Default)]
-pub struct BlackBoard {
+pub struct NodeRepository {
     board: HashMap<TypeId, Box<dyn Any>>,
 }
 
-impl BlackBoard {
-    pub fn new() -> BlackBoard {
-        BlackBoard {
+impl NodeRepository {
+    pub fn new() -> NodeRepository {
+        NodeRepository {
             board: HashMap::new(),
         }
     }
@@ -61,7 +61,7 @@ impl<'a, T> Deref for List<'a, T> {
 }
 
 impl<'a, T> LintData<'a> for List<'a, T> {
-    fn fetch(board: &'a BlackBoard) -> Self {
+    fn fetch(board: &'a NodeRepository) -> Self {
         List(board.get_raw::<T>())
     }
 }
@@ -71,7 +71,7 @@ where
     A: LintData<'a>,
     B: LintData<'a>,
 {
-    fn fetch(board: &'a BlackBoard) -> Self {
+    fn fetch(board: &'a NodeRepository) -> Self {
         (A::fetch(board), B::fetch(board))
     }
 }
@@ -83,7 +83,7 @@ where
     B: LintData<'a>,
     C: LintData<'a>,
 {
-    fn fetch(board: &'a BlackBoard) -> Self {
+    fn fetch(board: &'a NodeRepository) -> Self {
         (A::fetch(board), B::fetch(board), C::fetch(board))
     }
 }

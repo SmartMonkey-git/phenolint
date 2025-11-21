@@ -4,12 +4,10 @@ use phenolint::patches::patch_registration::PatchRegistration;
 use phenolint::report::report_registration::ReportRegistration;
 use phenolint::rules::rule_registration::RuleRegistration;
 use phenolint::rules::traits::RuleMetaData;
-use std::any::Any;
 
 use crate::common::test_functions::run_rule_test;
 use codespan_reporting::diagnostic::{LabelStyle, Severity};
 use phenolint::LinterContext;
-use phenolint::blackboard::List;
 use phenolint::diagnostics::LintViolation;
 use phenolint::error::FromContextError;
 use phenolint::patches::enums::PatchInstruction;
@@ -20,10 +18,11 @@ use phenolint::report::traits::{CompileReport, RegisterableReport, ReportFromCon
 use phenolint::rules::traits::LintRule;
 use phenolint::rules::traits::{RuleCheck, RuleFromContext};
 use phenolint::tree::node::DynamicNode;
+use phenolint::tree::node_repository::List;
 use phenolint::tree::pointer::Pointer;
 use phenolint_macros::{register_patch, register_report, register_rule};
 use phenopackets::schema::v2::Phenopacket;
-use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
+use phenopackets::schema::v2::core::OntologyClass;
 use rstest::rstest;
 
 mod common;
@@ -45,10 +44,10 @@ impl RuleFromContext for CustomRule {
 impl RuleCheck for CustomRule {
     type Data<'a> = List<'a, OntologyClass>;
 
-    fn check(&self, data: Self::Data<'_>) -> Vec<LintViolation> {
+    fn check(&self, _: Self::Data<'_>) -> Vec<LintViolation> {
         vec![LintViolation::new(
             LintRule::rule_id(self),
-            vec![Pointer::at_root()],
+            vec![Pointer::at_root().down("id").clone()],
         )]
     }
 }
@@ -81,6 +80,10 @@ impl ReportFromContext for CustomRuleReportCompiler {
 
 impl CompileReport for CustomRuleReportCompiler {
     fn compile_report(&self, full_node: &DynamicNode, violation: &LintViolation) -> ReportSpecs {
+        let ptr = violation
+            .at()
+            .first()
+            .expect("Pointer should have been there.");
         ReportSpecs::new(DiagnosticSpec {
             severity: Severity::Help,
             code: Self::RULE_ID.to_string(),
@@ -88,13 +91,9 @@ impl CompileReport for CustomRuleReportCompiler {
             labels: vec![LabelSpecs {
                 style: LabelStyle::Primary,
                 range: full_node
-                    .span(
-                        violation
-                            .at()
-                            .first()
-                            .expect("Pointer should have been there."),
-                    )
-                    .unwrap()
+                    .spans
+                    .get(ptr)
+                    .unwrap_or_else(|| panic!("Span should have been at '{}' there", ptr))
                     .clone(),
                 message: "Error was here".to_string(),
             }],

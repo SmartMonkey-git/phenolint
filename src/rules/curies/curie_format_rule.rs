@@ -1,15 +1,13 @@
-use crate::blackboard::{BlackBoard, List};
 use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
 use crate::linter_context::LinterContext;
 use crate::rules::rule_registration::RuleRegistration;
-use crate::rules::traits::{LintData, LintRule, RuleCheck, RuleFromContext, RuleMetaData};
-use crate::tree::pointer::Pointer;
+use crate::rules::traits::RuleMetaData;
+use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
+use crate::tree::node_repository::List;
 use phenolint_macros::register_rule;
 use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
 use regex::Regex;
-use std::any::Any;
-use std::collections::HashMap;
 
 /// ### CURIE001
 /// ## What it does

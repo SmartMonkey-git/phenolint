@@ -2,10 +2,8 @@ mod doc_string;
 mod utils;
 
 use crate::doc_string::{check_rule_docs_format, extract_doc_string};
-use crate::utils::{RuleArgs, extract_rule_id};
-use convert_case::{Case, Casing};
+use crate::utils::extract_rule_id;
 use proc_macro::TokenStream;
-use proc_macro2::{Ident as Ident2, Span as Span2};
 use quote::quote;
 use syn::{Item, ItemStruct, parse_macro_input};
 
@@ -23,9 +21,6 @@ pub fn register_rule(attr: TokenStream, item: TokenStream) -> TokenStream {
         Item::Struct(item_struct) => &item_struct.ident,
         _ => panic!("register_rule can only be applied to structs"),
     };
-
-    let upper_snake_case_struct_name = struct_name.to_string().to_case(Case::Snake).to_uppercase();
-    let upper_snake_case_struct = Ident2::new(&upper_snake_case_struct_name, Span2::call_site());
 
     let expanded = quote! {
         #input

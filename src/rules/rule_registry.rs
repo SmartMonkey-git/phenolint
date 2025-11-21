@@ -10,8 +10,8 @@ pub struct RuleRegistry {
 }
 
 impl RuleRegistry {
-    pub fn get(&self, rule_id: &str) -> Option<&Box<dyn LintRule>> {
-        self.rules.get(rule_id)
+    pub fn get(&self, rule_id: &str) -> Option<&dyn LintRule> {
+        self.rules.get(rule_id).map(|rule| &**rule)
     }
 
     pub fn get_mut(&mut self, rule_id: &str) -> Option<&mut Box<dyn LintRule>> {
@@ -71,7 +71,6 @@ pub(crate) fn check_duplicate_rule_ids() {
 #[cfg(test)]
 mod tests {
     use crate::LinterContext;
-    use crate::blackboard::List;
     use crate::diagnostics::LintViolation;
     use crate::error::FromContextError;
     use crate::rules::rule_registration::RuleRegistration;
@@ -80,12 +79,10 @@ mod tests {
     use crate::rules::traits::RuleCheck;
     use crate::rules::traits::RuleFromContext;
     use crate::rules::traits::RuleMetaData;
-    use crate::tree::pointer::Pointer;
+    use crate::tree::node_repository::List;
     use phenolint_macros::register_rule;
-    use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
+    use phenopackets::schema::v2::core::OntologyClass;
     use rstest::rstest;
-    use std::any::Any;
-    use std::sync::OnceLock;
 
     /// ### CURIE001
     /// ## What it does
@@ -102,9 +99,9 @@ mod tests {
         }
     }
     impl RuleCheck for TestRule {
-        type Data<'a> = (List<'a, OntologyClass>);
+        type Data<'a> = List<'a, OntologyClass>;
 
-        fn check(&self, data: Self::Data<'_>) -> Vec<LintViolation> {
+        fn check(&self, _: Self::Data<'_>) -> Vec<LintViolation> {
             todo!()
         }
     }
