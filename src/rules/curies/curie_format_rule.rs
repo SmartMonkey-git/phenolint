@@ -6,7 +6,7 @@ use crate::rules::traits::RuleMetaData;
 use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
 use crate::tree::node_repository::List;
 use phenolint_macros::register_rule;
-use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
+use phenopackets::schema::v2::core::OntologyClass;
 use regex::Regex;
 
 /// ### CURIE001
