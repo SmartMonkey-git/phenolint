@@ -1,10 +1,8 @@
-use crate::error::FromContextError;
 use crate::linter_context::LinterContext;
-use crate::rules::traits::BoxedRuleCheck;
-use phenopackets::schema::v2::Phenopacket;
-use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
-use std::collections::HashSet;
-use std::sync::Arc;
+use crate::rules::rule_registration::{RuleRegistration, all_rule_ids};
+use crate::rules::traits::LintRule;
+use log::warn;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Default)]
 pub struct RuleRegistry {
