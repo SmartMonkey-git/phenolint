@@ -78,8 +78,8 @@ impl Lint<str> for Phenolint {
 
         if let Err(err) = self.validator.validate_phenopacket(&values) {
             return LintResult::err(LinterError::InvalidPhenopacket {
-                path: err.instance_path.to_string(),
-                reason: validation_error_to_string(&err.kind),
+                path: err.instance_path().to_string(),
+                reason: validation_error_to_string(err.kind()),
             });
         }
 
