@@ -1,8 +1,12 @@
 #![allow(dead_code)]
+
 use phenolint::diagnostics::enums::PhenopacketData;
+use phenolint::enums::InputTypes;
 use phenolint::error::LintResult;
 use phenolint::patches::patch::Patch;
+use phenopackets::schema::v2::Phenopacket;
 use pretty_assertions::assert_eq;
+use prost::Message;
 
 pub struct LintResultAssertSettings<'a> {
     pub rule_id: &'a str,
@@ -125,6 +129,7 @@ pub fn assert_lint_result(
     lint_result: LintResult,
     assert_settings: &LintResultAssertSettings,
     console_messages: String,
+    input_type: InputTypes,
 ) {
     if let Some(err) = lint_result.error {
         eprintln!("Unexpected error during linting: {}", err);
@@ -145,10 +150,19 @@ pub fn assert_lint_result(
             assert_settings.rule_id
         );
     }
-    //assert_eq!(
-    //    lint_result.report.patched_phenopacket, assert_settings.patched_phenopacket,
-    //    "Patched phenopacket does not match expected value"
-    //);
+
+    if let Some(actual_patched) = &lint_result.report.patched_phenopacket
+        && let Some(expected) = &assert_settings.patched_phenopacket
+    {
+        let actual = parse_pp(actual_patched, &input_type);
+        let expected = parse_pp(expected, &InputTypes::Json);
+
+        assert_eq!(
+            actual, expected,
+            "Patched phenopacket does not match expected value"
+        );
+    };
+
     assert_eq!(
         lint_result.report.patches(),
         assert_settings.patches.iter().collect::<Vec<&Patch>>(),
@@ -156,7 +170,9 @@ pub fn assert_lint_result(
     );
 
     let mut message_snippets = assert_settings.message_snippets.to_vec();
-    message_snippets.push(assert_settings.rule_id);
+    if !lint_result.report.violations().is_empty() {
+        message_snippets.push(assert_settings.rule_id)
+    }
 
     for ms in message_snippets {
         assert!(
@@ -164,5 +180,27 @@ pub fn assert_lint_result(
             "Console output does not contain expected snippet: '{}'",
             ms
         );
+    }
+}
+
+fn parse_pp(pp_data: &PhenopacketData, input_format: &InputTypes) -> Phenopacket {
+    match pp_data {
+        PhenopacketData::Text(phenostr) => match input_format {
+            InputTypes::Json => serde_json::from_str::<Phenopacket>(phenostr)
+                .expect("Failed to parse phenostr to json format"),
+            InputTypes::Yaml => serde_yaml::from_str::<Phenopacket>(phenostr)
+                .expect("Failed to parse phenostr to yaml format"),
+            _ => {
+                panic!("Unexpected input format {}", input_format)
+            }
+        },
+        PhenopacketData::Binary(phenobytes) => match input_format {
+            InputTypes::Json => serde_json::from_slice::<Phenopacket>(phenobytes)
+                .expect("Failed to parse phenobytes to json format"),
+            InputTypes::Yaml => serde_yaml::from_slice::<Phenopacket>(phenobytes)
+                .expect("Failed to parse phenobytes to yaml format"),
+            InputTypes::Protobuf => Phenopacket::decode(phenobytes.as_slice())
+                .expect("Failed to decode phenobytes to protobuf format"),
+        },
     }
 }
