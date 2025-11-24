@@ -1,1 +1,1 @@
-mod curie_format_patch;
+mod disease_consistency_patch;

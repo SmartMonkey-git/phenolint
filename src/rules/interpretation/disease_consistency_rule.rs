@@ -6,7 +6,7 @@ use crate::rules::traits::RuleMetaData;
 use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
 use crate::tree::node_repository::List;
 use phenolint_macros::register_rule;
-use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
+use phenopackets::schema::v2::core::{Diagnosis, Disease};
 
 #[derive(Debug, Default)]
 /// ### INTER001
@@ -25,9 +25,34 @@ impl RuleFromContext for DiseaseConsistencyRule {
 }
 
 impl RuleCheck for DiseaseConsistencyRule {
-    type Data<'a> = (List<'a, OntologyClass>, List<'a, PhenotypicFeature>);
+    type Data<'a> = (List<'a, Diagnosis>, List<'a, Disease>);
 
-    fn check(&self, _: Self::Data<'_>) -> Vec<LintViolation> {
-        todo!()
+    fn check(&self, data: Self::Data<'_>) -> Vec<LintViolation> {
+        let mut violations = vec![];
+
+        let disease_terms: Vec<(&str, &str)> = data
+            .1
+            .iter()
+            .filter_map(|disease| {
+                disease
+                    .materialized_node
+                    .term
+                    .as_ref()
+                    .map(|oc| (oc.id.as_str(), oc.label.as_str()))
+            })
+            .collect();
+
+        for diagnosis in data.0.iter() {
+            if let Some(oc) = &diagnosis.materialized_node.disease
+                && !disease_terms.contains(&(oc.id.as_str(), oc.label.as_str()))
+            {
+                violations.push(LintViolation::new(
+                    LintRule::rule_id(self),
+                    vec![diagnosis.pointer.clone().down("disease").clone()],
+                ))
+            }
+        }
+
+        violations
     }
 }
