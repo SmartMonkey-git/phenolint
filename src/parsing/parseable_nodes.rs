@@ -1,7 +1,9 @@
 use crate::parsing::traits::ParsableNode;
 use crate::tree::node::DynamicNode;
 use phenopackets::schema::v2::Phenopacket;
-use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature, Resource, VitalStatus};
+use phenopackets::schema::v2::core::{
+    Diagnosis, Disease, OntologyClass, PhenotypicFeature, Resource, VitalStatus,
+};
 use serde_json::Value;
 
 impl ParsableNode<OntologyClass> for OntologyClass {
@@ -70,6 +72,42 @@ impl ParsableNode<VitalStatus> for VitalStatus {
             && let Ok(pp) = serde_json::from_value::<VitalStatus>(node.value.clone())
         {
             Some(pp)
+        } else {
+            None
+        }
+    }
+}
+
+impl ParsableNode<Disease> for Disease {
+    fn parse(node: &DynamicNode) -> Option<Disease> {
+        if let Value::Object(map) = &node.value
+            && node
+                .pointer
+                .segments()
+                .into_iter()
+                .any(|seg| seg.to_lowercase() == "diseases")
+            && map.contains_key("term")
+            && let Ok(disease) = serde_json::from_value::<Disease>(node.value.clone())
+        {
+            Some(disease)
+        } else {
+            None
+        }
+    }
+}
+
+impl ParsableNode<Diagnosis> for Diagnosis {
+    fn parse(node: &DynamicNode) -> Option<Diagnosis> {
+        if let Value::Object(map) = &node.value
+            && node
+                .pointer
+                .segments()
+                .into_iter()
+                .any(|seg| seg.to_lowercase() == "interpretations")
+            && map.contains_key("disease")
+            && let Ok(diag) = serde_json::from_value::<Diagnosis>(node.value.clone())
+        {
+            Some(diag)
         } else {
             None
         }

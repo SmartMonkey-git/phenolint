@@ -3,7 +3,9 @@ use crate::tree::node::{DynamicNode, MaterializedNode};
 use crate::tree::node_repository::NodeRepository;
 use log::error;
 use phenopackets::schema::v2::Phenopacket;
-use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature, Resource, VitalStatus};
+use phenopackets::schema::v2::core::{
+    Diagnosis, Disease, OntologyClass, PhenotypicFeature, Resource, VitalStatus,
+};
 
 pub(crate) struct NodeMaterializer;
 
@@ -18,6 +20,10 @@ impl NodeMaterializer {
         } else if let Some(vt) = VitalStatus::parse(dyn_node) {
             Self::push_to_repo(vt, dyn_node, repo);
         } else if let Some(resource) = Resource::parse(dyn_node) {
+            Self::push_to_repo(resource, dyn_node, repo);
+        } else if let Some(resource) = Disease::parse(dyn_node) {
+            Self::push_to_repo(resource, dyn_node, repo);
+        } else if let Some(resource) = Diagnosis::parse(dyn_node) {
             Self::push_to_repo(resource, dyn_node, repo);
         } else {
             error!("Unable to parse node at '{}'.", dyn_node.pointer);
