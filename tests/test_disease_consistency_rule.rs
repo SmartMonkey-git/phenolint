@@ -93,3 +93,53 @@ fn test_disease_consistency_rule_no_violation(disease_oc: OntologyClass) {
 
     run_rule_test(rule_id, &pp, assert_settings);
 }
+
+#[rstest]
+fn test_disease_consistency_rule_patch_with_disease(disease_oc: OntologyClass) {
+    let mut pp = minimal_valid_phenopacket();
+
+    let interpretation_id = "interpretation_123";
+
+    pp.interpretations.push(Interpretation {
+        id: interpretation_id.to_string(),
+        diagnosis: Some(Diagnosis {
+            disease: Some(OntologyClass {
+                id: "MONDO:0000359".to_string(),
+                label: "spondylocostal dysostosis".to_string(),
+            }),
+            genomic_interpretations: vec![],
+        }),
+
+        ..Default::default()
+    });
+
+    pp.diseases.push(Disease {
+        term: Some(disease_oc),
+        ..Default::default()
+    });
+
+    let rule_id = "INTER001";
+    let assert_settings = LintResultAssertSettings {
+        rule_id,
+        n_violations: 1,
+        patched_phenopacket: None,
+        patches: vec![Patch {
+            instructions: vec![Add {
+                at: Pointer::new("/diseases"),
+                value: Value::Array(vec![
+                    serde_json::to_value(Disease {
+                        term: Some(OntologyClass {
+                            id: "MONDO:0000359".to_string(),
+                            label: "spondylocostal dysostosis".to_string(),
+                        }),
+                        ..Default::default()
+                    })
+                    .unwrap(),
+                ]),
+            }],
+        }],
+        message_snippets: vec![],
+    };
+
+    run_rule_test(rule_id, &pp, assert_settings);
+}
