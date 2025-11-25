@@ -7,7 +7,7 @@ use crate::materializer::NodeMaterializer;
 use crate::parsing::phenopacket_parser::PhenopacketParser;
 use crate::patches::patch_engine::PatchEngine;
 use crate::patches::patch_registry::PatchRegistry;
-use crate::report::parser::ReportParser;
+use crate::report::renderer::ReportRenderer;
 use crate::report::report_registry::ReportRegistry;
 use crate::rules::rule_registry::{RuleRegistry, check_duplicate_rule_ids};
 use crate::schema_validation::validator::PhenopacketSchemaValidator;
@@ -51,13 +51,13 @@ impl Phenolint {
         }
     }
 
-    fn emit(phenostr: &str, report: &LintReport) {
+    fn emit(phenostr: &str, report: &LintReport, phenopacket_id: &str) {
         for (info, report_specs) in report
             .findings()
             .iter()
             .filter_map(|info| info.report().map(|rs| (info, rs)))
         {
-            if ReportParser::emit(report_specs, phenostr).is_err() {
+            if ReportRenderer::emit(report_specs, phenostr, phenopacket_id).is_err() {
                 warn!(
                     "Unable to parse and emit report for: '{}'",
                     info.violation().rule_id()
@@ -72,7 +72,7 @@ impl Lint<str> for Phenolint {
         let mut report = LintReport::default();
 
         let (values, spans, input_type) = match PhenopacketParser::to_abstract_tree(phenostr) {
-            Ok((values, spans, input_type)) => (values, spans, input_type),
+            Ok(data) => data,
             Err(err) => return LintResult::err(LinterError::ParsingError(err)),
         };
 
@@ -116,7 +116,12 @@ impl Lint<str> for Phenolint {
         report.extend_finding(findings);
 
         if !quit {
-            Self::emit(phenostr, &report);
+            let pp_id = values
+                .get("id")
+                .expect("Phenopacket should have ID")
+                .as_str()
+                .unwrap();
+            Self::emit(phenostr, &report, pp_id);
         }
 
         if patch & report.has_patches() {
