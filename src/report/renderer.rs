@@ -6,13 +6,17 @@ use codespan_reporting::term;
 use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
 
 #[derive(Default)]
-pub struct ReportParser;
+pub struct ReportRenderer;
 
-impl ReportParser {
+impl ReportRenderer {
     #[allow(dead_code)]
-    pub fn parse(report: &ReportSpecs, phenostr: &str) -> Result<String, ReportParseError> {
+    pub fn render_into_string(
+        report: &ReportSpecs,
+        phenostr: &str,
+        phenopacket_id: &str,
+    ) -> Result<String, ReportParseError> {
         let mut files = SimpleFiles::new();
-        let file_id = files.add(1, phenostr);
+        let file_id = files.add(phenopacket_id, phenostr);
 
         let codespan_diagnostic = Self::inner_parse(report, file_id);
 
@@ -22,9 +26,13 @@ impl ReportParser {
             .map_err(ReportParseError::StringParsing)
     }
 
-    pub fn emit(report: &ReportSpecs, phenostr: &str) -> Result<(), ReportParseError> {
+    pub fn emit(
+        report: &ReportSpecs,
+        phenostr: &str,
+        phenopacket_id: &str,
+    ) -> Result<(), ReportParseError> {
         let mut files = SimpleFiles::new();
-        let file_id = files.add(1, phenostr);
+        let file_id = files.add(phenopacket_id, phenostr);
 
         let codespan_diagnostic = Self::inner_parse(report, file_id);
 
