@@ -1,9 +1,9 @@
+use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
 use crate::rules::rule_registration::RuleRegistration;
 use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext, RuleMetaData};
 use crate::tree::node_repository::List;
-use crate::LinterContext;
 use phenolint_macros::register_rule;
 use phenopackets::schema::v2::core::{OntologyClass, Resource};
 use std::collections::HashSet;
@@ -43,7 +43,8 @@ impl RuleCheck for CuriesHaveResourcesRule {
         for node in data.0.iter() {
             if let Some(prefix) = find_prefix(node.materialized_node.id.as_str())
                 && !known_prefixes.contains(prefix)
-                && !complained.contains(prefix) // <- generate only one lint for a missing resource
+                // 👇 generate only one lint for a missing resource
+                && !complained.contains(prefix)
             {
                 violations.push(LintViolation::new(
                     LintRule::rule_id(self),
