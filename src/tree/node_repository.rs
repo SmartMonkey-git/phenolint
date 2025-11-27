@@ -1,6 +1,7 @@
 use crate::rules::traits::LintData;
 use crate::tree::node::MaterializedNode;
 use crate::tree::pointer::Pointer;
+use crate::tree::traits::Node;
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use std::ops::Deref;
@@ -41,7 +42,7 @@ impl NodeRepository {
                 .expect("Should be downcastable");
 
             for node in casted_node.iter() {
-                if &node.pointer == ptr {
+                if &node.pointer() == ptr {
                     return Some(node);
                 }
             }

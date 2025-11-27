@@ -1,16 +1,15 @@
-#![allow(unused)]
-
 use crate::tree::pointer::Pointer;
+use crate::tree::traits::Node;
+use serde::Serialize;
 use serde_json::Value;
-use std::any::Any;
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::ops::Range;
 
-#[derive()]
 pub struct DynamicNode {
-    pub value: Value,
-    pub spans: HashMap<Pointer, Range<usize>>,
-    pub pointer: Pointer,
+    value: Value,
+    spans: HashMap<Pointer, Range<usize>>,
+    pointer: Pointer,
 }
 
 impl DynamicNode {
@@ -21,21 +20,72 @@ impl DynamicNode {
             pointer,
         }
     }
-    pub fn value(&self, ptr: &Pointer) -> Value {
-        self.value.pointer(ptr.position()).unwrap().clone()
+}
+
+impl Node for DynamicNode {
+    fn get_value(&self) -> Cow<Value> {
+        Cow::Borrowed(&self.value)
     }
 
-    pub fn span(&self, ptr: &Pointer) -> Option<&Range<usize>> {
+    fn get_value_at(&self, ptr: &Pointer) -> Option<Cow<Value>> {
+        Some(Cow::Borrowed(self.value.pointer(ptr.position())?))
+    }
+
+    fn get_span(&self, ptr: &Pointer) -> Option<&Range<usize>> {
         self.spans.get(ptr)
     }
 
-    pub fn pointer(&self) -> Pointer {
-        self.pointer.clone()
+    fn pointer(&self) -> &Pointer {
+        &self.pointer
     }
 }
 
 pub struct MaterializedNode<T> {
     pub materialized_node: T,
-    pub spans: HashMap<Pointer, Range<usize>>,
-    pub pointer: Pointer,
+    spans: HashMap<Pointer, Range<usize>>,
+    pointer: Pointer,
+}
+
+impl<T> MaterializedNode<T> {
+    pub fn new(
+        materialized_node: T,
+        spans: HashMap<Pointer, Range<usize>>,
+        pointer: Pointer,
+    ) -> Self {
+        MaterializedNode {
+            materialized_node,
+            spans,
+            pointer,
+        }
+    }
+
+    pub(crate) fn from_dyn(materialized: T, dyn_node: &DynamicNode) -> Self {
+        Self::new(
+            materialized,
+            dyn_node.spans.clone(),
+            dyn_node.pointer().clone(),
+        )
+    }
+}
+
+impl<T: Serialize> Node for MaterializedNode<T> {
+    fn get_value(&self) -> Cow<Value> {
+        let node_opt =
+            serde_json::to_value(&self.materialized_node).expect("Should be serializable");
+        Cow::Owned(node_opt)
+    }
+
+    fn get_value_at(&self, ptr: &Pointer) -> Option<Cow<Value>> {
+        let node_opt = serde_json::to_value(&self.materialized_node).ok()?;
+        let value = node_opt.pointer(ptr.position())?.clone();
+        Some(Cow::Owned(value))
+    }
+
+    fn get_span(&self, ptr: &Pointer) -> Option<&Range<usize>> {
+        self.spans.get(ptr)
+    }
+
+    fn pointer(&self) -> &Pointer {
+        &self.pointer
+    }
 }

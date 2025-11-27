@@ -5,6 +5,7 @@ use crate::rules::rule_registration::RuleRegistration;
 use crate::rules::traits::RuleMetaData;
 use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
 use crate::tree::node_repository::List;
+use crate::tree::traits::Node;
 use phenolint_macros::register_rule;
 use phenopackets::schema::v2::core::OntologyClass;
 use regex::Regex;
@@ -38,7 +39,7 @@ impl RuleCheck for CurieFormatRule {
 
         for node in data.0.iter() {
             if !self.regex.is_match(&node.materialized_node.id) {
-                let mut ptr = node.pointer.clone();
+                let mut ptr = node.pointer().clone();
                 ptr.down("id");
 
                 violations.push(LintViolation::new(LintRule::rule_id(self), vec![ptr]))
