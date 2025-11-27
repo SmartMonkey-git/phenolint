@@ -1,9 +1,9 @@
+use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
 use crate::rules::rule_registration::RuleRegistration;
 use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext, RuleMetaData};
 use crate::tree::node_repository::List;
-use crate::LinterContext;
 use phenolint_macros::register_rule;
 use phenopackets::schema::v2::core::{OntologyClass, Resource};
 use std::collections::HashSet;
@@ -83,7 +83,10 @@ mod test_curies_have_resources {
         let violation = violations.first().unwrap();
 
         assert_eq!(violation.rule_id(), rule.rule_id());
-        assert_eq!(violation.at().first().unwrap().position(), "/phenotypicFeatures/0/type");
+        assert_eq!(
+            violation.at().first().unwrap().position(),
+            "/phenotypicFeatures/0/type"
+        );
     }
 }
 

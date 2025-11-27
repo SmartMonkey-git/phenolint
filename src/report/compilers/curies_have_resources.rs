@@ -1,3 +1,4 @@
+use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
 use crate::report::report_registration::ReportRegistration;
@@ -6,7 +7,6 @@ use crate::report::traits::{CompileReport, RuleReport};
 use crate::report::traits::{RegisterableReport, ReportFromContext};
 use crate::tree::node::DynamicNode;
 use crate::tree::pointer::Pointer;
-use crate::LinterContext;
 use codespan_reporting::diagnostic::{LabelStyle, Severity};
 use phenolint_macros::register_report;
 

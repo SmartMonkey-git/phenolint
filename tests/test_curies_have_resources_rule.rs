@@ -25,7 +25,6 @@ fn test_rule() {
         ..Default::default()
     });
 
-
     let rule_id = "INTER002";
     let assert_settings = LintResultAssertSettings {
         rule_id,
