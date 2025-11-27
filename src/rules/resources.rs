@@ -39,18 +39,14 @@ impl RuleCheck for CuriesHaveResourcesRule {
 
         let mut violations = vec![];
 
-        let mut complained = HashSet::new();
         for node in data.0.iter() {
             if let Some(prefix) = find_prefix(node.materialized_node.id.as_str())
                 && !known_prefixes.contains(prefix)
-                // 👇 generate only one lint for a missing resource
-                && !complained.contains(prefix)
             {
                 violations.push(LintViolation::new(
                     LintRule::rule_id(self),
                     vec![node.pointer.clone()], // <- warns about the ontology class itself
                 ));
-                complained.insert(prefix);
             }
         }
         violations
