@@ -23,6 +23,31 @@ impl Pointer {
     pub fn at_root() -> Self {
         Self(String::new())
     }
+
+    pub fn at_meta_data() -> Self {
+        Self::new("metaData")
+    }
+
+    pub fn at_resources() -> Self {
+        let mut mtd_ptr = Pointer::at_meta_data();
+        mtd_ptr.down("resources");
+        mtd_ptr
+    }
+
+    pub fn at_phenotypes() -> Self {
+        Self::new("phenotypicFeatures")
+    }
+
+    pub fn at_subject() -> Self {
+        Self::new("subject")
+    }
+
+    pub fn at_vital_status() -> Self {
+        let mut ptr = Pointer::at_subject();
+        ptr.down("vitalStatus");
+        ptr
+    }
+
     /// Returns the final segment (tip) of the pointer path.
     ///
     /// For example, if the pointer represents `"/user/name"`,
