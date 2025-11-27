@@ -7,6 +7,7 @@ use crate::report::specs::{DiagnosticSpec, LabelSpecs, ReportSpecs};
 use crate::report::traits::{CompileReport, RegisterableReport, ReportFromContext, RuleReport};
 use crate::tree::node::DynamicNode;
 use crate::tree::pointer::Pointer;
+use crate::tree::traits::Node;
 use codespan_reporting::diagnostic::{LabelStyle, Severity};
 use phenolint_macros::register_report;
 
@@ -29,14 +30,16 @@ impl CompileReport for CurieFormatReport {
         lint_violation: &LintViolation,
     ) -> ReportSpecs {
         let violation_ptr = lint_violation.at().first().unwrap().clone();
-        let curie = full_node.value(&violation_ptr);
+        let curie = full_node
+            .get_value_at(&violation_ptr)
+            .expect("CURIE should exist");
         ReportSpecs::new(DiagnosticSpec {
             severity: Severity::Error,
             code: Self::RULE_ID.to_string(),
             message: format!("CURIE formatted wrong: {}", curie),
             labels: vec![LabelSpecs {
                 style: LabelStyle::Primary,
-                range: full_node.span(&violation_ptr).unwrap().clone(),
+                range: full_node.get_span(&violation_ptr).unwrap().clone(),
                 message: String::default(),
             }],
             notes: vec![],

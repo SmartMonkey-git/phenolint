@@ -91,11 +91,7 @@ impl Lint<str> for Phenolint {
                 .materialize_nodes(&node, &mut node_repo)
         }
 
-        let root_node = DynamicNode {
-            value: values.clone(),
-            spans,
-            pointer: Pointer::at_root(),
-        };
+        let root_node = DynamicNode::new(&values, &spans, Pointer::at_root());
 
         let mut findings = vec![];
         for rule in self.rule_registry.rules() {

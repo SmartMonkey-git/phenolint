@@ -5,6 +5,7 @@ use crate::rules::rule_registration::RuleRegistration;
 use crate::rules::traits::RuleMetaData;
 use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
 use crate::tree::node_repository::List;
+use crate::tree::traits::Node;
 use phenolint_macros::register_rule;
 use phenopackets::schema::v2::core::{Diagnosis, Disease};
 
@@ -48,7 +49,7 @@ impl RuleCheck for DiseaseConsistencyRule {
             {
                 violations.push(LintViolation::new(
                     LintRule::rule_id(self),
-                    vec![diagnosis.pointer.clone().down("disease").clone()],
+                    vec![diagnosis.pointer().clone().down("disease").clone()],
                 ))
             }
         }

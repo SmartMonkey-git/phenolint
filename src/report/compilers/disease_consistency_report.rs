@@ -5,6 +5,7 @@ use crate::report::report_registration::ReportRegistration;
 use crate::report::specs::{DiagnosticSpec, LabelSpecs, ReportSpecs};
 use crate::report::traits::{CompileReport, RegisterableReport, ReportFromContext, RuleReport};
 use crate::tree::node::DynamicNode;
+use crate::tree::traits::Node;
 use codespan_reporting::diagnostic::{LabelStyle, Severity};
 use phenolint_macros::register_report;
 
@@ -27,11 +28,11 @@ impl CompileReport for DiseaseConsistencyReport {
         let mut interpretation_ptr = violation_ptr.clone();
 
         let interpretation_id = full_node
-            .value
-            .pointer(interpretation_ptr.up().up().position())
+            .get_value_at(interpretation_ptr.up().up())
             .expect("Interpretation should have been there")
             .get("id")
-            .expect("Interpretation ID should have been there");
+            .expect("Interpretation ID should have been there")
+            .clone();
 
         ReportSpecs::new(DiagnosticSpec {
             severity: Severity::Warning,
@@ -40,7 +41,7 @@ impl CompileReport for DiseaseConsistencyReport {
                 .to_string(),
             labels: vec![LabelSpecs {
                 style: LabelStyle::Primary,
-                range: full_node.span(&violation_ptr).unwrap().clone(),
+                range: full_node.get_span(&violation_ptr).unwrap().clone(),
                 message: String::default(),
             }],
             notes: vec![],

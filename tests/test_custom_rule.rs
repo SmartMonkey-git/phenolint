@@ -20,6 +20,7 @@ use phenolint::rules::traits::{RuleCheck, RuleFromContext};
 use phenolint::tree::node::DynamicNode;
 use phenolint::tree::node_repository::List;
 use phenolint::tree::pointer::Pointer;
+use phenolint::tree::traits::Node;
 use phenolint_macros::{register_patch, register_report, register_rule};
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::OntologyClass;
@@ -64,7 +65,7 @@ impl PatchFromContext for CustomRulePatchCompiler {
 impl CompilePatches for CustomRulePatchCompiler {
     fn compile_patches(&self, node: &DynamicNode, _: &LintViolation) -> Vec<Patch> {
         vec![Patch::new(vec![PatchInstruction::Remove {
-            at: node.pointer.clone().down("id").clone(),
+            at: node.pointer().clone().down("id").clone(),
         }])]
     }
 }
@@ -91,8 +92,7 @@ impl CompileReport for CustomRuleReportCompiler {
             labels: vec![LabelSpecs {
                 style: LabelStyle::Primary,
                 range: full_node
-                    .spans
-                    .get(ptr)
+                    .get_span(ptr)
                     .unwrap_or_else(|| panic!("Span should have been at '{}' there", ptr))
                     .clone(),
                 message: "Error was here".to_string(),
