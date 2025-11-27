@@ -5,6 +5,7 @@ use serde_json::Value;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::ops::Range;
+use std::process::Output;
 
 pub struct DynamicNode {
     value: Value,
@@ -23,11 +24,12 @@ impl DynamicNode {
 }
 
 impl Node for DynamicNode {
-    fn get_value(&self) -> Cow<Value> {
-        Cow::Borrowed(&self.value)
+    type Output = Value;
+    fn get_node(&self) -> &Self::Output {
+        &self.value
     }
 
-    fn get_value_at(&self, ptr: &Pointer) -> Option<Cow<Value>> {
+    fn get_value_at(&'_ self, ptr: &Pointer) -> Option<Cow<'_, Value>> {
         Some(Cow::Borrowed(self.value.pointer(ptr.position())?))
     }
 
@@ -40,13 +42,16 @@ impl Node for DynamicNode {
     }
 }
 
-pub struct MaterializedNode<T> {
+pub struct MaterializedNode<T>
+where
+    T: Clone + Serialize,
+{
     pub materialized_node: T,
     spans: HashMap<Pointer, Range<usize>>,
     pointer: Pointer,
 }
 
-impl<T> MaterializedNode<T> {
+impl<T: Clone + Serialize> MaterializedNode<T> {
     pub fn new(
         materialized_node: T,
         spans: HashMap<Pointer, Range<usize>>,
@@ -68,14 +73,13 @@ impl<T> MaterializedNode<T> {
     }
 }
 
-impl<T: Serialize> Node for MaterializedNode<T> {
-    fn get_value(&self) -> Cow<Value> {
-        let node_opt =
-            serde_json::to_value(&self.materialized_node).expect("Should be serializable");
-        Cow::Owned(node_opt)
+impl<T: Clone + Serialize> Node for MaterializedNode<T> {
+    type Output = T;
+    fn get_node(&self) -> &Self::Output {
+        &self.materialized_node
     }
 
-    fn get_value_at(&self, ptr: &Pointer) -> Option<Cow<Value>> {
+    fn get_value_at(&'_ self, ptr: &Pointer) -> Option<Cow<'_, Value>> {
         let node_opt = serde_json::to_value(&self.materialized_node).ok()?;
         let value = node_opt.pointer(ptr.position())?.clone();
         Some(Cow::Owned(value))
