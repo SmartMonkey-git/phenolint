@@ -50,6 +50,14 @@ impl NodeRepository {
     }
 }
 
+pub struct Single<'a, T: 'static>(pub Option<&'a MaterializedNode<T>>);
+
+impl<'a, T> LintData<'a> for Single<'a, T> {
+    fn fetch(board: &'a NodeRepository) -> Self {
+        Single(board.get_raw::<T>().first())
+    }
+}
+
 pub struct List<'a, T: 'static>(pub &'a [MaterializedNode<T>]);
 
 impl<'a, T> Deref for List<'a, T> {
