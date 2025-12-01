@@ -36,7 +36,7 @@ impl CompileReport for DiseaseConsistencyReport {
                 .to_string(),
             labels: vec![LabelSpecs {
                 style: LabelStyle::Primary,
-                range: full_node.span_at(&violation_ptr).unwrap().clone(),
+                span: full_node.span_at(&violation_ptr).unwrap().clone(),
                 message: String::default(),
             }],
             notes: vec![],

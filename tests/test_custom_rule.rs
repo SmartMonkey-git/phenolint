@@ -91,7 +91,7 @@ impl CompileReport for CustomRuleReportCompiler {
             message: "This is a custom violation".to_string(),
             labels: vec![LabelSpecs {
                 style: LabelStyle::Primary,
-                range: full_node
+                span: full_node
                     .span_at(ptr)
                     .unwrap_or_else(|| panic!("Span should have been at '{}' there", ptr))
                     .clone(),
