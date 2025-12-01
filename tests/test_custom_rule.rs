@@ -17,7 +17,6 @@ use phenolint::report::specs::{DiagnosticSpec, LabelSpecs, ReportSpecs};
 use phenolint::report::traits::{CompileReport, RegisterableReport, ReportFromContext, RuleReport};
 use phenolint::rules::traits::LintRule;
 use phenolint::rules::traits::{RuleCheck, RuleFromContext};
-use phenolint::tree::node::DynamicNode;
 use phenolint::tree::node_repository::List;
 use phenolint::tree::pointer::Pointer;
 use phenolint::tree::traits::Node;

@@ -4,7 +4,6 @@ use crate::error::FromContextError;
 use crate::report::report_registration::ReportRegistration;
 use crate::report::specs::{DiagnosticSpec, LabelSpecs, ReportSpecs};
 use crate::report::traits::{CompileReport, RegisterableReport, ReportFromContext, RuleReport};
-use crate::tree::node::DynamicNode;
 use crate::tree::traits::Node;
 use codespan_reporting::diagnostic::{LabelStyle, Severity};
 use phenolint_macros::register_report;
