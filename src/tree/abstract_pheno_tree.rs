@@ -26,7 +26,7 @@ impl AbstractTreeTraversal {
         Box::new(std::iter::from_fn(move || {
             #[allow(clippy::never_loop)]
             while let Some(current_node) = queue.pop_front() {
-                if let Some(value) = current_node.get_value_at(&Pointer::at_root()) {
+                if let Some(value) = current_node.value_at(&Pointer::at_root()) {
                     match value.as_ref() {
                         Value::Array(list) => {
                             for (i, val) in list.iter().enumerate() {

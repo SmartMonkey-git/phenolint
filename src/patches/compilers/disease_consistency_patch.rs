@@ -26,7 +26,7 @@ impl CompilePatches for DiseaseConsistencyPatch {
     fn compile_patches(&self, value: &DynamicNode, lint_violation: &LintViolation) -> Vec<Patch> {
         let oc: OntologyClass = serde_json::from_value(
             value
-                .get_value_at(lint_violation.at().first().expect("Should have pointer."))
+                .value_at(lint_violation.at().first().expect("Should have pointer."))
                 .unwrap()
                 .as_ref()
                 .clone(),

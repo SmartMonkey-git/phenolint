@@ -92,7 +92,7 @@ impl CompileReport for CustomRuleReportCompiler {
             labels: vec![LabelSpecs {
                 style: LabelStyle::Primary,
                 range: full_node
-                    .get_span(ptr)
+                    .span_at(ptr)
                     .unwrap_or_else(|| panic!("Span should have been at '{}' there", ptr))
                     .clone(),
                 message: "Error was here".to_string(),

@@ -28,7 +28,7 @@ impl CompileReport for DiseaseConsistencyReport {
         let mut interpretation_ptr = violation_ptr.clone();
 
         let interpretation_id = full_node
-            .get_value_at(interpretation_ptr.up().up())
+            .value_at(interpretation_ptr.up().up())
             .expect("Interpretation should have been there")
             .get("id")
             .expect("Interpretation ID should have been there")
@@ -41,7 +41,7 @@ impl CompileReport for DiseaseConsistencyReport {
                 .to_string(),
             labels: vec![LabelSpecs {
                 style: LabelStyle::Primary,
-                range: full_node.get_span(&violation_ptr).unwrap().clone(),
+                range: full_node.span_at(&violation_ptr).unwrap().clone(),
                 message: String::default(),
             }],
             notes: vec![],

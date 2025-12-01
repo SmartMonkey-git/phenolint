@@ -37,7 +37,7 @@ impl NodeMaterializer {
         dyn_node: &DynamicNode,
         board: &mut NodeRepository,
     ) {
-        let node = MaterializedNode::from_dyn(materialized, dyn_node);
+        let node = MaterializedNode::from_dynamic(materialized, dyn_node);
         board.insert(node);
     }
 }

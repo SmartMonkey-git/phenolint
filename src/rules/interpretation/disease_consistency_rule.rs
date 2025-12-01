@@ -36,7 +36,7 @@ impl RuleCheck for DiseaseConsistencyRule {
             .iter()
             .filter_map(|disease| {
                 disease
-                    .materialized_node
+                    .inner()
                     .term
                     .as_ref()
                     .map(|oc| (oc.id.as_str(), oc.label.as_str()))
@@ -44,7 +44,7 @@ impl RuleCheck for DiseaseConsistencyRule {
             .collect();
 
         for diagnosis in data.0.iter() {
-            if let Some(oc) = &diagnosis.materialized_node.disease
+            if let Some(oc) = &diagnosis.inner().disease
                 && !disease_terms.contains(&(oc.id.as_str(), oc.label.as_str()))
             {
                 violations.push(LintViolation::new(
