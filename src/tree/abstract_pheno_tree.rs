@@ -1,5 +1,6 @@
 use crate::tree::node::DynamicNode;
 use crate::tree::pointer::Pointer;
+use crate::tree::traits::Node;
 use serde_json::Value;
 use std::collections::{HashMap, VecDeque};
 use std::ops::Range;
@@ -25,29 +26,33 @@ impl AbstractTreeTraversal {
         Box::new(std::iter::from_fn(move || {
             #[allow(clippy::never_loop)]
             while let Some(current_node) = queue.pop_front() {
-                match current_node.value(&Pointer::at_root()) {
-                    Value::Array(ref list) => {
-                        for (i, val) in list.iter().enumerate() {
-                            let mut new_pointer = current_node.pointer().clone();
-                            new_pointer.down(i);
+                if let Some(value) = current_node.value_at(&Pointer::at_root()) {
+                    match value.as_ref() {
+                        Value::Array(list) => {
+                            for (i, val) in list.iter().enumerate() {
+                                let mut new_pointer = current_node.pointer().clone();
+                                new_pointer.down(i);
 
-                            let next_node = DynamicNode::new(val, &self.spans.clone(), new_pointer);
+                                let next_node =
+                                    DynamicNode::new(val, &self.spans.clone(), new_pointer);
 
-                            queue.push_back(next_node);
+                                queue.push_back(next_node);
+                            }
                         }
-                    }
-                    Value::Object(ref obj) => {
-                        for (key, val) in obj {
-                            let mut new_pointer = current_node.pointer().clone();
-                            new_pointer.down(key);
+                        Value::Object(obj) => {
+                            for (key, val) in obj {
+                                let mut new_pointer = current_node.pointer().clone();
+                                new_pointer.down(key);
 
-                            let next_node = DynamicNode::new(val, &self.spans.clone(), new_pointer);
+                                let next_node =
+                                    DynamicNode::new(val, &self.spans.clone(), new_pointer);
 
-                            queue.push_back(next_node);
+                                queue.push_back(next_node);
+                            }
                         }
+                        _ => {}
                     }
-                    _ => {}
-                };
+                }
 
                 return Some(current_node);
             }

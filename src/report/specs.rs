@@ -3,7 +3,7 @@ use std::ops::Range;
 #[derive(Debug, Clone, PartialEq)]
 pub struct LabelSpecs {
     pub style: LabelStyle,
-    pub range: Range<usize>,
+    pub span: Range<usize>,
     pub message: String,
 }
 
@@ -13,7 +13,7 @@ impl LabelSpecs {
     }
 
     pub fn range(&self) -> &Range<usize> {
-        &self.range
+        &self.span
     }
 
     pub fn message(&self) -> &str {
