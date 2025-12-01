@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::ops::Range;
 
 pub struct DynamicNode {
-    inner: Value,
+    pub inner: Value,
     spans: HashMap<Pointer, Range<usize>>,
     pointer: Pointer,
 }
@@ -23,11 +23,6 @@ impl DynamicNode {
 }
 
 impl Node for DynamicNode {
-    type Inner = Value;
-    fn inner(&self) -> &Self::Inner {
-        &self.inner
-    }
-
     fn value_at(&'_ self, ptr: &Pointer) -> Option<Cow<'_, Value>> {
         Some(Cow::Borrowed(self.inner.pointer(ptr.position())?))
     }
@@ -73,11 +68,6 @@ impl<T: Clone + Serialize + 'static> MaterializedNode<T> {
 }
 
 impl<T: Clone + Serialize> Node for MaterializedNode<T> {
-    type Inner = T;
-    fn inner(&self) -> &Self::Inner {
-        &self.inner
-    }
-
     fn value_at(&'_ self, ptr: &Pointer) -> Option<Cow<'_, Value>> {
         let node_opt = serde_json::to_value(&self.inner).ok()?;
         let value = node_opt.pointer(ptr.position())?.clone();

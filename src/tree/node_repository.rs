@@ -55,10 +55,10 @@ impl NodeRepository {
     }
 }
 
-pub struct List<'a, T: 'static + Clone + Serialize>(pub Vec<&'a dyn Node<Inner = T>>);
+pub struct List<'a, T: 'static + Clone + Serialize>(pub &'a [MaterializedNode<T>]);
 
 impl<'a, T: Clone + Serialize> Deref for List<'a, T> {
-    type Target = Vec<&'a dyn Node<Inner = T>>;
+    type Target = &'a [MaterializedNode<T>];
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -67,12 +67,7 @@ impl<'a, T: Clone + Serialize> Deref for List<'a, T> {
 
 impl<'a, T: Clone + Serialize> LintData<'a> for List<'a, T> {
     fn fetch(board: &'a NodeRepository) -> Self {
-        let nodes: Vec<_> = board
-            .get_raw()
-            .iter()
-            .map(|n: &MaterializedNode<T>| n as &dyn Node<Inner = T>)
-            .collect();
-        List(nodes)
+        List(board.get_raw())
     }
 }
 

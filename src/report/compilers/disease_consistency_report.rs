@@ -19,11 +19,7 @@ impl ReportFromContext for DiseaseConsistencyReport {
 }
 
 impl CompileReport for DiseaseConsistencyReport {
-    fn compile_report(
-        &self,
-        full_node: &DynamicNode,
-        lint_violation: &LintViolation,
-    ) -> ReportSpecs {
+    fn compile_report(&self, full_node: &dyn Node, lint_violation: &LintViolation) -> ReportSpecs {
         let violation_ptr = lint_violation.at().first().unwrap().clone();
         let mut interpretation_ptr = violation_ptr.clone();
 

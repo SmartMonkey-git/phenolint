@@ -63,7 +63,7 @@ impl PatchFromContext for CustomRulePatchCompiler {
 }
 
 impl CompilePatches for CustomRulePatchCompiler {
-    fn compile_patches(&self, node: &DynamicNode, _: &LintViolation) -> Vec<Patch> {
+    fn compile_patches(&self, node: &dyn Node, _: &LintViolation) -> Vec<Patch> {
         vec![Patch::new(vec![PatchInstruction::Remove {
             at: node.pointer().clone().down("id").clone(),
         }])]
@@ -80,11 +80,12 @@ impl ReportFromContext for CustomRuleReportCompiler {
 }
 
 impl CompileReport for CustomRuleReportCompiler {
-    fn compile_report(&self, full_node: &DynamicNode, violation: &LintViolation) -> ReportSpecs {
+    fn compile_report(&self, full_node: &dyn Node, violation: &LintViolation) -> ReportSpecs {
         let ptr = violation
             .at()
             .first()
             .expect("Pointer should have been there.");
+
         ReportSpecs::new(DiagnosticSpec {
             severity: Severity::Help,
             code: Self::RULE_ID.to_string(),

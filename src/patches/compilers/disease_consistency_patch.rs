@@ -6,7 +6,6 @@ use crate::patches::patch::Patch;
 use crate::patches::patch_registration::PatchRegistration;
 use crate::patches::traits::RulePatch;
 use crate::patches::traits::{CompilePatches, PatchFromContext, RegisterablePatch};
-use crate::tree::node::DynamicNode;
 use crate::tree::pointer::Pointer;
 use crate::tree::traits::Node;
 use phenolint_macros::register_patch;
@@ -23,7 +22,7 @@ impl PatchFromContext for DiseaseConsistencyPatch {
 }
 
 impl CompilePatches for DiseaseConsistencyPatch {
-    fn compile_patches(&self, value: &DynamicNode, lint_violation: &LintViolation) -> Vec<Patch> {
+    fn compile_patches(&self, value: &dyn Node, lint_violation: &LintViolation) -> Vec<Patch> {
         let oc: OntologyClass = serde_json::from_value(
             value
                 .value_at(lint_violation.at().first().expect("Should have pointer."))
