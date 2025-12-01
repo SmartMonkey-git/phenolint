@@ -36,16 +36,13 @@ impl Node for DynamicNode {
     }
 }
 
-pub struct MaterializedNode<T>
-where
-    T: Clone + Serialize,
-{
+pub struct MaterializedNode<T> {
     pub inner: T,
     spans: HashMap<Pointer, Range<usize>>,
     pointer: Pointer,
 }
 
-impl<T: Clone + Serialize + 'static> MaterializedNode<T> {
+impl<T> MaterializedNode<T> {
     pub fn new(
         materialized_node: T,
         spans: HashMap<Pointer, Range<usize>>,
