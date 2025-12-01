@@ -36,7 +36,10 @@ impl NodeRepository {
             .push(node);
     }
 
-    pub fn node_by_pointer<T>(&self, ptr: &Pointer) -> Option<&MaterializedNode<T>> {
+    pub fn node_by_pointer<T: 'static + Clone + Serialize>(
+        &self,
+        ptr: &Pointer,
+    ) -> Option<&MaterializedNode<T>> {
         for nodes in self.board.values() {
             let casted_node = nodes
                 .downcast_ref::<Vec<MaterializedNode<T>>>()
