@@ -17,9 +17,9 @@ use phenolint::report::specs::{DiagnosticSpec, LabelSpecs, ReportSpecs};
 use phenolint::report::traits::{CompileReport, RegisterableReport, ReportFromContext, RuleReport};
 use phenolint::rules::traits::LintRule;
 use phenolint::rules::traits::{RuleCheck, RuleFromContext};
-use phenolint::tree::node::DynamicNode;
 use phenolint::tree::node_repository::List;
 use phenolint::tree::pointer::Pointer;
+use phenolint::tree::traits::Node;
 use phenolint_macros::{register_patch, register_report, register_rule};
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::OntologyClass;
@@ -62,9 +62,9 @@ impl PatchFromContext for CustomRulePatchCompiler {
 }
 
 impl CompilePatches for CustomRulePatchCompiler {
-    fn compile_patches(&self, node: &DynamicNode, _: &LintViolation) -> Vec<Patch> {
+    fn compile_patches(&self, node: &dyn Node, _: &LintViolation) -> Vec<Patch> {
         vec![Patch::new(vec![PatchInstruction::Remove {
-            at: node.pointer.clone().down("id").clone(),
+            at: node.pointer().clone().down("id").clone(),
         }])]
     }
 }
@@ -79,20 +79,20 @@ impl ReportFromContext for CustomRuleReportCompiler {
 }
 
 impl CompileReport for CustomRuleReportCompiler {
-    fn compile_report(&self, full_node: &DynamicNode, violation: &LintViolation) -> ReportSpecs {
+    fn compile_report(&self, full_node: &dyn Node, violation: &LintViolation) -> ReportSpecs {
         let ptr = violation
             .at()
             .first()
             .expect("Pointer should have been there.");
+
         ReportSpecs::new(DiagnosticSpec {
             severity: Severity::Help,
             code: Self::RULE_ID.to_string(),
             message: "This is a custom violation".to_string(),
             labels: vec![LabelSpecs {
                 style: LabelStyle::Primary,
-                range: full_node
-                    .spans
-                    .get(ptr)
+                span: full_node
+                    .span_at(ptr)
                     .unwrap_or_else(|| panic!("Span should have been at '{}' there", ptr))
                     .clone(),
                 message: "Error was here".to_string(),

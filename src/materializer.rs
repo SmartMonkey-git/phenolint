@@ -1,11 +1,13 @@
 use crate::parsing::traits::ParsableNode;
 use crate::tree::node::{DynamicNode, MaterializedNode};
 use crate::tree::node_repository::NodeRepository;
+use crate::tree::traits::Node;
 use log::error;
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{
     Diagnosis, Disease, OntologyClass, PhenotypicFeature, Resource, VitalStatus,
 };
+use serde::Serialize;
 
 pub(crate) struct NodeMaterializer;
 
@@ -26,20 +28,16 @@ impl NodeMaterializer {
         } else if let Some(resource) = Diagnosis::parse(dyn_node) {
             Self::push_to_repo(resource, dyn_node, repo);
         } else {
-            error!("Unable to parse node at '{}'.", dyn_node.pointer);
+            error!("Unable to parse node at '{}'.", dyn_node.pointer());
         };
     }
 
-    fn push_to_repo<T: 'static>(
+    fn push_to_repo<T: 'static + Clone + Serialize>(
         materialized: T,
         dyn_node: &DynamicNode,
         board: &mut NodeRepository,
     ) {
-        let node = MaterializedNode {
-            materialized_node: materialized,
-            spans: dyn_node.spans.clone(),
-            pointer: dyn_node.pointer.clone(),
-        };
+        let node = MaterializedNode::from_dynamic(materialized, dyn_node);
         board.insert(node);
     }
 }
