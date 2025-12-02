@@ -6,6 +6,7 @@ mod tests {
     use crate::common::construction::minimal_valid_phenopacket;
     use crate::common::test_functions::run_rule_test;
     use phenolint::diagnostics::enums::PhenopacketData;
+    use phenolint::helper::NonEmptyVec;
     use phenolint::patches::enums::PatchInstruction::Add;
     use phenolint::patches::patch::Patch;
     use phenolint::tree::pointer::Pointer;
@@ -54,12 +55,10 @@ mod tests {
             patched_phenopacket: Some(PhenopacketData::Text(
                 serde_json::to_string_pretty(&patched).unwrap(),
             )),
-            patches: vec![Patch {
-                instructions: vec![Add {
-                    at: Pointer::new("/diseases"),
-                    value: Value::Array(vec![serde_json::to_value(disease).unwrap()]),
-                }],
-            }],
+            patches: vec![Patch::new(NonEmptyVec::with_single_entry(Add {
+                at: Pointer::new("/diseases"),
+                value: Value::Array(vec![serde_json::to_value(disease).unwrap()]),
+            }))],
             message_snippets: vec![interpretation_id, "disease"],
         };
 
@@ -126,25 +125,24 @@ mod tests {
         });
 
         let rule_id = "INTER001";
+
         let assert_settings = LintResultAssertSettings {
             rule_id,
             n_violations: 1,
             patched_phenopacket: None,
-            patches: vec![Patch {
-                instructions: vec![Add {
-                    at: Pointer::new("/diseases"),
-                    value: Value::Array(vec![
-                        serde_json::to_value(Disease {
-                            term: Some(OntologyClass {
-                                id: "MONDO:0000359".to_string(),
-                                label: "spondylocostal dysostosis".to_string(),
-                            }),
-                            ..Default::default()
-                        })
-                        .unwrap(),
-                    ]),
-                }],
-            }],
+            patches: vec![Patch::new(NonEmptyVec::with_single_entry(Add {
+                at: Pointer::new("/diseases"),
+                value: Value::Array(vec![
+                    serde_json::to_value(Disease {
+                        term: Some(OntologyClass {
+                            id: "MONDO:0000359".to_string(),
+                            label: "spondylocostal dysostosis".to_string(),
+                        }),
+                        ..Default::default()
+                    })
+                    .unwrap(),
+                ]),
+            }))],
             message_snippets: vec![],
         };
 

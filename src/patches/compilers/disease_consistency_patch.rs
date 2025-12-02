@@ -1,6 +1,7 @@
 use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
+use crate::helper::NonEmptyVec;
 use crate::patches::enums::PatchInstruction;
 use crate::patches::patch::Patch;
 use crate::patches::patch_registration::PatchRegistration;
@@ -43,6 +44,6 @@ impl CompilePatches for DiseaseConsistencyPatch {
             value: Value::Array(vec![disease]),
         };
 
-        vec![Patch::new(vec![instruction])]
+        vec![Patch::new(NonEmptyVec::with_single_entry(instruction))]
     }
 }

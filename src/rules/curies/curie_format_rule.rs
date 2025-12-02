@@ -46,7 +46,7 @@ impl RuleCheck for CurieFormatRule {
 
                 violations.push(LintViolation::new(
                     LintRule::rule_id(self),
-                    NonEmptyVec::new(ptr, None),
+                    NonEmptyVec::with_single_entry(ptr),
                 ))
             }
         }

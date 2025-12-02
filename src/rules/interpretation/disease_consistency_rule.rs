@@ -51,7 +51,9 @@ impl RuleCheck for DiseaseConsistencyRule {
             {
                 violations.push(LintViolation::new(
                     LintRule::rule_id(self),
-                    NonEmptyVec::new(diagnosis.pointer().clone().down("disease").clone(), None),
+                    NonEmptyVec::with_single_entry(
+                        diagnosis.pointer().clone().down("disease").clone(),
+                    ),
                 ))
             }
         }
