@@ -2,6 +2,7 @@ use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
 use crate::helper::non_empty_vec::NonEmptyVec;
+use crate::report::compilers::disease_consistency_report::__LINKER_ERROR_MISSING_REPORT_STRUCT_FOR_INTER001;
 use crate::rules::rule_registration::RuleRegistration;
 use crate::rules::traits::RuleMetaData;
 use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};

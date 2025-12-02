@@ -73,6 +73,7 @@ mod tests {
     use crate::LinterContext;
     use crate::diagnostics::LintViolation;
     use crate::error::FromContextError;
+    use crate::report::compilers::curies::curie_format_report::__LINKER_ERROR_MISSING_REPORT_STRUCT_FOR_CURIE001;
     use crate::rules::rule_registration::RuleRegistration;
     use crate::rules::rule_registry::check_duplicate_rule_ids;
     use crate::rules::traits::LintRule;

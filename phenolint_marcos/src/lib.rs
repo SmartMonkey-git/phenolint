@@ -2,7 +2,7 @@ mod doc_string;
 mod utils;
 
 use crate::doc_string::{check_rule_docs_format, extract_doc_string};
-use crate::utils::extract_rule_id;
+use crate::utils::{extract_rule_id, generate_rule_report_assertion};
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{Item, ItemStruct, parse_macro_input};
@@ -22,6 +22,8 @@ pub fn register_rule(attr: TokenStream, item: TokenStream) -> TokenStream {
         _ => panic!("register_rule can only be applied to structs"),
     };
 
+    let rule_report_assertion = generate_rule_report_assertion(&rule_id);
+
     let expanded = quote! {
         #input
 
@@ -38,6 +40,11 @@ pub fn register_rule(attr: TokenStream, item: TokenStream) -> TokenStream {
             }
         }
 
+        const _: () = {
+            fn _assert_report_exists() {
+                let _ = #rule_report_assertion::RULE_ID;
+            }
+        };
     };
 
     TokenStream::from(expanded)
@@ -79,6 +86,8 @@ pub fn register_report(attr: TokenStream, item: TokenStream) -> TokenStream {
         Err(err) => panic!("{}", err),
     };
 
+    let rule_report_assertion = generate_rule_report_assertion(&rule_id);
+
     let input = parse_macro_input!(item as ItemStruct);
     let name = &input.ident;
 
@@ -96,6 +105,12 @@ pub fn register_report(attr: TokenStream, item: TokenStream) -> TokenStream {
                 }
             }
         }
+
+        pub(crate) struct #rule_report_assertion;
+        impl #rule_report_assertion{
+            pub(crate) const RULE_ID: &'static str = #rule_id;
+        }
+
     };
 
     TokenStream::from(expanded)

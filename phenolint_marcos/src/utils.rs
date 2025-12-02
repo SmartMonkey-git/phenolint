@@ -1,8 +1,9 @@
 use proc_macro::TokenStream;
+use quote::format_ident;
 use regex::Regex;
 use syn::parse::Parser;
 
-use syn::Lit;
+use syn::{Ident, Lit};
 
 static RULE_FORMAT: &str = "^[A-Z]{1,5}[0-9]{3}$";
 
@@ -45,4 +46,8 @@ pub(crate) fn extract_rule_id(attr_tokens: &TokenStream) -> std::result::Result<
             }
         }
     }
+}
+
+pub(crate) fn generate_rule_report_assertion(rule_id: &str) -> Ident {
+    format_ident!("__LINKER_ERROR_MISSING_REPORT_STRUCT_FOR_{}", rule_id)
 }
