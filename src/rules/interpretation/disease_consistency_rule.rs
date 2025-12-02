@@ -1,6 +1,7 @@
 use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
+use crate::helper::non_empty_vec::NonEmptyVec;
 use crate::rules::rule_registration::RuleRegistration;
 use crate::rules::traits::RuleMetaData;
 use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
@@ -49,7 +50,7 @@ impl RuleCheck for DiseaseConsistencyRule {
             {
                 violations.push(LintViolation::new(
                     LintRule::rule_id(self),
-                    vec![diagnosis.pointer().clone().down("disease").clone()],
+                    NonEmptyVec::new(diagnosis.pointer().clone().down("disease").clone(), None),
                 ))
             }
         }

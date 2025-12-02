@@ -1,3 +1,4 @@
+use crate::helper::non_empty_vec::NonEmptyVec;
 use crate::tree::pointer::Pointer;
 
 #[derive(Debug, PartialEq)]
@@ -8,10 +9,10 @@ pub struct LintViolation {
 }
 
 impl LintViolation {
-    pub fn new(rule_id: &str, at: Vec<Pointer>) -> LintViolation {
+    pub fn new(rule_id: &str, at: NonEmptyVec<Pointer>) -> LintViolation {
         Self {
             rule_id: rule_id.to_string(),
-            at,
+            at: at.into_vec(),
         }
     }
 
