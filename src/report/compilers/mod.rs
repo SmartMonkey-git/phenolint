@@ -1,2 +1,2 @@
 pub(crate) mod curies;
-mod disease_consistency_report;
+pub(crate) mod disease_consistency_report;
