@@ -1,4 +1,3 @@
-pub mod compilers;
 pub mod error;
 pub mod renderer;
 pub mod report_registration;
