@@ -48,7 +48,7 @@ impl RuleCheck for CustomRule {
     fn check(&self, _: Self::Data<'_>) -> Vec<LintViolation> {
         vec![LintViolation::new(
             LintRule::rule_id(self),
-            NonEmptyVec::new(Pointer::at_root().down("id").clone(), None),
+            NonEmptyVec::with_single_entry(Pointer::at_root().down("id").clone()),
         )]
     }
 }
@@ -64,9 +64,11 @@ impl PatchFromContext for CustomRulePatchCompiler {
 
 impl CompilePatches for CustomRulePatchCompiler {
     fn compile_patches(&self, node: &dyn Node, _: &LintViolation) -> Vec<Patch> {
-        vec![Patch::new(vec![PatchInstruction::Remove {
-            at: node.pointer().clone().down("id").clone(),
-        }])]
+        vec![Patch::new(NonEmptyVec::with_single_entry(
+            PatchInstruction::Remove {
+                at: node.pointer().clone().down("id").clone(),
+            },
+        ))]
     }
 }
 
@@ -107,9 +109,11 @@ impl CompileReport for CustomRuleReportCompiler {
 fn test_custom_rule(json_phenopacket: Phenopacket) {
     let settings = LintResultAssertSettings::builder("CUST001")
         .one_violation()
-        .patch(Patch::new(vec![PatchInstruction::Remove {
-            at: Pointer::new("/id"),
-        }]))
+        .patch(Patch::new(NonEmptyVec::with_single_entry(
+            PatchInstruction::Remove {
+                at: Pointer::new("/id"),
+            },
+        )))
         .build();
 
     run_rule_test("CUST001", &json_phenopacket, settings);
