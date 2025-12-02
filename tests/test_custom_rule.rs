@@ -10,6 +10,7 @@ use codespan_reporting::diagnostic::{LabelStyle, Severity};
 use phenolint::LinterContext;
 use phenolint::diagnostics::LintViolation;
 use phenolint::error::FromContextError;
+use phenolint::helper::NonEmptyVec;
 use phenolint::patches::enums::PatchInstruction;
 use phenolint::patches::patch::Patch;
 use phenolint::patches::traits::{CompilePatches, PatchFromContext, RegisterablePatch, RulePatch};
@@ -47,7 +48,7 @@ impl RuleCheck for CustomRule {
     fn check(&self, _: Self::Data<'_>) -> Vec<LintViolation> {
         vec![LintViolation::new(
             LintRule::rule_id(self),
-            vec![Pointer::at_root().down("id").clone()],
+            NonEmptyVec::new(Pointer::at_root().down("id").clone(), None),
         )]
     }
 }

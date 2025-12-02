@@ -1,5 +1,6 @@
 use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
+use crate::helper::non_empty_vec::NonEmptyVec;
 use crate::linter_context::LinterContext;
 use crate::rules::rule_registration::RuleRegistration;
 use crate::rules::traits::RuleMetaData;
@@ -42,7 +43,10 @@ impl RuleCheck for CurieFormatRule {
                 let mut ptr = node.pointer().clone();
                 ptr.down("id");
 
-                violations.push(LintViolation::new(LintRule::rule_id(self), vec![ptr]))
+                violations.push(LintViolation::new(
+                    LintRule::rule_id(self),
+                    NonEmptyVec::new(ptr, None),
+                ))
             }
         }
 

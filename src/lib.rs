@@ -6,6 +6,7 @@ pub mod rules;
 
 pub mod linter_context;
 pub use linter_context::LinterContext;
+pub mod helper;
 mod materializer;
 pub(crate) mod parsing;
 pub mod patches;
