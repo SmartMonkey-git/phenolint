@@ -4,7 +4,7 @@ mod utils;
 use crate::doc_string::{check_rule_docs_format, extract_doc_string};
 use crate::utils::{extract_rule_id, generate_rule_report_assertion};
 use proc_macro::TokenStream;
-use quote::{format_ident, quote};
+use quote::quote;
 use syn::{Item, ItemStruct, parse_macro_input};
 
 #[proc_macro_attribute]
