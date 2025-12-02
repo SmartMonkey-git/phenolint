@@ -1,6 +1,8 @@
 use crate::rules::traits::LintData;
 use crate::tree::node::MaterializedNode;
 use crate::tree::pointer::Pointer;
+use crate::tree::traits::Node;
+use serde::Serialize;
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use std::ops::Deref;
@@ -34,19 +36,30 @@ impl NodeRepository {
             .push(node);
     }
 
-    pub fn node_by_pointer<T: 'static>(&self, ptr: &Pointer) -> Option<&MaterializedNode<T>> {
+    pub fn node_by_pointer<T: 'static + Clone + Serialize>(
+        &self,
+        ptr: &Pointer,
+    ) -> Option<&MaterializedNode<T>> {
         for nodes in self.board.values() {
             let casted_node = nodes
                 .downcast_ref::<Vec<MaterializedNode<T>>>()
                 .expect("Should be downcastable");
 
             for node in casted_node.iter() {
-                if &node.pointer == ptr {
+                if node.pointer() == ptr {
                     return Some(node);
                 }
             }
         }
         None
+    }
+}
+
+pub struct Single<'a, T: 'static>(pub Option<&'a MaterializedNode<T>>);
+
+impl<'a, T> LintData<'a> for Single<'a, T> {
+    fn fetch(board: &'a NodeRepository) -> Self {
+        Single(board.get_raw::<T>().first())
     }
 }
 
@@ -62,7 +75,7 @@ impl<'a, T> Deref for List<'a, T> {
 
 impl<'a, T> LintData<'a> for List<'a, T> {
     fn fetch(board: &'a NodeRepository) -> Self {
-        List(board.get_raw::<T>())
+        List(board.get_raw())
     }
 }
 

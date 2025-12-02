@@ -1,10 +1,12 @@
 use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
+use crate::helper::non_empty_vec::NonEmptyVec;
 use crate::rules::rule_registration::RuleRegistration;
 use crate::rules::traits::RuleMetaData;
 use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
 use crate::tree::node_repository::List;
+use crate::tree::traits::Node;
 use phenolint_macros::register_rule;
 use phenopackets::schema::v2::core::{Diagnosis, Disease};
 
@@ -35,7 +37,7 @@ impl RuleCheck for DiseaseConsistencyRule {
             .iter()
             .filter_map(|disease| {
                 disease
-                    .materialized_node
+                    .inner
                     .term
                     .as_ref()
                     .map(|oc| (oc.id.as_str(), oc.label.as_str()))
@@ -43,12 +45,12 @@ impl RuleCheck for DiseaseConsistencyRule {
             .collect();
 
         for diagnosis in data.0.iter() {
-            if let Some(oc) = &diagnosis.materialized_node.disease
+            if let Some(oc) = &diagnosis.inner.disease
                 && !disease_terms.contains(&(oc.id.as_str(), oc.label.as_str()))
             {
                 violations.push(LintViolation::new(
                     LintRule::rule_id(self),
-                    vec![diagnosis.pointer.clone().down("disease").clone()],
+                    NonEmptyVec::new(diagnosis.pointer().clone().down("disease").clone(), None),
                 ))
             }
         }
