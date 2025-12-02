@@ -23,4 +23,8 @@ impl LintViolation {
     pub fn at(&self) -> &[Pointer] {
         &self.at
     }
+
+    pub fn first_at(&self) -> &Pointer {
+        self.at.first().expect("At should never be empty")
+    }
 }
