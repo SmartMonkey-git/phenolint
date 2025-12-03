@@ -17,7 +17,6 @@ use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
 use crate::tree::node_repository::List;
 use crate::tree::pointer::Pointer;
 use crate::tree::traits::Node;
-use codespan_reporting::diagnostic::{LabelStyle, Severity};
 use phenolint_macros::{register_patch, register_report, register_rule};
 use phenopackets::schema::v2::core::{Diagnosis, Disease, OntologyClass};
 use serde_json::Value;
