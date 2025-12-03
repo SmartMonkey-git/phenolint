@@ -1,14 +1,22 @@
-use codespan_reporting::diagnostic::{LabelStyle, Severity};
+use crate::report::enums::{LabelPriority, ViolationSeverity};
 use std::ops::Range;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct LabelSpecs {
-    pub style: LabelStyle,
-    pub span: Range<usize>,
-    pub message: String,
+    style: LabelPriority,
+    span: Range<usize>,
+    message: String,
 }
 
 impl LabelSpecs {
-    pub fn style(&self) -> &LabelStyle {
+    pub fn new(style: LabelPriority, span: Range<usize>, message: String) -> Self {
+        LabelSpecs {
+            style,
+            span,
+            message,
+        }
+    }
+    pub fn style(&self) -> &LabelPriority {
         &self.style
     }
 
@@ -23,15 +31,30 @@ impl LabelSpecs {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct DiagnosticSpec {
-    pub severity: Severity,
-    pub code: String,
-    pub message: String,
-    pub labels: Vec<LabelSpecs>,
-    pub notes: Vec<String>,
+    severity: ViolationSeverity,
+    code: String,
+    message: String,
+    labels: Vec<LabelSpecs>,
+    notes: Vec<String>,
 }
 
 impl DiagnosticSpec {
-    pub fn severity(&self) -> &Severity {
+    pub fn new(
+        severity: ViolationSeverity,
+        code: String,
+        message: String,
+        labels: Vec<LabelSpecs>,
+        notes: Vec<String>,
+    ) -> Self {
+        DiagnosticSpec {
+            severity,
+            code,
+            message,
+            labels,
+            notes,
+        }
+    }
+    pub fn severity(&self) -> &ViolationSeverity {
         &self.severity
     }
 
@@ -57,11 +80,11 @@ pub struct ReportSpecs {
     diagnostic_spec: DiagnosticSpec,
 }
 
-// TODO: Temp default implementation. Should not have one
+/// TODO: Temp default implementation. Should not have one.
 impl Default for ReportSpecs {
     fn default() -> Self {
         let diag = DiagnosticSpec {
-            severity: Severity::Help,
+            severity: ViolationSeverity::Help,
             code: "None".to_string(),
             message: "I'm the default Report. You forgot to implement me.".to_string(),
             labels: vec![],

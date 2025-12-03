@@ -6,7 +6,6 @@ use phenolint::rules::rule_registration::RuleRegistration;
 use phenolint::rules::traits::RuleMetaData;
 
 use crate::common::test_functions::run_rule_test;
-use codespan_reporting::diagnostic::{LabelStyle, Severity};
 use phenolint::LinterContext;
 use phenolint::diagnostics::LintViolation;
 use phenolint::error::FromContextError;
@@ -14,6 +13,7 @@ use phenolint::helper::NonEmptyVec;
 use phenolint::patches::enums::PatchInstruction;
 use phenolint::patches::patch::Patch;
 use phenolint::patches::traits::{CompilePatches, PatchFromContext, RegisterablePatch, RulePatch};
+use phenolint::report::enums::{LabelPriority, ViolationSeverity};
 use phenolint::report::specs::{DiagnosticSpec, LabelSpecs, ReportSpecs};
 use phenolint::report::traits::{CompileReport, RegisterableReport, ReportFromContext, RuleReport};
 use phenolint::rules::traits::LintRule;
@@ -85,20 +85,20 @@ impl CompileReport for CustomRuleReportCompiler {
     fn compile_report(&self, full_node: &dyn Node, violation: &LintViolation) -> ReportSpecs {
         let ptr = violation.first_at();
 
-        ReportSpecs::new(DiagnosticSpec {
-            severity: Severity::Help,
-            code: Self::RULE_ID.to_string(),
-            message: "This is a custom violation".to_string(),
-            labels: vec![LabelSpecs {
-                style: LabelStyle::Primary,
-                span: full_node
+        ReportSpecs::new(DiagnosticSpec::new(
+            ViolationSeverity::Help,
+            Self::RULE_ID.to_string(),
+            "This is a custom violation".to_string(),
+            vec![LabelSpecs::new(
+                LabelPriority::Primary,
+                full_node
                     .span_at(ptr)
                     .unwrap_or_else(|| panic!("Span should have been at '{}' there", ptr))
                     .clone(),
-                message: "Error was here".to_string(),
-            }],
-            notes: vec![],
-        })
+                "Error was here".to_string(),
+            )],
+            vec![],
+        ))
     }
 }
 

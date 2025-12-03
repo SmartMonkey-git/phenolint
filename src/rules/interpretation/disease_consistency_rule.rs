@@ -7,6 +7,7 @@ use crate::patches::patch::Patch;
 use crate::patches::patch_registration::PatchRegistration;
 use crate::patches::traits::RulePatch;
 use crate::patches::traits::{CompilePatches, PatchFromContext, RegisterablePatch};
+use crate::report::enums::{LabelPriority, ViolationSeverity};
 use crate::report::report_registration::ReportRegistration;
 use crate::report::specs::{DiagnosticSpec, LabelSpecs, ReportSpecs};
 use crate::report::traits::{CompileReport, RegisterableReport, ReportFromContext, RuleReport};
@@ -93,18 +94,18 @@ impl CompileReport for DiseaseConsistencyReport {
             .expect("Interpretation ID should have been there")
             .clone();
 
-        ReportSpecs::new(DiagnosticSpec {
-            severity: Severity::Warning,
-            code: Self::RULE_ID.to_string(),
-            message: format!("Found disease in interpretation {interpretation_id} that is not present in diseases section")
+        ReportSpecs::new(DiagnosticSpec::new(
+             ViolationSeverity::Warning,
+             Self::RULE_ID.to_string(),
+             format!("Found disease in interpretation {interpretation_id} that is not present in diseases section")
                 .to_string(),
-            labels: vec![LabelSpecs {
-                style: LabelStyle::Primary,
-                span: full_node.span_at(&violation_ptr).unwrap().clone(),
-                message: String::default(),
-            }],
-            notes: vec![],
-        })
+             vec![LabelSpecs::new(
+                 LabelPriority::Primary,
+                 full_node.span_at(&violation_ptr).unwrap().clone(),
+                String::default(),
+             )],
+             vec![],
+        ))
     }
 }
 
