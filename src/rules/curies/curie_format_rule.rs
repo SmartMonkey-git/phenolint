@@ -70,7 +70,7 @@ impl ReportFromContext for CurieFormatReport {
 
 impl CompileReport for CurieFormatReport {
     fn compile_report(&self, full_node: &dyn Node, lint_violation: &LintViolation) -> ReportSpecs {
-        let violation_ptr = lint_violation.at().first().unwrap().clone();
+        let violation_ptr = lint_violation.first_at().clone();
         let curie = full_node
             .value_at(&violation_ptr)
             .expect("CURIE should exist");

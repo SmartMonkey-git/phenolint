@@ -83,10 +83,7 @@ impl ReportFromContext for CustomRuleReportCompiler {
 
 impl CompileReport for CustomRuleReportCompiler {
     fn compile_report(&self, full_node: &dyn Node, violation: &LintViolation) -> ReportSpecs {
-        let ptr = violation
-            .at()
-            .first()
-            .expect("Pointer should have been there.");
+        let ptr = violation.first_at();
 
         ReportSpecs::new(DiagnosticSpec {
             severity: Severity::Help,
