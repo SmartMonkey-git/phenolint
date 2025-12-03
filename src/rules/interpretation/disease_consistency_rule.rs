@@ -7,8 +7,9 @@ use crate::patches::patch::Patch;
 use crate::patches::patch_registration::PatchRegistration;
 use crate::patches::traits::RulePatch;
 use crate::patches::traits::{CompilePatches, PatchFromContext, RegisterablePatch};
+use crate::report::enums::{LabelPriority, ViolationSeverity};
 use crate::report::report_registration::ReportRegistration;
-use crate::report::specs::{DiagnosticSpec, LabelSpecs, ReportSpecs};
+use crate::report::specs::{LabelSpecs, ReportSpecs};
 use crate::report::traits::{CompileReport, RegisterableReport, ReportFromContext, RuleReport};
 use crate::rules::rule_registration::RuleRegistration;
 use crate::rules::traits::RuleMetaData;
@@ -16,7 +17,6 @@ use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
 use crate::tree::node_repository::List;
 use crate::tree::pointer::Pointer;
 use crate::tree::traits::Node;
-use codespan_reporting::diagnostic::{LabelStyle, Severity};
 use phenolint_macros::{register_patch, register_report, register_rule};
 use phenopackets::schema::v2::core::{Diagnosis, Disease, OntologyClass};
 use serde_json::Value;
@@ -60,6 +60,7 @@ impl RuleCheck for DiseaseConsistencyRule {
                 && !disease_terms.contains(&(oc.id.as_str(), oc.label.as_str()))
             {
                 violations.push(LintViolation::new(
+                    ViolationSeverity::Warning,
                     LintRule::rule_id(self),
                     NonEmptyVec::with_single_entry(
                         diagnosis.pointer().clone().down("disease").clone(),
@@ -93,18 +94,17 @@ impl CompileReport for DiseaseConsistencyReport {
             .expect("Interpretation ID should have been there")
             .clone();
 
-        ReportSpecs::new(DiagnosticSpec {
-            severity: Severity::Warning,
-            code: Self::RULE_ID.to_string(),
-            message: format!("Found disease in interpretation {interpretation_id} that is not present in diseases section")
+        ReportSpecs::from_violation(
+             lint_violation,
+             format!("Found disease in interpretation {interpretation_id} that is not present in diseases section")
                 .to_string(),
-            labels: vec![LabelSpecs {
-                style: LabelStyle::Primary,
-                span: full_node.span_at(&violation_ptr).unwrap().clone(),
-                message: String::default(),
-            }],
-            notes: vec![],
-        })
+             vec![LabelSpecs::new(
+                 LabelPriority::Primary,
+                 full_node.span_at(&violation_ptr).unwrap().clone(),
+                String::default(),
+             )],
+             vec![],
+        )
     }
 }
 
