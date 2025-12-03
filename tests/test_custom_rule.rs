@@ -47,7 +47,7 @@ impl RuleCheck for CustomRule {
 
     fn check(&self, _: Self::Data<'_>) -> Vec<LintViolation> {
         vec![LintViolation::new(
-            ViolationSeverity::Help,
+            ViolationSeverity::Info,
             LintRule::rule_id(self),
             NonEmptyVec::with_single_entry(Pointer::at_root().down("id").clone()),
         )]

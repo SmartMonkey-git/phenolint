@@ -3,12 +3,13 @@ use std::ops::Range;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ViolationSeverity {
-    /// Indicates that the violation will likely break other applications
+    /// Critical issues that will cause failures (e.g. runtime crashes,
+    /// or contract violations that break dependent code)
     Error,
-    /// Indicates that the violation is unexpected but not breaking
+    /// Problematic patterns that should be fixed but won't cause immediate failure
     Warning,
-    /// Something has been violated that is not breaking, not unexpected but needs some attention
-    Help,
+    /// Suggestions for improvement or style violations that don't affect correctness
+    Info,
 }
 
 impl ViolationSeverity {
@@ -16,7 +17,7 @@ impl ViolationSeverity {
         match self {
             ViolationSeverity::Error => Diagnostic::error(),
             ViolationSeverity::Warning => Diagnostic::warning(),
-            ViolationSeverity::Help => Diagnostic::help(),
+            ViolationSeverity::Info => Diagnostic::help(),
         }
     }
 }
