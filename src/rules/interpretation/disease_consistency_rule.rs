@@ -9,7 +9,7 @@ use crate::patches::traits::RulePatch;
 use crate::patches::traits::{CompilePatches, PatchFromContext, RegisterablePatch};
 use crate::report::enums::{LabelPriority, ViolationSeverity};
 use crate::report::report_registration::ReportRegistration;
-use crate::report::specs::{DiagnosticSpec, LabelSpecs, ReportSpecs};
+use crate::report::specs::{LabelSpecs, ReportSpecs};
 use crate::report::traits::{CompileReport, RegisterableReport, ReportFromContext, RuleReport};
 use crate::rules::rule_registration::RuleRegistration;
 use crate::rules::traits::RuleMetaData;
@@ -60,6 +60,7 @@ impl RuleCheck for DiseaseConsistencyRule {
                 && !disease_terms.contains(&(oc.id.as_str(), oc.label.as_str()))
             {
                 violations.push(LintViolation::new(
+                    ViolationSeverity::Warning,
                     LintRule::rule_id(self),
                     NonEmptyVec::with_single_entry(
                         diagnosis.pointer().clone().down("disease").clone(),
@@ -93,9 +94,8 @@ impl CompileReport for DiseaseConsistencyReport {
             .expect("Interpretation ID should have been there")
             .clone();
 
-        ReportSpecs::new(DiagnosticSpec::new(
-             ViolationSeverity::Warning,
-             Self::RULE_ID.to_string(),
+        ReportSpecs::from_violation(
+             lint_violation,
              format!("Found disease in interpretation {interpretation_id} that is not present in diseases section")
                 .to_string(),
              vec![LabelSpecs::new(
@@ -104,7 +104,7 @@ impl CompileReport for DiseaseConsistencyReport {
                 String::default(),
              )],
              vec![],
-        ))
+        )
     }
 }
 

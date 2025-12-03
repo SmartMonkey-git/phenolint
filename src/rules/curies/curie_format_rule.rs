@@ -4,7 +4,7 @@ use crate::helper::non_empty_vec::NonEmptyVec;
 use crate::linter_context::LinterContext;
 use crate::report::enums::{LabelPriority, ViolationSeverity};
 use crate::report::report_registration::ReportRegistration;
-use crate::report::specs::{DiagnosticSpec, LabelSpecs, ReportSpecs};
+use crate::report::specs::{LabelSpecs, ReportSpecs};
 use crate::report::traits::RuleReport;
 use crate::report::traits::{CompileReport, RegisterableReport, ReportFromContext};
 use crate::rules::rule_registration::RuleRegistration;
@@ -49,6 +49,7 @@ impl RuleCheck for CurieFormatRule {
                 ptr.down("id");
 
                 violations.push(LintViolation::new(
+                    ViolationSeverity::Error,
                     LintRule::rule_id(self),
                     NonEmptyVec::with_single_entry(ptr),
                 ))
@@ -75,9 +76,8 @@ impl CompileReport for CurieFormatReport {
             .value_at(&violation_ptr)
             .expect("CURIE should exist");
 
-        ReportSpecs::new(DiagnosticSpec::new(
-            ViolationSeverity::Error,
-            Self::RULE_ID.to_string(),
+        ReportSpecs::from_violation(
+            lint_violation,
             format!("CURIE formatted wrong: {}", curie),
             vec![LabelSpecs::new(
                 LabelPriority::Primary,
@@ -85,6 +85,6 @@ impl CompileReport for CurieFormatReport {
                 String::default(),
             )],
             vec![],
-        ))
+        )
     }
 }

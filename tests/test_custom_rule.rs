@@ -14,7 +14,7 @@ use phenolint::patches::enums::PatchInstruction;
 use phenolint::patches::patch::Patch;
 use phenolint::patches::traits::{CompilePatches, PatchFromContext, RegisterablePatch, RulePatch};
 use phenolint::report::enums::{LabelPriority, ViolationSeverity};
-use phenolint::report::specs::{DiagnosticSpec, LabelSpecs, ReportSpecs};
+use phenolint::report::specs::{LabelSpecs, ReportSpecs};
 use phenolint::report::traits::{CompileReport, RegisterableReport, ReportFromContext, RuleReport};
 use phenolint::rules::traits::LintRule;
 use phenolint::rules::traits::{RuleCheck, RuleFromContext};
@@ -47,6 +47,7 @@ impl RuleCheck for CustomRule {
 
     fn check(&self, _: Self::Data<'_>) -> Vec<LintViolation> {
         vec![LintViolation::new(
+            ViolationSeverity::Help,
             LintRule::rule_id(self),
             NonEmptyVec::with_single_entry(Pointer::at_root().down("id").clone()),
         )]
@@ -85,9 +86,8 @@ impl CompileReport for CustomRuleReportCompiler {
     fn compile_report(&self, full_node: &dyn Node, violation: &LintViolation) -> ReportSpecs {
         let ptr = violation.first_at();
 
-        ReportSpecs::new(DiagnosticSpec::new(
-            ViolationSeverity::Help,
-            Self::RULE_ID.to_string(),
+        ReportSpecs::from_violation(
+            violation,
             "This is a custom violation".to_string(),
             vec![LabelSpecs::new(
                 LabelPriority::Primary,
@@ -98,7 +98,7 @@ impl CompileReport for CustomRuleReportCompiler {
                 "Error was here".to_string(),
             )],
             vec![],
-        ))
+        )
     }
 }
 

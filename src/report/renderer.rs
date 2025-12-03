@@ -43,15 +43,13 @@ impl ReportRenderer {
             .map_err(ReportParseError::Emit)
     }
 
-    pub fn parse_specs(report: &ReportSpecs, file_id: usize) -> Diagnostic<usize> {
-        let spec = report.diagnostics();
+    pub fn parse_specs(report_specs: &ReportSpecs, file_id: usize) -> Diagnostic<usize> {
+        let mut diagnostic = report_specs.severity().as_codespan_diagnostic();
+        diagnostic = diagnostic.with_message(report_specs.message());
+        diagnostic = diagnostic.with_code(report_specs.code());
 
-        let mut diagnostic = spec.severity().as_codespan_diagnostic();
-        diagnostic = diagnostic.with_message(spec.message());
-        diagnostic = diagnostic.with_code(spec.code());
-
-        if !spec.labels().is_empty() {
-            let labels = spec
+        if !report_specs.labels().is_empty() {
+            let labels = report_specs
                 .labels()
                 .iter()
                 .map(|label_spec| {
@@ -65,8 +63,8 @@ impl ReportRenderer {
             diagnostic = diagnostic.with_labels(labels);
         }
 
-        if !spec.notes().is_empty() {
-            diagnostic = diagnostic.with_notes(spec.notes().to_vec());
+        if !report_specs.notes().is_empty() {
+            diagnostic = diagnostic.with_notes(report_specs.notes().to_vec());
         }
         diagnostic
     }
