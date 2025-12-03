@@ -83,7 +83,7 @@ impl ReportFromContext for DiseaseConsistencyReport {
 
 impl CompileReport for DiseaseConsistencyReport {
     fn compile_report(&self, full_node: &dyn Node, lint_violation: &LintViolation) -> ReportSpecs {
-        let violation_ptr = lint_violation.at().first().unwrap().clone();
+        let violation_ptr = lint_violation.first_at().clone();
         let mut interpretation_ptr = violation_ptr.clone();
 
         let interpretation_id = full_node
@@ -121,7 +121,7 @@ impl CompilePatches for DiseaseConsistencyPatch {
     fn compile_patches(&self, value: &dyn Node, lint_violation: &LintViolation) -> Vec<Patch> {
         let oc: OntologyClass = serde_json::from_value(
             value
-                .value_at(lint_violation.at().first().expect("Should have pointer."))
+                .value_at(lint_violation.first_at())
                 .unwrap()
                 .as_ref()
                 .clone(),

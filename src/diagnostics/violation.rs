@@ -24,6 +24,9 @@ impl LintViolation {
         &self.at
     }
 
+    /// Will return the first pointer without an option
+    ///
+    /// This is guarantied to not panic, because `LintViolation` can only be initialized using `NonEmptyVec`
     pub fn first_at(&self) -> &Pointer {
         self.at.first().expect("At should never be empty")
     }

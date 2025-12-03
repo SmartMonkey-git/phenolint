@@ -111,10 +111,7 @@ impl CompileReport for CustomRuleReportCompiler {
                 style: LabelStyle::Primary,
                 range: node
                     .span(
-                        violation
-                            .at()
-                            .first()
-                            .expect("Pointer should have been there."),
+                        violation.first_at(),
                     )
                     .unwrap()
                     .clone(),
