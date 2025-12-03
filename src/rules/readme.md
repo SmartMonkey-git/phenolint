@@ -19,6 +19,7 @@ use crate::tree::node_repository::List;
 use phenolint_macros::register_rule;
 use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
 use regex::Regex;
+use crate::helper::non_empty_vec::NonEmptyVec;
 
 /// ### CUST001
 /// ## What it does
@@ -43,14 +44,13 @@ impl RuleCheck for CustomRule {
         data.1; //<--- Access PhenotypicFeatures
         vec![LintViolation::new(
             LintRule::rule_id(self),
-            vec![Pointer::at_root().down("id").clone()],
+            NonEmptyVec::with_single_entry(Pointer::at_root().down("id").clone()),
         )]
     }
 }
 ```
 
-If the violations of your rule can be fixed you should also write a patch. Add the implementation to:
-`src/patches/compilers`
+If the violations of your rule can be fixed you should also write a patch.
 
 ```rust
 use crate::LinterContext;
@@ -64,6 +64,8 @@ use crate::patches::traits::RulePatch;
 use crate::patches::traits::{CompilePatches, PatchFromContext, RegisterablePatch};
 use crate::tree::node::Node;
 use phenolint_macros::register_patch;
+use crate::helper::non_empty_vec::NonEmptyVec;
+
 
 #[register_patch(id = "CUST001")] //TODO: This id needs to align with your rule's id.
 struct CustomRulePatchCompiler;
@@ -77,16 +79,15 @@ impl PatchFromContext for CustomRulePatchCompiler {
 impl CompilePatches for CustomRulePatchCompiler {
     // This function should return one or multiple patches per violation.
     // It should only return several patches, if there is more than one way to fix the violation and both would lead to a different phenopacket. 
-    fn compile_patches(&self, full_node: &DynamicNode, violation: &LintViolation) -> Vec<Patch> {
-        vec![Patch::new(vec![PatchInstruction::Remove {
+    fn compile_patches(&self, full_node: &dyn Node, violation: &LintViolation) -> Vec<Patch> {
+        vec![Patch::new(NonEmptyVec::with_single_entry(PatchInstruction::Remove {
             at: node.pointer.clone().down("id").clone(),
-        }])]
+        }))]
     }
 }
 ```
 
-Lastly, you need to implement a report that will be printed to the console. Your implementation needs to be added to:
-`src/report/compilers`
+Lastly, you need to implement a report that will be printed to the console.
 
 ```rust
 #[register_report(id = "CUST001")]  //TODO: This id needs to align with your rule's id.
@@ -101,7 +102,7 @@ impl ReportFromContext for CustomRuleReportCompiler {
 impl CompileReport for CustomRuleReportCompiler {
     // You probably want to try out some settings and configurations with this object to find out how your report is printed.
     // You just need to implement the ReportSpecs.
-    fn compile_report(&self, full_node: &DynamicNode, violation: &LintViolation) -> ReportSpecs { // <-- TODO: Is currently receiving the full node. Later on will only receive violated nodes and their children. You can get the values and spans you need using the pointers in the violation.
+    fn compile_report(&self, full_node: &dyn Node, violation: &LintViolation) -> ReportSpecs { // <-- TODO: Is currently receiving the full node. Later on will only receive violated nodes and their children. You can get the values and spans you need using the pointers in the violation.
         ReportSpecs::new(DiagnosticSpec {
             severity: Severity::Help,
             code: Self::RULE_ID.to_string(),
@@ -110,10 +111,7 @@ impl CompileReport for CustomRuleReportCompiler {
                 style: LabelStyle::Primary,
                 range: node
                     .span(
-                        violation
-                            .at()
-                            .first()
-                            .expect("Pointer should have been there."),
+                        violation.first_at(),
                     )
                     .unwrap()
                     .clone(),

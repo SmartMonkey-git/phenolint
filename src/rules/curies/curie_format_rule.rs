@@ -2,12 +2,17 @@ use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
 use crate::helper::non_empty_vec::NonEmptyVec;
 use crate::linter_context::LinterContext;
+use crate::report::enums::{LabelPriority, ViolationSeverity};
+use crate::report::report_registration::ReportRegistration;
+use crate::report::specs::{LabelSpecs, ReportSpecs};
+use crate::report::traits::RuleReport;
+use crate::report::traits::{CompileReport, RegisterableReport, ReportFromContext};
 use crate::rules::rule_registration::RuleRegistration;
 use crate::rules::traits::RuleMetaData;
 use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
 use crate::tree::node_repository::List;
 use crate::tree::traits::Node;
-use phenolint_macros::register_rule;
+use phenolint_macros::{register_report, register_rule};
 use phenopackets::schema::v2::core::OntologyClass;
 use regex::Regex;
 
@@ -44,12 +49,42 @@ impl RuleCheck for CurieFormatRule {
                 ptr.down("id");
 
                 violations.push(LintViolation::new(
+                    ViolationSeverity::Error,
                     LintRule::rule_id(self),
-                    NonEmptyVec::new(ptr, None),
+                    NonEmptyVec::with_single_entry(ptr),
                 ))
             }
         }
 
         violations
+    }
+}
+
+#[register_report(id = "CURIE001")]
+struct CurieFormatReport;
+
+impl ReportFromContext for CurieFormatReport {
+    fn from_context(_: &LinterContext) -> Result<Box<dyn RegisterableReport>, FromContextError> {
+        Ok(Box::new(CurieFormatReport))
+    }
+}
+
+impl CompileReport for CurieFormatReport {
+    fn compile_report(&self, full_node: &dyn Node, lint_violation: &LintViolation) -> ReportSpecs {
+        let violation_ptr = lint_violation.first_at().clone();
+        let curie = full_node
+            .value_at(&violation_ptr)
+            .expect("CURIE should exist");
+
+        ReportSpecs::from_violation(
+            lint_violation,
+            format!("CURIE formatted wrong: {}", curie),
+            vec![LabelSpecs::new(
+                LabelPriority::Primary,
+                full_node.span_at(&violation_ptr).unwrap().clone(),
+                String::default(),
+            )],
+            vec![],
+        )
     }
 }

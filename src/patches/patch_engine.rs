@@ -54,7 +54,7 @@ impl PatchEngine {
         let mut resolved_patches: Vec<PatchInstruction> = patches
             .into_iter()
             .flat_map(|p| {
-                p.instructions
+                p.instructions()
                     .iter()
                     .flat_map(|instruction| match instruction {
                         PatchInstruction::Move { from, to } => {
@@ -124,6 +124,7 @@ impl PatchEngine {
 
 #[cfg(test)]
 mod tests {
+    use crate::helper::NonEmptyVec;
     use crate::patches::enums::PatchInstruction;
     use crate::patches::patch::Patch;
     use crate::patches::patch_engine::PatchEngine;
@@ -165,13 +166,13 @@ mod tests {
     fn test_add_single_field() {
         let patcher = PatchEngine;
         let phenostr = sample_phenopacket();
-        let patch = Patch {
-            instructions: [PatchInstruction::Add {
+        let patch = Patch::new(NonEmptyVec::with_rest(
+            PatchInstruction::Add {
                 at: Pointer::new("/metaData"),
                 value: json!({"created": "2024-01-01"}),
-            }]
-            .to_vec(),
-        };
+            },
+            vec![],
+        ));
 
         let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
@@ -184,13 +185,13 @@ mod tests {
         let patcher = PatchEngine;
         let phenostr = sample_phenopacket();
 
-        let patch = Patch {
-            instructions: [PatchInstruction::Add {
+        let patch = Patch::new(NonEmptyVec::with_rest(
+            PatchInstruction::Add {
                 at: Pointer::new("/subject/timeAtLastEncounter"),
                 value: json!({"age": "P30Y"}),
-            }]
-            .to_vec(),
-        };
+            },
+            vec![],
+        ));
 
         let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
@@ -203,12 +204,12 @@ mod tests {
         let patcher = PatchEngine;
         let phenostr = sample_phenopacket();
 
-        let patch = Patch {
-            instructions: [PatchInstruction::Remove {
+        let patch = Patch::new(NonEmptyVec::with_rest(
+            PatchInstruction::Remove {
                 at: Pointer::new("/subject/dateOfBirth"),
-            }]
-            .to_vec(),
-        };
+            },
+            vec![],
+        ));
 
         let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
@@ -220,12 +221,12 @@ mod tests {
         let patcher = PatchEngine;
         let phenostr = sample_phenopacket();
 
-        let patch = Patch {
-            instructions: [PatchInstruction::Remove {
+        let patch = Patch::new(NonEmptyVec::with_rest(
+            PatchInstruction::Remove {
                 at: Pointer::new("/diseases/0/onset"),
-            }]
-            .to_vec(),
-        };
+            },
+            vec![],
+        ));
 
         let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
@@ -238,13 +239,13 @@ mod tests {
         let patcher = PatchEngine;
         let phenostr = sample_phenopacket();
 
-        let patch = Patch {
-            instructions: [PatchInstruction::Move {
+        let patch = Patch::new(NonEmptyVec::with_rest(
+            PatchInstruction::Move {
                 from: Pointer::new("/subject/dateOfBirth"),
                 to: Pointer::new("/subject/birthDate"),
-            }]
-            .to_vec(),
-        };
+            },
+            vec![],
+        ));
 
         let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
@@ -257,13 +258,13 @@ mod tests {
         let patcher = PatchEngine;
         let phenostr = sample_phenopacket();
 
-        let patch = Patch {
-            instructions: [PatchInstruction::Move {
+        let patch = Patch::new(NonEmptyVec::with_rest(
+            PatchInstruction::Move {
                 from: Pointer::new("/diseases/0/onset"),
                 to: Pointer::new("/ageOfOnset"),
-            }]
-            .to_vec(),
-        };
+            },
+            vec![],
+        ));
 
         let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
@@ -276,13 +277,13 @@ mod tests {
         let patcher = PatchEngine;
         let phenostr = sample_phenopacket();
 
-        let patch = Patch {
-            instructions: [PatchInstruction::Duplicate {
+        let patch = Patch::new(NonEmptyVec::with_rest(
+            PatchInstruction::Duplicate {
                 from: Pointer::new("/subject/id"),
                 to: Pointer::new("/subject/patientId"),
-            }]
-            .to_vec(),
-        };
+            },
+            vec![],
+        ));
 
         let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
@@ -295,13 +296,13 @@ mod tests {
         let patcher = PatchEngine;
         let phenostr = sample_phenopacket();
 
-        let patch = Patch {
-            instructions: [PatchInstruction::Duplicate {
+        let patch = Patch::new(NonEmptyVec::with_rest(
+            PatchInstruction::Duplicate {
                 from: Pointer::new("/diseases/0/term"),
                 to: Pointer::new("/diagnosisTerm"),
-            }]
-            .to_vec(),
-        };
+            },
+            vec![],
+        ));
 
         let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
@@ -315,19 +316,16 @@ mod tests {
         let patcher = PatchEngine;
         let phenostr = sample_phenopacket();
 
-        let patch = Patch {
-            instructions: [
-                PatchInstruction::Add {
-                    at: Pointer::new("/subject/karyotypicSex"),
-                    value: Value::String("XY".to_string()),
-                },
-                PatchInstruction::Add {
-                    at: Pointer::new("/subject/taxonomy"),
-                    value: json!({"id": "NCBITaxon:9606", "label": "Homo sapiens"}),
-                },
-            ]
-            .to_vec(),
-        };
+        let patch = Patch::new(NonEmptyVec::with_rest(
+            PatchInstruction::Add {
+                at: Pointer::new("/subject/karyotypicSex"),
+                value: Value::String("XY".to_string()),
+            },
+            vec![PatchInstruction::Add {
+                at: Pointer::new("/subject/taxonomy"),
+                value: json!({"id": "NCBITaxon:9606", "label": "Homo sapiens"}),
+            }],
+        ));
 
         let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
@@ -340,12 +338,12 @@ mod tests {
         let patcher = PatchEngine;
         let phenostr = sample_phenopacket();
 
-        let patch = Patch {
-            instructions: [
-                PatchInstruction::Add {
-                    at: Pointer::new("/metaData"),
-                    value: json!({"created": "2024-01-01"}),
-                },
+        let patch = Patch::new(NonEmptyVec::with_rest(
+            PatchInstruction::Add {
+                at: Pointer::new("/metaData"),
+                value: json!({"created": "2024-01-01"}),
+            },
+            vec![
                 PatchInstruction::Remove {
                     at: Pointer::new("/subject/dateOfBirth"),
                 },
@@ -353,9 +351,8 @@ mod tests {
                     from: Pointer::new("/subject/sex"),
                     to: Pointer::new("/subject/gender"),
                 },
-            ]
-            .to_vec(),
-        };
+            ],
+        ));
 
         let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
@@ -370,18 +367,15 @@ mod tests {
         let patcher = PatchEngine;
         let phenostr = sample_phenopacket();
 
-        let patch = Patch {
-            instructions: [
-                PatchInstruction::Remove {
-                    at: Pointer::new("/subject/sex"),
-                },
-                PatchInstruction::Add {
-                    at: Pointer::new("/subject/gender"),
-                    value: Value::String("MALE".to_string()),
-                },
-            ]
-            .to_vec(),
-        };
+        let patch = Patch::new(NonEmptyVec::with_rest(
+            PatchInstruction::Remove {
+                at: Pointer::new("/subject/sex"),
+            },
+            vec![PatchInstruction::Add {
+                at: Pointer::new("/subject/gender"),
+                value: Value::String("MALE".to_string()),
+            }],
+        ));
 
         let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
@@ -394,19 +388,16 @@ mod tests {
         let patcher = PatchEngine;
         let phenostr = sample_phenopacket();
 
-        let patch = Patch {
-            instructions: [
-                PatchInstruction::Move {
-                    from: Pointer::new("/diseases/0"),
-                    to: Pointer::new("/primaryDiagnosis"),
-                },
-                PatchInstruction::Add {
-                    at: Pointer::new("/primaryDiagnosis/confirmed"),
-                    value: Value::Bool(true),
-                },
-            ]
-            .to_vec(),
-        };
+        let patch = Patch::new(NonEmptyVec::with_rest(
+            PatchInstruction::Move {
+                from: Pointer::new("/diseases/0"),
+                to: Pointer::new("/primaryDiagnosis"),
+            },
+            vec![PatchInstruction::Add {
+                at: Pointer::new("/primaryDiagnosis/confirmed"),
+                value: Value::Bool(true),
+            }],
+        ));
 
         let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
@@ -430,13 +421,13 @@ mod tests {
         let patcher = PatchEngine;
         let phenostr = sample_phenopacket();
 
-        let patch = Patch {
-            instructions: [PatchInstruction::Add {
+        let patch = Patch::new(NonEmptyVec::with_rest(
+            PatchInstruction::Add {
                 at: Pointer::new("/schemaVersion"),
                 value: Value::Number(Number::from_f64(2.0f64).unwrap()),
-            }]
-            .to_vec(),
-        };
+            },
+            vec![],
+        ));
 
         let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
@@ -448,18 +439,15 @@ mod tests {
         let patcher = PatchEngine;
         let phenostr = sample_phenopacket();
 
-        let patch = Patch {
-            instructions: [
-                PatchInstruction::Duplicate {
-                    from: Pointer::new("/subject"),
-                    to: Pointer::new("/backup"),
-                },
-                PatchInstruction::Remove {
-                    at: Pointer::new("/subject/dateOfBirth"),
-                },
-            ]
-            .to_vec(),
-        };
+        let patch = Patch::new(NonEmptyVec::with_rest(
+            PatchInstruction::Duplicate {
+                from: Pointer::new("/subject"),
+                to: Pointer::new("/backup"),
+            },
+            vec![PatchInstruction::Remove {
+                at: Pointer::new("/subject/dateOfBirth"),
+            }],
+        ));
 
         let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
@@ -474,13 +462,13 @@ mod tests {
         let patcher = PatchEngine;
         let phenostr = sample_phenopacket();
 
-        let patch = Patch {
-            instructions: [PatchInstruction::Add {
+        let patch = Patch::new(NonEmptyVec::with_rest(
+            PatchInstruction::Add {
                 at: Pointer::new("/phenotypicFeatures/0/severity"),
                 value: json!({"label": "severe"}),
-            }]
-            .to_vec(),
-        };
+            },
+            vec![],
+        ));
 
         let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
@@ -495,13 +483,13 @@ mod tests {
         let patcher = PatchEngine;
         let phenostr = sample_phenopacket();
 
-        let patch = Patch {
-            instructions: [PatchInstruction::Add {
+        let patch = Patch::new(NonEmptyVec::with_rest(
+            PatchInstruction::Add {
                 at: Pointer::new("/diseases/0/onset/iso8601"),
                 value: json!({"iso8601duration": "P10Y"}),
-            }]
-            .to_vec(),
-        };
+            },
+            vec![],
+        ));
 
         let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
@@ -516,15 +504,15 @@ mod tests {
         let patcher = PatchEngine;
         let phenostr = sample_phenopacket();
 
-        let patch = Patch {
-            instructions: [PatchInstruction::Add {
+        let patch = Patch::new(NonEmptyVec::with_rest(
+            PatchInstruction::Add {
                 at: Pointer::new("/notes"),
                 value: Value::String(
                     "Patient has \"complex\" symptoms; requires care.".to_string(),
                 ),
-            }]
-            .to_vec(),
-        };
+            },
+            vec![],
+        ));
 
         let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
@@ -536,19 +524,16 @@ mod tests {
         let patcher = PatchEngine;
         let phenostr = sample_phenopacket();
 
-        let patch = Patch {
-            instructions: [
-                PatchInstruction::Move {
-                    from: Pointer::new("/subject/sex"),
-                    to: Pointer::new("/subject/biologicalSex"),
-                },
-                PatchInstruction::Move {
-                    from: Pointer::new("/subject/id"),
-                    to: Pointer::new("/patientIdentifier"),
-                },
-            ]
-            .to_vec(),
-        };
+        let patch = Patch::new(NonEmptyVec::with_rest(
+            PatchInstruction::Move {
+                from: Pointer::new("/subject/sex"),
+                to: Pointer::new("/subject/biologicalSex"),
+            },
+            vec![PatchInstruction::Move {
+                from: Pointer::new("/subject/id"),
+                to: Pointer::new("/patientIdentifier"),
+            }],
+        ));
 
         let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
@@ -563,18 +548,15 @@ mod tests {
         let patcher = PatchEngine;
         let phenostr = sample_phenopacket();
 
-        let patch = Patch {
-            instructions: [
-                PatchInstruction::Remove {
-                    at: Pointer::new("/subject/sex"),
-                },
-                PatchInstruction::Add {
-                    at: Pointer::new("/subject/sex"),
-                    value: Value::String("FEMALE".to_string()),
-                },
-            ]
-            .to_vec(),
-        };
+        let patch = Patch::new(NonEmptyVec::with_rest(
+            PatchInstruction::Remove {
+                at: Pointer::new("/subject/sex"),
+            },
+            vec![PatchInstruction::Add {
+                at: Pointer::new("/subject/sex"),
+                value: Value::String("FEMALE".to_string()),
+            }],
+        ));
 
         let result = patcher.patch(&phenostr, vec![&patch]).unwrap();
 
@@ -586,13 +568,10 @@ mod tests {
         let patcher = PatchEngine;
         let minimal = json!({"id": "test"});
 
-        let patch = Patch {
-            instructions: [PatchInstruction::Add {
-                at: Pointer::new("/subject"),
-                value: json!({"id": "patient.1"}),
-            }]
-            .to_vec(),
-        };
+        let patch = Patch::new(NonEmptyVec::with_single_entry(PatchInstruction::Add {
+            at: Pointer::new("/subject"),
+            value: json!({"id": "patient.1"}),
+        }));
 
         let result = patcher.patch(&minimal, vec![&patch]).unwrap();
 

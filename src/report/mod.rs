@@ -1,4 +1,4 @@
-pub mod compilers;
+pub mod enums;
 pub mod error;
 pub mod renderer;
 pub mod report_registration;
