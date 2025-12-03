@@ -43,7 +43,7 @@ impl ReportRenderer {
             .map_err(ReportParseError::Emit)
     }
 
-    pub fn parse_specs(report_specs: &ReportSpecs, file_id: usize) -> Diagnostic<usize> {
+    pub(crate) fn parse_specs(report_specs: &ReportSpecs, file_id: usize) -> Diagnostic<usize> {
         let mut diagnostic = report_specs.severity().as_codespan_diagnostic();
         diagnostic = diagnostic.with_message(report_specs.message());
         diagnostic = diagnostic.with_code(report_specs.code());
