@@ -11,9 +11,10 @@ use crate::rules::rule_registration::RuleRegistration;
 use crate::rules::traits::RuleMetaData;
 use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
 use crate::tree::node_repository::List;
-use crate::tree::traits::Node;
+use crate::tree::traits::{Case, DataAccess, Node, Scope};
 use phenolint_macros::{register_report, register_rule};
-use phenopackets::schema::v2::core::OntologyClass;
+use phenopackets::schema::v2::Phenopacket;
+use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
 use regex::Regex;
 
 /// ### CURIE001
@@ -38,12 +39,12 @@ impl RuleFromContext for CurieFormatRule {
 }
 
 impl RuleCheck for CurieFormatRule {
-    type Data<'a> = List<'a, OntologyClass>;
+    type Data<'a> =  DataAccess<'a, Scope<Case>, List<'a, OntologyClass>>;
 
     fn check(&self, data: Self::Data<'_>) -> Vec<LintViolation> {
         let mut violations = vec![];
-
-        for node in data.0.iter() {
+        data.0
+        for node in data.inner.iter() {
             if !self.regex.is_match(&node.inner.id) {
                 let mut ptr = node.pointer().clone();
                 ptr.down("id");
