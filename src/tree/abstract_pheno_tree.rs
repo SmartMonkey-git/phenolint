@@ -11,11 +11,8 @@ pub struct AbstractTreeTraversal {
 }
 
 impl AbstractTreeTraversal {
-    pub fn new(tree: Value, spans: &HashMap<Pointer, Range<usize>>) -> AbstractTreeTraversal {
-        AbstractTreeTraversal {
-            tree: tree.clone(),
-            spans: spans.clone(),
-        }
+    pub fn new(tree: Value, spans: HashMap<Pointer, Range<usize>>) -> AbstractTreeTraversal {
+        AbstractTreeTraversal { tree, spans }
     }
 
     pub fn traverse<'s>(self) -> Box<dyn Iterator<Item = DynamicNode> + 's> {

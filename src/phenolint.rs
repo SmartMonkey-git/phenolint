@@ -70,7 +70,7 @@ impl Lint<str> for Phenolint {
 
         let root_node = DynamicNode::new(&values, &spans, Pointer::at_root());
 
-        let apt = AbstractTreeTraversal::new(values, &spans);
+        let apt = AbstractTreeTraversal::new(values, spans);
         let mut node_repo: NodeRepository = NodeRepository::new();
 
         for node in apt.traverse() {
