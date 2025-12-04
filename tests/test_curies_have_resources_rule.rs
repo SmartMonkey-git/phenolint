@@ -31,7 +31,7 @@ fn test_rule() {
         n_violations: 2,
         patched_phenopacket: None,
         patches: vec![],
-        message_snippets: vec![],
+        message_snippets: vec!["This ontology class ...", "... should have a resource here"],
     };
 
     run_rule_test(rule_id, &pp, assert_settings);
