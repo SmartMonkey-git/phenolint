@@ -1,5 +1,6 @@
 use crate::diagnostics::LintFinding;
 use crate::report::renderer::ReportRenderer;
+use crate::report::specs::ReportSpecs;
 use once_cell::sync::Lazy;
 use ontolius::io::OntologyLoaderBuilder;
 use ontolius::ontology::csr::FullCsrOntology;
@@ -34,15 +35,15 @@ pub(crate) fn assert_report_message(
     message_snippet: &str,
     phenostr: &str,
 ) {
-    let owned_report = finding.report().unwrap();
+    let _owned_report = todo!();
     assert!(
-        ReportRenderer::render_into_string(owned_report, phenostr, "1")
+        ReportRenderer::render_into_string(_owned_report, phenostr, "1")
             .unwrap()
             .contains(rule_id),
         "Report should mention the rule ID"
     );
     assert!(
-        ReportRenderer::render_into_string(owned_report, phenostr, "1")
+        ReportRenderer::render_into_string(_owned_report, phenostr, "1")
             .unwrap()
             .contains(message_snippet),
         "Report should mention {message_snippet}"
