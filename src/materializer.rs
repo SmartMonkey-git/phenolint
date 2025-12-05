@@ -7,7 +7,6 @@ use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{
     Diagnosis, Disease, OntologyClass, PhenotypicFeature, Resource, VitalStatus,
 };
-use serde::Serialize;
 
 pub(crate) struct NodeMaterializer;
 
