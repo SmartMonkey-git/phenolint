@@ -1,13 +1,12 @@
 use crate::parsing::traits::ParsableNode;
 use crate::tree::node::{DynamicNode, MaterializedNode};
 use crate::tree::node_repository::NodeRepository;
-use crate::tree::traits::Node;
+use crate::tree::traits::LocatableNode;
 use log::error;
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{
     Diagnosis, Disease, OntologyClass, PhenotypicFeature, Resource, VitalStatus,
 };
-use serde::Serialize;
 
 pub(crate) struct NodeMaterializer;
 
@@ -32,7 +31,7 @@ impl NodeMaterializer {
         };
     }
 
-    fn push_to_repo<T: 'static + Clone + Serialize>(
+    fn push_to_repo<T: 'static>(
         materialized: T,
         dyn_node: &DynamicNode,
         board: &mut NodeRepository,

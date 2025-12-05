@@ -1,6 +1,6 @@
 use crate::tree::node::DynamicNode;
 use crate::tree::pointer::Pointer;
-use crate::tree::traits::Node;
+use crate::tree::traits::{LocatableNode, RetrievableNode};
 use serde_json::Value;
 use std::collections::{HashMap, VecDeque};
 use std::ops::Range;
