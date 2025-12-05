@@ -74,7 +74,7 @@ impl<T: Serialize> RetrievableNode for MaterializedNode<T> {
     }
 }
 
-impl<T: Clone + Serialize> LocatableNode for MaterializedNode<T> {
+impl<T> LocatableNode for MaterializedNode<T> {
     fn span_at(&self, ptr: &Pointer) -> Option<&Range<usize>> {
         self.spans.get(ptr)
     }

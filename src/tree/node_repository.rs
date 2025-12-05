@@ -2,7 +2,7 @@ use crate::rules::traits::LintData;
 use crate::tree::node::MaterializedNode;
 use crate::tree::pointer::Pointer;
 use crate::tree::traits::LocatableNode;
-use serde::Serialize;
+
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use std::ops::Deref;
@@ -36,10 +36,7 @@ impl NodeRepository {
             .push(node);
     }
 
-    pub fn node_by_pointer<T: 'static + Clone + Serialize>(
-        &self,
-        ptr: &Pointer,
-    ) -> Option<&MaterializedNode<T>> {
+    pub fn node_by_pointer<T: 'static>(&self, ptr: &Pointer) -> Option<&MaterializedNode<T>> {
         for nodes in self.board.values() {
             let casted_node = nodes
                 .downcast_ref::<Vec<MaterializedNode<T>>>()

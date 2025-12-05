@@ -32,7 +32,7 @@ impl NodeMaterializer {
         };
     }
 
-    fn push_to_repo<T: 'static + Clone + Serialize>(
+    fn push_to_repo<T: 'static>(
         materialized: T,
         dyn_node: &DynamicNode,
         board: &mut NodeRepository,
