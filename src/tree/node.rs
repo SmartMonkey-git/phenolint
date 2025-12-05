@@ -1,5 +1,5 @@
 use crate::tree::pointer::Pointer;
-use crate::tree::traits::Node;
+use crate::tree::traits::{LocatableNode, RetrievableNode};
 use serde::Serialize;
 use serde_json::Value;
 use std::borrow::Cow;
@@ -22,11 +22,13 @@ impl DynamicNode {
     }
 }
 
-impl Node for DynamicNode {
-    fn value_at(&'_ self, ptr: &Pointer) -> Option<Cow<'_, Value>> {
+impl RetrievableNode for DynamicNode {
+    fn value_at(&self, ptr: &Pointer) -> Option<Cow<'_, Value>> {
         Some(Cow::Borrowed(self.inner.pointer(ptr.position())?))
     }
+}
 
+impl LocatableNode for DynamicNode {
     fn span_at(&self, ptr: &Pointer) -> Option<&Range<usize>> {
         self.spans.get(ptr)
     }
@@ -64,13 +66,15 @@ impl<T> MaterializedNode<T> {
     }
 }
 
-impl<T: Clone + Serialize> Node for MaterializedNode<T> {
-    fn value_at(&'_ self, ptr: &Pointer) -> Option<Cow<'_, Value>> {
+impl<T: Serialize> RetrievableNode for MaterializedNode<T> {
+    fn value_at(&self, ptr: &Pointer) -> Option<Cow<'_, Value>> {
         let node_opt = serde_json::to_value(&self.inner).ok()?;
         let value = node_opt.pointer(ptr.position())?.clone();
         Some(Cow::Owned(value))
     }
+}
 
+impl<T: Clone + Serialize> LocatableNode for MaterializedNode<T> {
     fn span_at(&self, ptr: &Pointer) -> Option<&Range<usize>> {
         self.spans.get(ptr)
     }

@@ -1,7 +1,7 @@
 use crate::parsing::traits::ParsableNode;
 use crate::tree::node::{DynamicNode, MaterializedNode};
 use crate::tree::node_repository::NodeRepository;
-use crate::tree::traits::Node;
+use crate::tree::traits::LocatableNode;
 use log::error;
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{

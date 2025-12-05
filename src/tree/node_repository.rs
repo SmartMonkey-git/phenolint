@@ -1,7 +1,7 @@
 use crate::rules::traits::LintData;
 use crate::tree::node::MaterializedNode;
 use crate::tree::pointer::Pointer;
-use crate::tree::traits::Node;
+use crate::tree::traits::LocatableNode;
 use serde::Serialize;
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
