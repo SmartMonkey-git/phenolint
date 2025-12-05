@@ -50,25 +50,10 @@ impl Phenolint {
             validator: PhenopacketSchemaValidator::default(),
         }
     }
-
-    fn emit(phenostr: &str, report: &LintReport, phenopacket_id: &str) {
-        for (info, report_specs) in report
-            .findings()
-            .iter()
-            .filter_map(|info| info.report().map(|rs| (info, rs)))
-        {
-            if ReportRenderer::emit(report_specs, phenostr, phenopacket_id).is_err() {
-                warn!(
-                    "Unable to parse and emit report for: '{}'",
-                    info.violation().rule_id()
-                );
-            }
-        }
-    }
 }
 
 impl Lint<str> for Phenolint {
-    fn lint(&mut self, phenostr: &str, patch: bool, quit: bool) -> LintResult {
+    fn lint(&mut self, phenostr: &str, patch: bool, quiet: bool) -> LintResult {
         let mut report = LintReport::default();
 
         let (values, spans, input_type) = match PhenopacketParser::to_abstract_tree(phenostr) {
@@ -83,15 +68,15 @@ impl Lint<str> for Phenolint {
             });
         }
 
-        let apt = AbstractTreeTraversal::new(&values, &spans);
+        let root_node = DynamicNode::new(&values, &spans, Pointer::at_root());
+
+        let apt = AbstractTreeTraversal::new(values, spans);
         let mut node_repo: NodeRepository = NodeRepository::new();
 
         for node in apt.traverse() {
             self.node_materializer
                 .materialize_nodes(&node, &mut node_repo)
         }
-
-        let root_node = DynamicNode::new(&values, &spans, Pointer::at_root());
 
         let mut findings = vec![];
         for rule in self.rule_registry.rules() {
@@ -102,26 +87,40 @@ impl Lint<str> for Phenolint {
                     self.patch_registry
                         .get_patches_for(rule.rule_id(), &root_node, &violation);
 
-                let report =
-                    self.report_registry
-                        .get_report_for(rule.rule_id(), &root_node, &violation);
-
-                findings.push(LintFinding::new(violation, report, patches));
+                findings.push(LintFinding::new(violation, patches));
             }
         }
+
         report.extend_finding(findings);
 
-        if !quit {
-            let pp_id = values
+        if !quiet {
+            let phenopacket_id = root_node
+                .inner
                 .get("id")
                 .expect("Phenopacket should have ID")
                 .as_str()
                 .unwrap();
-            Self::emit(phenostr, &report, pp_id);
+
+            for violation in report.violations() {
+                let renderable_report = self.report_registry.get_report_for(&root_node, violation);
+
+                if renderable_report.is_none() {
+                    continue;
+                }
+
+                if ReportRenderer::emit(&renderable_report.unwrap(), phenostr, phenopacket_id)
+                    .is_err()
+                {
+                    warn!(
+                        "Unable to parse and emit report for '{}'",
+                        violation.rule_id()
+                    );
+                }
+            }
         }
 
         if patch & report.has_patches() {
-            match self.patch_engine.patch(&values, report.patches()) {
+            match self.patch_engine.patch(&root_node.inner, report.patches()) {
                 Ok(patched_phenopacket) => {
                     match convert_phenopacket_to_input_type_str(&patched_phenopacket, input_type) {
                         Ok(phenostr) => {
