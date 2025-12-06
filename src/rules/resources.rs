@@ -11,6 +11,7 @@ use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext, RuleMetaData};
 use crate::tree::node_repository::List;
 use crate::tree::pointer::Pointer;
 use crate::tree::traits::Node;
+use crate::tree::traits::UberNode;
 use phenolint_macros::{register_report, register_rule};
 use phenopackets::schema::v2::core::{OntologyClass, Resource};
 use std::collections::HashSet;
@@ -108,7 +109,11 @@ impl ReportFromContext for CuriesHaveResourcesReport {
 }
 
 impl CompileReport for CuriesHaveResourcesReport {
-    fn compile_report(&self, full_node: &dyn Node, lint_violation: &LintViolation) -> ReportSpecs {
+    fn compile_report(
+        &self,
+        full_node: &dyn UberNode,
+        lint_violation: &LintViolation,
+    ) -> ReportSpecs {
         let resources_ptr = Pointer::new("/metaData/resources");
         let span = if let Some(resources_range) = full_node.span_at(&resources_ptr).cloned() {
             resources_range

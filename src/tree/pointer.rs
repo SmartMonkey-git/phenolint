@@ -1,10 +1,11 @@
 use crate::tree::utils::{escape, unescape};
+use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
 /// A struct representing a JSON Pointer (RFC 6901).
 ///
 /// This internally stores the pointer as an escaped string (e.g., "/a/~1b").
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Pointer(String);
 
 impl Pointer {

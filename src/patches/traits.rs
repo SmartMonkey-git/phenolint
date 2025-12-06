@@ -3,9 +3,14 @@ use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
 use crate::patches::patch::Patch;
 use crate::tree::traits::Node;
+use crate::tree::traits::UberNode;
 
 pub trait RegisterablePatch: Send + Sync {
-    fn compile_patches(&self, full_node: &dyn Node, lint_violation: &LintViolation) -> Vec<Patch>;
+    fn compile_patches(
+        &self,
+        full_node: &dyn UberNode,
+        lint_violation: &LintViolation,
+    ) -> Vec<Patch>;
     fn rule_id(&self) -> String;
 }
 
@@ -16,7 +21,7 @@ pub trait PatchFromContext {
 }
 
 impl<T: CompilePatches + Send + RulePatch> RegisterablePatch for T {
-    fn compile_patches(&self, value: &dyn Node, lint_violation: &LintViolation) -> Vec<Patch> {
+    fn compile_patches(&self, value: &dyn UberNode, lint_violation: &LintViolation) -> Vec<Patch> {
         CompilePatches::compile_patches(self, value, lint_violation)
     }
 
@@ -31,5 +36,5 @@ pub trait RulePatch: PatchFromContext + RegisterablePatch + CompilePatches {
 
 /// Tries to compile patches for a given rule.
 pub trait CompilePatches: Send + Sync {
-    fn compile_patches(&self, node: &dyn Node, lint_violation: &LintViolation) -> Vec<Patch>;
+    fn compile_patches(&self, node: &dyn UberNode, lint_violation: &LintViolation) -> Vec<Patch>;
 }

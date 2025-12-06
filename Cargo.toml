@@ -26,7 +26,8 @@ once_cell = "1.21.3"
 log = "0.4.28"
 codespan-reporting = "0.13.1"
 prost = "0.14.0"# Can't change because of phenopackets crate
-
+rusqlite = "0.37.0"
+bincode = "1.3"
 
 [dev-dependencies]
 rstest = "0.26.1"

@@ -1,19 +1,22 @@
 use crate::parsing::traits::ParsableNode;
 use crate::tree::node::{DynamicNode, MaterializedNode};
-use crate::tree::node_repository::NodeRepository;
-use crate::tree::traits::Node;
+use crate::tree::sql_node_repository::SQLNodeRepository;
+use crate::tree::traits::{Node, NodeRepository};
 use log::error;
-use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{
     Diagnosis, Disease, OntologyClass, PhenotypicFeature, Resource, VitalStatus,
 };
+use phenopackets::schema::v2::{Cohort, Phenopacket};
+use prost::Message;
 use serde::Serialize;
 
 pub(crate) struct NodeMaterializer;
 
 impl NodeMaterializer {
-    pub fn materialize_nodes(&mut self, dyn_node: &DynamicNode, repo: &mut NodeRepository) {
-        if let Some(oc) = OntologyClass::parse(dyn_node) {
+    pub fn materialize_nodes(&self, dyn_node: &DynamicNode, repo: &mut SQLNodeRepository) {
+        if let Some(cohort) = Cohort::parse(dyn_node) {
+            Self::push_to_repo(cohort, dyn_node, repo);
+        } else if let Some(oc) = OntologyClass::parse(dyn_node) {
             Self::push_to_repo(oc, dyn_node, repo);
         } else if let Some(pf) = PhenotypicFeature::parse(dyn_node) {
             Self::push_to_repo(pf, dyn_node, repo);
@@ -32,12 +35,12 @@ impl NodeMaterializer {
         };
     }
 
-    fn push_to_repo<T: 'static + Clone + Serialize>(
+    fn push_to_repo<T: 'static + Message>(
         materialized: T,
         dyn_node: &DynamicNode,
-        board: &mut NodeRepository,
+        board: &mut SQLNodeRepository,
     ) {
         let node = MaterializedNode::from_dynamic(materialized, dyn_node);
-        board.insert(node);
+        board.insert(node).expect("TODO: panic message");
     }
 }

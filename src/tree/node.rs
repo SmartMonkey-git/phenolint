@@ -1,6 +1,6 @@
 use crate::tree::pointer::Pointer;
-use crate::tree::traits::Node;
-use serde::Serialize;
+use crate::tree::traits::{IndexNode, Node};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -22,11 +22,13 @@ impl DynamicNode {
     }
 }
 
-impl Node for DynamicNode {
+impl IndexNode for DynamicNode {
     fn value_at(&'_ self, ptr: &Pointer) -> Option<Cow<'_, Value>> {
         Some(Cow::Borrowed(self.inner.pointer(ptr.position())?))
     }
+}
 
+impl Node for DynamicNode {
     fn span_at(&self, ptr: &Pointer) -> Option<&Range<usize>> {
         self.spans.get(ptr)
     }
@@ -36,6 +38,7 @@ impl Node for DynamicNode {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct MaterializedNode<T> {
     pub inner: T,
     spans: HashMap<Pointer, Range<usize>>,
@@ -64,13 +67,15 @@ impl<T> MaterializedNode<T> {
     }
 }
 
-impl<T: Clone + Serialize> Node for MaterializedNode<T> {
+impl<T: Serialize> IndexNode for MaterializedNode<T> {
     fn value_at(&'_ self, ptr: &Pointer) -> Option<Cow<'_, Value>> {
         let node_opt = serde_json::to_value(&self.inner).ok()?;
         let value = node_opt.pointer(ptr.position())?.clone();
         Some(Cow::Owned(value))
     }
+}
 
+impl<T> Node for MaterializedNode<T> {
     fn span_at(&self, ptr: &Pointer) -> Option<&Range<usize>> {
         self.spans.get(ptr)
     }

@@ -1,6 +1,6 @@
 use crate::tree::node::DynamicNode;
 use crate::tree::pointer::Pointer;
-use crate::tree::traits::Node;
+use crate::tree::traits::{IndexNode, Node};
 use serde_json::Value;
 use std::collections::{HashMap, VecDeque};
 use std::ops::Range;
@@ -42,7 +42,7 @@ impl AbstractTreeTraversal {
                                 new_pointer.down(key);
 
                                 let next_node =
-                                    DynamicNode::new(val, &self.spans.clone(), new_pointer);
+                                    DynamicNode::new(&val, &self.spans.clone(), new_pointer);
 
                                 queue.push_back(next_node);
                             }

@@ -17,6 +17,7 @@ use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
 use crate::tree::node_repository::List;
 use crate::tree::pointer::Pointer;
 use crate::tree::traits::Node;
+use crate::tree::traits::UberNode;
 use phenolint_macros::{register_patch, register_report, register_rule};
 use phenopackets::schema::v2::core::{Diagnosis, Disease, OntologyClass};
 use serde_json::Value;
@@ -83,7 +84,11 @@ impl ReportFromContext for DiseaseConsistencyReport {
 }
 
 impl CompileReport for DiseaseConsistencyReport {
-    fn compile_report(&self, full_node: &dyn Node, lint_violation: &LintViolation) -> ReportSpecs {
+    fn compile_report(
+        &self,
+        full_node: &dyn UberNode,
+        lint_violation: &LintViolation,
+    ) -> ReportSpecs {
         let violation_ptr = lint_violation.first_at().clone();
         let mut interpretation_ptr = violation_ptr.clone();
 
@@ -118,7 +123,7 @@ impl PatchFromContext for DiseaseConsistencyPatch {
 }
 
 impl CompilePatches for DiseaseConsistencyPatch {
-    fn compile_patches(&self, value: &dyn Node, lint_violation: &LintViolation) -> Vec<Patch> {
+    fn compile_patches(&self, value: &dyn UberNode, lint_violation: &LintViolation) -> Vec<Patch> {
         let oc: OntologyClass = serde_json::from_value(
             value
                 .value_at(lint_violation.first_at())

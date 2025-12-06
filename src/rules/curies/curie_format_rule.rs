@@ -11,7 +11,8 @@ use crate::rules::rule_registration::RuleRegistration;
 use crate::rules::traits::RuleMetaData;
 use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
 use crate::tree::node_repository::List;
-use crate::tree::traits::Node;
+use crate::tree::traits::UberNode;
+use crate::tree::traits::{IndexNode, Node};
 use phenolint_macros::{register_report, register_rule};
 use phenopackets::schema::v2::core::OntologyClass;
 use regex::Regex;
@@ -70,7 +71,11 @@ impl ReportFromContext for CurieFormatReport {
 }
 
 impl CompileReport for CurieFormatReport {
-    fn compile_report(&self, full_node: &dyn Node, lint_violation: &LintViolation) -> ReportSpecs {
+    fn compile_report(
+        &self,
+        full_node: &(dyn UberNode),
+        lint_violation: &LintViolation,
+    ) -> ReportSpecs {
         let violation_ptr = lint_violation.first_at().clone();
         let curie = full_node
             .value_at(&violation_ptr)

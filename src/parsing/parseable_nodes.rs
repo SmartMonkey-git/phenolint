@@ -1,10 +1,10 @@
 use crate::parsing::traits::ParsableNode;
 use crate::tree::node::DynamicNode;
 use crate::tree::traits::Node;
-use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{
     Diagnosis, Disease, OntologyClass, PhenotypicFeature, Resource, VitalStatus,
 };
+use phenopackets::schema::v2::{Cohort, Phenopacket};
 use serde_json::Value;
 
 impl ParsableNode<OntologyClass> for OntologyClass {
@@ -41,10 +41,23 @@ impl ParsableNode<Phenopacket> for Phenopacket {
         if let Value::Object(map) = &node.inner
             && map.contains_key("id")
             && map.contains_key("metaData")
-            && node.pointer().is_root()
             && let Ok(pp) = serde_json::from_value::<Phenopacket>(node.inner.clone())
         {
             Some(pp)
+        } else {
+            None
+        }
+    }
+}
+
+impl ParsableNode<Cohort> for Cohort {
+    fn parse(node: &DynamicNode) -> Option<Cohort> {
+        if let Value::Object(map) = &node.inner
+            && map.contains_key("id")
+            && map.contains_key("members")
+            && let Ok(cohort) = serde_json::from_value::<Cohort>(node.inner.clone())
+        {
+            Some(cohort)
         } else {
             None
         }

@@ -4,6 +4,7 @@ use crate::report::report_registration::ReportRegistration;
 use crate::report::specs::ReportSpecs;
 use crate::report::traits::{CompileReport, RegisterableReport, RuleReport};
 use crate::tree::node::DynamicNode;
+use crate::tree::traits::UberNode;
 use log::warn;
 use std::collections::HashMap;
 

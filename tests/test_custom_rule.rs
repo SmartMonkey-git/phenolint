@@ -20,7 +20,7 @@ use phenolint::rules::traits::LintRule;
 use phenolint::rules::traits::{RuleCheck, RuleFromContext};
 use phenolint::tree::node_repository::List;
 use phenolint::tree::pointer::Pointer;
-use phenolint::tree::traits::Node;
+use phenolint::tree::traits::{Node, UberNode};
 use phenolint_macros::{register_patch, register_report, register_rule};
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::OntologyClass;
@@ -64,7 +64,7 @@ impl PatchFromContext for CustomRulePatchCompiler {
 }
 
 impl CompilePatches for CustomRulePatchCompiler {
-    fn compile_patches(&self, node: &dyn Node, _: &LintViolation) -> Vec<Patch> {
+    fn compile_patches(&self, node: &dyn UberNode, _: &LintViolation) -> Vec<Patch> {
         vec![Patch::new(NonEmptyVec::with_single_entry(
             PatchInstruction::Remove {
                 at: node.pointer().clone().down("id").clone(),
@@ -83,7 +83,7 @@ impl ReportFromContext for CustomRuleReportCompiler {
 }
 
 impl CompileReport for CustomRuleReportCompiler {
-    fn compile_report(&self, full_node: &dyn Node, violation: &LintViolation) -> ReportSpecs {
+    fn compile_report(&self, full_node: &dyn UberNode, violation: &LintViolation) -> ReportSpecs {
         let ptr = violation.first_at();
 
         ReportSpecs::from_violation(

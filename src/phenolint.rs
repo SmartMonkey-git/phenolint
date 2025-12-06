@@ -74,8 +74,8 @@ impl Lint<str> for Phenolint {
         let mut node_repo: NodeRepository = NodeRepository::new();
 
         for node in apt.traverse() {
-            self.node_materializer
-                .materialize_nodes(&node, &mut node_repo)
+            /*self.node_materializer
+            .materialize_nodes(&node, &mut node_repo)*/
         }
 
         let mut findings = vec![];
