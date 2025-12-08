@@ -4,7 +4,6 @@ use crate::tree::traits::{Node, NodeRepository};
 use phenopackets::schema::v2::{Cohort, Family, Phenopacket};
 use prost::Message;
 use rusqlite::Connection as SQLiteConnection;
-use serde::de::DeserializeOwned;
 use std::any::TypeId;
 use std::cell::Cell;
 use std::collections::HashMap;
@@ -48,9 +47,8 @@ impl ScopeMappings {
         self.scope_by_type_id.contains_key(type_id)
     }
 
-    pub fn derive_scope<T: 'static>(&self, node: &MaterializedNode<T>) -> u8 {
-        let type_id = TypeId::of::<T>();
-        let path_str = node.pointer().position();
+    pub fn derive_scope(&self, ptr: &Pointer, type_id: &TypeId) -> u8 {
+        let path_str = ptr.position();
 
         if let Some(scope) = self.get_scope(&type_id) {
             let current_max = self.max_scope.get();
@@ -60,7 +58,7 @@ impl ScopeMappings {
         let phenopacket_type_id = TypeId::of::<Phenopacket>();
         let case_scope = self.scope_by_type_id.get(&phenopacket_type_id).unwrap();
 
-        if phenopacket_type_id == type_id {
+        if &phenopacket_type_id == type_id {
             return *case_scope;
         }
 
@@ -173,18 +171,12 @@ impl SQLNodeRepository {
 impl NodeRepository for SQLNodeRepository {
     fn insert<T: 'static + Message>(&mut self, node: MaterializedNode<T>) -> Result<(), String> {
         let type_id = TypeId::of::<T>();
-        use std::any::type_name;
         let mut bytes = Vec::new();
         T::encode(&node.inner, &mut bytes).unwrap();
 
         let type_id_hash = type_id_to_u64(&type_id);
-        let scope = self.scope_mappings.derive_scope::<T>(&node);
+        let scope = self.scope_mappings.derive_scope(node.pointer(), &type_id);
         let is_scope_boundary = self.scope_mappings.is_scope_boundary(&type_id);
-
-        //println!("----Saving----");
-        //println!("Type: {}", type_name::<T>());
-        //println!("is_scope_boundary: {}", is_scope_boundary);
-        //println!("In scope: {}", scope);
 
         self.board
             .execute(
@@ -205,11 +197,88 @@ impl NodeRepository for SQLNodeRepository {
         Ok(())
     }
 
-    fn get_nodes_in_scope<T: DeserializeOwned + 'static>(
+    fn get_all<T: Default + Message + 'static>(&self) -> Result<Vec<MaterializedNode<T>>, String> {
+        let type_id = TypeId::of::<T>();
+        let type_id_hash = type_id_to_u64(&type_id) as i64;
+        let query = format!(
+            "SELECT path, inner from {} WHERE type_id_hash = ?1",
+            Self::NODE_TABLE_NAME
+        );
+
+        let mut stmt = self
+            .board
+            .prepare(&query)
+            .map_err(|e| format!("Failed to prepare statement: {}", e))?;
+
+        let raw_nodes = stmt
+            .query_map([type_id_hash; 1], |row| {
+                let path: String = row.get(0)?;
+                let bytes: Vec<u8> = row.get(1)?;
+
+                Ok((bytes, path))
+            })
+            .map_err(|e| format!("Failed to query: {}", e))?;
+
+        let nodes: Vec<MaterializedNode<T>> = raw_nodes
+            .into_iter()
+            .map(|r| {
+                let (bytes, path) = r.map_err(|e| format!("Failed to read row: {}", e))?;
+
+                let node_content: T = T::decode(bytes.as_slice())
+                    .map_err(|_| "Failed to decode content".to_string())?;
+
+                Ok(MaterializedNode::new(
+                    node_content,
+                    Default::default(), // TODO
+                    Pointer::new(&path),
+                ))
+            })
+            .collect::<Result<Vec<_>, String>>()?;
+
+        Ok(nodes)
+    }
+
+    fn get_nodes_in_scope<T: Message + Default + 'static>(
         &self,
         scope: u8,
     ) -> Result<Vec<MaterializedNode<T>>, String> {
-        todo!()
+        let type_id = TypeId::of::<T>();
+        let type_id_hash = type_id_to_u64(&type_id);
+        let query = format!(
+            "SELECT path, inner from {} WHERE scope = 1? AND type_id_hash = 2?",
+            Self::NODE_TABLE_NAME
+        );
+
+        let mut stmt = self
+            .board
+            .prepare(&query)
+            .map_err(|e| format!("Failed to prepare statement: {}", e))?;
+
+        let raw_nodes = stmt
+            .query_map((scope, type_id_hash), |row| {
+                let bytes: Vec<u8> = row.get(1)?;
+                let path: String = row.get(2)?;
+                Ok((bytes, path))
+            })
+            .map_err(|e| format!("Failed to query: {}", e))?;
+
+        let nodes: Vec<MaterializedNode<T>> = raw_nodes
+            .into_iter()
+            .map(|r| {
+                let (bytes, path) = r.map_err(|e| format!("Failed to read row: {}", e))?;
+
+                let node_content: T = T::decode(bytes.as_slice())
+                    .map_err(|_| "Failed to decode content".to_string())?;
+
+                Ok(MaterializedNode::new(
+                    node_content,
+                    Default::default(), // TODO
+                    Pointer::new(&path),
+                ))
+            })
+            .collect::<Result<Vec<_>, String>>()?;
+
+        Ok(nodes)
     }
 
     // Should get all nodes within a scope, encapsulated in a vec per top level element of that scope
@@ -264,10 +333,6 @@ impl NodeRepository for SQLNodeRepository {
         let output = output.into_values().collect::<Vec<_>>();
         Ok(output)
     }
-
-    fn get_all<T: DeserializeOwned + 'static>(&self) -> Vec<MaterializedNode<T>> {
-        todo!()
-    }
 }
 #[cfg(test)]
 mod tests {
@@ -275,10 +340,56 @@ mod tests {
     use crate::materializer::NodeMaterializer;
     use crate::tree::abstract_pheno_tree::AbstractTreeTraversal;
     use crate::tree::pointer::Pointer;
-    use phenopackets::schema::v2::core::OntologyClass;
+    use phenopackets::schema::v2::core::{MetaData, OntologyClass, Resource};
     use std::collections::HashMap;
     use std::fs;
     use std::path::PathBuf;
+
+    fn test_cohort() -> Cohort {
+        let assets_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests")
+            .join("assets");
+
+        let json_phenopacket_path = assets_dir.join("phenopacket.json");
+        let phenostr = fs::read_to_string(json_phenopacket_path).unwrap();
+
+        let pp: Phenopacket = serde_json::from_str(&phenostr).unwrap();
+
+        Cohort {
+            id: "Some".to_string(),
+            description: "".to_string(),
+            members: vec![pp.clone(), pp.clone()],
+            files: vec![],
+            meta_data: Some(MetaData {
+                created: None,
+                created_by: "Patrick".to_string(),
+                submitted_by: "Patrick".to_string(),
+                resources: vec![Resource {
+                    id: "1".to_string(),
+                    name: "HP".to_string(),
+                    url: "www.example.com".to_string(),
+                    version: "2020-10-10".to_string(),
+                    namespace_prefix: "hp".to_string(),
+                    iri_prefix: "".to_string(),
+                }],
+                updates: vec![],
+                phenopacket_schema_version: "2".to_string(),
+                external_references: vec![],
+            }),
+        }
+    }
+    fn cohort_board() -> SQLNodeRepository {
+        let mut repo = SQLNodeRepository::new().expect("Failed to create board");
+        let cohort = test_cohort();
+        let value = serde_json::to_value(&cohort).unwrap();
+
+        let tree = AbstractTreeTraversal::new(value, HashMap::new());
+        let mat = NodeMaterializer;
+        for node in tree.traverse() {
+            mat.materialize_nodes(&node, &mut repo);
+        }
+        repo
+    }
 
     #[test]
     fn test_insert() {
@@ -296,37 +407,28 @@ mod tests {
     }
 
     #[test]
-    fn test_insert_2() {
-        let mut repo = SQLNodeRepository::new().expect("Failed to create board");
-        let assets_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("tests")
-            .join("assets");
-        let json_phenopacket_path = assets_dir.join("phenopacket.json");
-        let phenostr = fs::read_to_string(json_phenopacket_path).unwrap();
-
-        let pp: Phenopacket = serde_json::from_str(&phenostr).unwrap();
-
-        let cohort = Cohort {
-            id: "Some".to_string(),
-            description: "".to_string(),
-            members: vec![pp.clone(), pp.clone()],
-            files: vec![],
-            meta_data: None,
-        };
-
-        let value = serde_json::to_value(&cohort).unwrap();
-
-        let tree = AbstractTreeTraversal::new(value, HashMap::new());
-        let mat = NodeMaterializer;
-        for node in tree.traverse() {
-            mat.materialize_nodes(&node, &mut repo);
-        }
-
+    fn test_get_nodes_for_scope_per_top_level_element() {
+        let repo = cohort_board();
         let retrieved = repo
             .get_nodes_for_scope_per_top_level_element::<OntologyClass>(0u8)
             .unwrap();
 
         assert_eq!(retrieved.len(), 2);
         dbg!(&retrieved);
+    }
+
+    #[test]
+    fn test_get_all_nodes() {
+        let repo = cohort_board();
+        let test_cohort = test_cohort();
+        let retrieved = repo.get_all::<Resource>().unwrap();
+
+        let mut n_resources = test_cohort.meta_data.unwrap().resources.len();
+
+        for pp in test_cohort.members {
+            n_resources += pp.meta_data.unwrap().resources.len()
+        }
+
+        assert_eq!(retrieved.len(), n_resources);
     }
 }

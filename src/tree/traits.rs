@@ -23,9 +23,13 @@ pub trait IndexNode {
 pub(crate) trait NodeRepository {
     fn insert<T: 'static + Message>(&mut self, node: MaterializedNode<T>) -> Result<(), String>;
 
-    // Gets all nodes of a type in a scope
+    // Gets all nodes of a type
+    // Example: Check if all CURIE id's are formatted correctly
+    fn get_all<T: Default + Message + 'static>(&self) -> Result<Vec<MaterializedNode<T>>, String>;
 
-    fn get_nodes_in_scope<T: DeserializeOwned + 'static>(
+    // Gets all nodes of a type in a scope
+    // Example: Get all nodes of the phenopacket scope + all resources of the cohort. Check if pp resources are in cohort
+    fn get_nodes_in_scope<T: Message + Default + 'static>(
         &self,
         scope: u8,
     ) -> Result<Vec<MaterializedNode<T>>, String>;
@@ -36,11 +40,4 @@ pub(crate) trait NodeRepository {
         &self,
         scope: u8,
     ) -> Result<Vec<Vec<MaterializedNode<T>>>, String>;
-
-    // Gets all nodes of a type
-    // Example: Check if all CURIE id's are formatted correctly
-    fn get_all<T: DeserializeOwned + 'static>(&self) -> Vec<MaterializedNode<T>>;
-
-    // All nodes of a type for scope and lower scopes (in path)
-    // All nodes of a type per top-level-scope-branch and lower scopes (in path)
 }
