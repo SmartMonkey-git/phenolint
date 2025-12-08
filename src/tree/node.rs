@@ -65,6 +65,7 @@ impl<T> MaterializedNode<T> {
         )
     }
 
+    #[allow(dead_code)]
     pub(crate) fn spans(&self) -> &HashMap<Pointer, Range<usize>> {
         &self.spans
     }

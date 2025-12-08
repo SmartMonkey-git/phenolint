@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::tree::error::NodeRepositoryError;
 use crate::tree::node::MaterializedNode;
 use crate::tree::pointer::Pointer;

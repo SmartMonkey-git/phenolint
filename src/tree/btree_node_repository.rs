@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::tree::error::NodeRepositoryError;
 use crate::tree::node::MaterializedNode;
 use crate::tree::pointer::Pointer;
@@ -28,12 +29,6 @@ impl ScopeMappings {
 
     pub fn get_scope(&self, type_id: &TypeId) -> Option<u8> {
         self.scope_by_type_id.get(type_id).copied()
-    }
-
-    pub fn get_type_id(&self, scope: &u8) -> Option<&TypeId> {
-        self.scope_by_type_id
-            .iter()
-            .find_map(|(type_id, v)| if v == scope { Some(type_id) } else { None })
     }
 
     pub fn is_scope_boundary(&self, type_id: &TypeId) -> bool {
@@ -224,8 +219,6 @@ impl NodeRepository for BTreeNodeRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::materializer::NodeMaterializer;
-    use crate::tree::abstract_pheno_tree::AbstractTreeTraversal;
     use crate::tree::pointer::Pointer;
     use phenopackets::schema::v2::core::{MetaData, OntologyClass, Resource};
     use phenopackets::schema::v2::{Cohort, Phenopacket};
@@ -267,18 +260,20 @@ mod tests {
         }
     }
     fn cohort_board() -> BTreeNodeRepository {
-        let cohort = test_cohort();
+        /*let cohort = test_cohort();
         let value = serde_json::to_value(&cohort).unwrap();
 
-        let tree = AbstractTreeTraversal::new(value, HashMap::new());
-        let mut repo = BTreeNodeRepository::new();
+         let tree = AbstractTreeTraversal::new(value, HashMap::new());
+        let repo = BTreeNodeRepository::new();
 
         let mat = NodeMaterializer;
         // TODO: Change interface of materialize_nodes to take an impl NodeRepository trait
-        /*for node in tree.traverse() {
+        for node in tree.traverse() {
             mat.materialize_nodes(&node, &mut repo);
-        }*/
+        }
         repo
+         */
+        BTreeNodeRepository::new()
     }
 
     #[test]
