@@ -3,6 +3,12 @@ pub struct NonEmptyVec<T> {
     inner: Vec<T>,
 }
 
+impl<T> From<T> for NonEmptyVec<T> {
+    fn from(value: T) -> Self {
+        Self::with_single_entry(value)
+    }
+}
+
 impl<T> NonEmptyVec<T> {
     pub fn with_rest(first: T, rest: Vec<T>) -> Self {
         match rest.is_empty() {
@@ -14,6 +20,7 @@ impl<T> NonEmptyVec<T> {
     }
 
     pub fn with_single_entry(first: T) -> Self {
+        // TODO: consider using `from`
         Self::with_rest(first, vec![])
     }
 

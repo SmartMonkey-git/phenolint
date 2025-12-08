@@ -1,6 +1,6 @@
 use crate::tree::node::DynamicNode;
 use crate::tree::pointer::Pointer;
-use crate::tree::traits::Node;
+use crate::tree::traits::{LocatableNode, RetrievableNode};
 use serde_json::Value;
 use std::collections::{HashMap, VecDeque};
 use std::ops::Range;
@@ -11,14 +11,11 @@ pub struct AbstractTreeTraversal {
 }
 
 impl AbstractTreeTraversal {
-    pub fn new(tree: &Value, spans: &HashMap<Pointer, Range<usize>>) -> AbstractTreeTraversal {
-        AbstractTreeTraversal {
-            tree: tree.clone(),
-            spans: spans.clone(),
-        }
+    pub fn new(tree: Value, spans: HashMap<Pointer, Range<usize>>) -> AbstractTreeTraversal {
+        AbstractTreeTraversal { tree, spans }
     }
 
-    pub fn traverse<'s>(&'s self) -> Box<dyn Iterator<Item = DynamicNode> + 's> {
+    pub fn traverse<'s>(self) -> Box<dyn Iterator<Item = DynamicNode> + 's> {
         let mut queue = VecDeque::new();
         let root_node = DynamicNode::new(&self.tree, &self.spans.clone(), Pointer::at_root());
         queue.push_back(root_node);

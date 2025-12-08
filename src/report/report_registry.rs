@@ -20,12 +20,11 @@ impl ReportRegistry {
 
     pub fn get_report_for(
         &self,
-        rule_id: &str,
         value: &DynamicNode,
         violation: &LintViolation,
     ) -> Option<ReportSpecs> {
         self.report_compiler
-            .get(rule_id)
+            .get(violation.rule_id())
             .map(|report_compiler| report_compiler.compile_report(value, violation))
     }
 
