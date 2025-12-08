@@ -1,8 +1,7 @@
-use crate::tree::node;
 use crate::tree::node::MaterializedNode;
 use crate::tree::pointer::Pointer;
-use prost::Message;
-use serde::de::DeserializeOwned;
+
+use crate::tree::error::NodeRepositoryError;
 use serde_json::Value;
 use std::borrow::Cow;
 use std::ops::Range;
@@ -21,23 +20,26 @@ pub trait IndexNode {
 }
 
 pub(crate) trait NodeRepository {
-    fn insert<T: 'static + Message>(&mut self, node: MaterializedNode<T>) -> Result<(), String>;
+    fn insert<T: 'static + Clone>(
+        &mut self,
+        node: MaterializedNode<T>,
+    ) -> Result<(), NodeRepositoryError>;
 
     // Gets all nodes of a type
     // Example: Check if all CURIE id's are formatted correctly
-    fn get_all<T: Default + Message + 'static>(&self) -> Result<Vec<MaterializedNode<T>>, String>;
+    fn get_all<T: Clone + 'static>(&self) -> Result<Vec<MaterializedNode<T>>, NodeRepositoryError>;
 
     // Gets all nodes of a type in a scope
     // Example: Get all nodes of the phenopacket scope + all resources of the cohort. Check if pp resources are in cohort
-    fn get_nodes_in_scope<T: Message + Default + 'static>(
+    fn get_nodes_in_scope<T: Clone + 'static>(
         &self,
         scope: u8,
-    ) -> Result<Vec<MaterializedNode<T>>, String>;
+    ) -> Result<Vec<MaterializedNode<T>>, NodeRepositoryError>;
 
     // All nodes of a type for cases per case
     // Example: Check if all curie id's are represented in the resources in a phenopacket
-    fn get_nodes_for_scope_per_top_level_element<T: Default + Message + 'static>(
+    fn get_nodes_for_scope_per_top_level_element<T: Clone + 'static>(
         &self,
         scope: u8,
-    ) -> Result<Vec<Vec<MaterializedNode<T>>>, String>;
+    ) -> Result<Vec<Vec<MaterializedNode<T>>>, NodeRepositoryError>;
 }

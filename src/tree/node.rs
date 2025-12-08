@@ -65,6 +65,10 @@ impl<T> MaterializedNode<T> {
             dyn_node.pointer().clone(),
         )
     }
+
+    pub(crate) fn spans(&self) -> &HashMap<Pointer, Range<usize>> {
+        &self.spans
+    }
 }
 
 impl<T: Serialize> IndexNode for MaterializedNode<T> {
