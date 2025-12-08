@@ -24,7 +24,7 @@ impl ScopeDefinition for Phenopacket {
     }
 
     fn partitioning_fields() -> &'static [&'static str] {
-        &["members", "relatives", "probands"]
+        &["members", "relatives", "proband"]
     }
 }
 
