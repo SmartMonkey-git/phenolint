@@ -4,5 +4,6 @@ mod error;
 pub mod node;
 pub mod node_repository;
 pub mod pointer;
+mod scopes;
 pub mod traits;
 pub(crate) mod utils;

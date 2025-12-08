@@ -2,73 +2,15 @@
 use crate::tree::error::NodeRepositoryError;
 use crate::tree::node::MaterializedNode;
 use crate::tree::pointer::Pointer;
+use crate::tree::scopes::{ScopeLayer, ScopeMappings};
 use crate::tree::traits::{LocatableNode, NodeRepository};
-use phenopackets::schema::v2::{Cohort, Family, Phenopacket};
 use std::any::{Any, TypeId};
-use std::cell::Cell;
 use std::collections::{BTreeMap, HashMap};
 use std::ops::Range;
 
-pub(crate) struct ScopeMappings {
-    scope_by_type_id: HashMap<TypeId, u8>,
-    max_scope: Cell<u8>,
-}
-
-impl ScopeMappings {
-    pub(crate) fn new() -> Self {
-        let mut type_id_by_scope: HashMap<TypeId, u8> = HashMap::new();
-        type_id_by_scope.insert(TypeId::of::<Phenopacket>(), 0u8);
-        type_id_by_scope.insert(TypeId::of::<Cohort>(), 1u8);
-        type_id_by_scope.insert(TypeId::of::<Family>(), 1u8);
-
-        Self {
-            max_scope: Cell::from(
-                *type_id_by_scope
-                    .values()
-                    .min()
-                    .expect("Value was just assigned"),
-            ),
-            scope_by_type_id: type_id_by_scope,
-        }
-    }
-
-    pub fn get_scope(&self, type_id: &TypeId) -> Option<u8> {
-        self.scope_by_type_id.get(type_id).copied()
-    }
-
-    pub fn is_scope_boundary(&self, type_id: &TypeId) -> bool {
-        self.scope_by_type_id.contains_key(type_id)
-    }
-
-    pub fn derive_scope(&self, path: &str, type_id: &TypeId) -> u8 {
-        if let Some(scope) = self.get_scope(type_id) {
-            let current_max = self.max_scope.get();
-            self.max_scope.set(current_max.max(scope));
-        }
-
-        let phenopacket_type_id = TypeId::of::<Phenopacket>();
-
-        if path.contains("members")
-            || path.contains("relatives")
-            || path.contains("proband")
-            // This is needed to know, when we only look at a single phenopacket.
-            // Since, we are iterating the phenopacket tree from top to bottom, we will always find top level structures
-            // that are above the phenopacket, if not we can assume, that we are only looking at a single one.
-            || self.max_scope.get() == *self.scope_by_type_id.get(&phenopacket_type_id).unwrap()
-            || type_id == &phenopacket_type_id
-        {
-            self.get_scope(&TypeId::of::<Phenopacket>())
-                .expect("Should always exist")
-        } else {
-            self.get_scope(&TypeId::of::<Cohort>())
-                .expect("Should always exist")
-        }
-    }
-}
-
 struct NodeEntry {
     type_id: TypeId,
-    scope: u8,
+    scope: ScopeLayer,
     is_scope_boundary: bool,
     inner: Box<dyn Any>,
 }
@@ -164,7 +106,7 @@ impl NodeRepository for BTreeNodeRepository {
 
     fn get_nodes_in_scope<T>(
         &self,
-        scope: u8,
+        scope: ScopeLayer,
     ) -> Result<Vec<MaterializedNode<T>>, NodeRepositoryError>
     where
         T: Clone + 'static,
@@ -183,7 +125,7 @@ impl NodeRepository for BTreeNodeRepository {
 
     fn get_nodes_for_scope_per_top_level_element<T>(
         &self,
-        scope: u8,
+        scope: ScopeLayer,
     ) -> Result<Vec<Vec<MaterializedNode<T>>>, NodeRepositoryError>
     where
         T: Clone + 'static,
@@ -296,7 +238,7 @@ mod tests {
     fn test_get_nodes_for_scope_per_top_level_element() {
         let repo = cohort_board();
         let retrieved = repo
-            .get_nodes_for_scope_per_top_level_element::<OntologyClass>(0u8)
+            .get_nodes_for_scope_per_top_level_element::<OntologyClass>(ScopeLayer::Individual)
             .unwrap();
 
         assert_eq!(retrieved.len(), 2);
