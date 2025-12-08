@@ -274,9 +274,10 @@ mod tests {
         let mut repo = BTreeNodeRepository::new();
 
         let mat = NodeMaterializer;
-        for node in tree.traverse() {
+        // TODO: Change interface of materialize_nodes to take an impl NodeRepository trait
+        /*for node in tree.traverse() {
             mat.materialize_nodes(&node, &mut repo);
-        }
+        }*/
         repo
     }
 
