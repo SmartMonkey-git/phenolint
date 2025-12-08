@@ -627,4 +627,16 @@ mod tests {
 
         assert_eq!(&ptr, "/a/b~1c/~0d");
     }
+
+    #[test]
+    #[ignore]
+    fn escaped_vs_unescaped() {
+        let ptr_from_escaped = Pointer::from("a/b~1c/~0d");
+        let ptr_from_unescaped = Pointer::from("a/b/c/~d");
+        let ptr_from_iter = Pointer::from_iter(["a", "b/c", "~d"]);
+
+        eprintln!("Escaped: {:?}", ptr_from_escaped);
+        eprintln!("Unescaped: {:?}", ptr_from_unescaped);
+        eprintln!("From iter: {:?}", ptr_from_iter);
+    }
 }
