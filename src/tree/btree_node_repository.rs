@@ -22,8 +22,13 @@ impl ScopeMappings {
         type_id_by_scope.insert(TypeId::of::<Family>(), 1u8);
 
         Self {
+            max_scope: Cell::from(
+                *type_id_by_scope
+                    .values()
+                    .min()
+                    .expect("Value was just assigned"),
+            ),
             scope_by_type_id: type_id_by_scope,
-            max_scope: Cell::from(0u8),
         }
     }
 
@@ -42,19 +47,15 @@ impl ScopeMappings {
         }
 
         let phenopacket_type_id = TypeId::of::<Phenopacket>();
-        let case_scope = self.scope_by_type_id.get(&phenopacket_type_id).unwrap();
-
-        if &phenopacket_type_id == type_id {
-            return *case_scope;
-        }
 
         if path.contains("members")
             || path.contains("relatives")
             || path.contains("proband")
             // This is needed to know, when we only look at a single phenopacket.
             // Since, we are iterating the phenopacket tree from top to bottom, we will always find top level structures
-            // that are above the phenopacket, if not we can assume, that we are only looking at a single one
-            || self.max_scope.get() == *case_scope
+            // that are above the phenopacket, if not we can assume, that we are only looking at a single one.
+            || self.max_scope.get() == *self.scope_by_type_id.get(&phenopacket_type_id).unwrap()
+            || type_id == &phenopacket_type_id
         {
             self.get_scope(&TypeId::of::<Phenopacket>())
                 .expect("Should always exist")
