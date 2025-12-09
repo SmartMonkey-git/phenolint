@@ -2,8 +2,8 @@ use super::utils::{escape, unescape};
 use std::borrow::Cow;
 use std::fmt::Display;
 
-/// Separator of reference tokens of the JSON pointer.
-pub const TOKEN_SEP: char = '/';
+/// Separator of the reference tokens in the JSON pointer.
+const TOKEN_SEP: char = '/';
 
 /// A struct representing a JSON Pointer (RFC 6901).
 ///
@@ -11,7 +11,8 @@ pub const TOKEN_SEP: char = '/';
 ///
 /// # Creation
 ///
-/// A `Pointer` can be created from an escaped string or from iterator of reference tokens (will be escaped):
+/// A `Pointer` can be created from an escaped string or from an iterator of reference tokens
+/// (the tokens will be escaped):
 ///
 /// ```
 /// use phenolint::tree::pointer::Pointer;
@@ -28,7 +29,12 @@ pub const TOKEN_SEP: char = '/';
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Pointer(String);
 
-/// Compare the `Pointer` with an escaped `&str`.
+/// Compare the `Pointer` with a `&str` representing
+/// escaped reference tokens joined with a path separator (`/`).
+///
+/// # Example
+///
+/// Compare a value where no escaping is necessary:
 ///
 /// ```
 /// use phenolint::tree::pointer::Pointer;
@@ -36,6 +42,16 @@ pub struct Pointer(String);
 /// let ptr = Pointer::from("/path/to/0/resource");
 ///
 /// assert_eq!(&ptr, "/path/to/0/resource")
+/// ```
+///
+/// Compare a value that needs to be escaped:
+///
+/// ```
+/// # use phenolint::tree::pointer::Pointer;
+/// #
+/// let ptr = Pointer::from_iter(["path", "t/o", "~resource"]);
+///
+/// assert_eq!(&ptr, "/path/t~1o/~0resource")
 /// ```
 impl PartialEq<str> for Pointer {
     fn eq(&self, other: &str) -> bool {
