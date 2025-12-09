@@ -28,10 +28,7 @@ macro_rules! impl_query_strategy_for_tuples {
 impl_query_strategy_for_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12);
 
 #[derive(Debug)]
-struct QueryAllNodes<NodeType, Presentation> {
-    node_type: PhantomData<NodeType>,
-    presentation: PhantomData<Presentation>,
-}
+struct QueryAllNodes<NodeType, Presentation>(PhantomData<(Presentation, NodeType)>);
 
 impl<NodeType: Clone + 'static, Presentation: QueryPresentation<Vec<MaterializedNode<NodeType>>>>
     QueryStrategy for QueryAllNodes<NodeType, Presentation>
@@ -42,11 +39,9 @@ impl<NodeType: Clone + 'static, Presentation: QueryPresentation<Vec<Materialized
     }
 }
 #[derive(Debug)]
-struct QueryNodesInScope<Scope: ScopeDefinition, NodeType, Presentation> {
-    result: PhantomData<Presentation>,
-    scope: PhantomData<Scope>,
-    node_type: PhantomData<NodeType>,
-}
+struct QueryNodesInScope<Scope: ScopeDefinition, NodeType, Presentation>(
+    PhantomData<(Scope, Presentation, NodeType)>,
+);
 
 impl<
     Scope: ScopeDefinition,
@@ -65,11 +60,9 @@ impl<
 }
 
 #[derive(Debug)]
-struct QueryGroupedNodes<Scope: ScopeDefinition, NodeType, Presentation> {
-    pub result: Presentation,
-    _scope: PhantomData<Scope>,
-    _node: PhantomData<NodeType>,
-}
+struct QueryGroupedNodes<Scope: ScopeDefinition, NodeType, Presentation>(
+    PhantomData<(Scope, Presentation, NodeType)>,
+);
 
 impl<
     Scope: ScopeDefinition,
