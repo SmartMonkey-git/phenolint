@@ -1,4 +1,5 @@
 use crate::tree::node::MaterializedNode;
+use std::ops::Deref;
 
 pub trait QueryPresentation<Input> {
     fn present(query_res: Input) -> Self
@@ -6,7 +7,15 @@ pub trait QueryPresentation<Input> {
         Self: Sized;
 }
 
-struct Flattened<NodeType>(pub Vec<MaterializedNode<NodeType>>);
+pub struct Flattened<NodeType>(pub Vec<MaterializedNode<NodeType>>);
+
+impl<NodeType> Deref for Flattened<NodeType> {
+    type Target = Vec<MaterializedNode<NodeType>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 impl<NodeType> QueryPresentation<Vec<MaterializedNode<NodeType>>> for Flattened<NodeType> {
     fn present(query_res: Vec<MaterializedNode<NodeType>>) -> Self {
@@ -20,7 +29,15 @@ impl<NodeType> QueryPresentation<Vec<Vec<MaterializedNode<NodeType>>>> for Flatt
     }
 }
 
-pub struct First<T>(pub Option<MaterializedNode<T>>);
+pub struct First<NodeType>(pub Option<MaterializedNode<NodeType>>);
+
+impl<NodeType> Deref for First<NodeType> {
+    type Target = Option<MaterializedNode<NodeType>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 impl<NodeType: Clone> QueryPresentation<Vec<MaterializedNode<NodeType>>> for First<NodeType> {
     fn present(query_res: Vec<MaterializedNode<NodeType>>) -> Self {
@@ -41,6 +58,14 @@ impl<NodeType: Clone> QueryPresentation<Vec<Vec<MaterializedNode<NodeType>>>> fo
 }
 
 pub struct Grouped<NodeType>(pub Vec<Vec<MaterializedNode<NodeType>>>);
+
+impl<NodeType> Deref for Grouped<NodeType> {
+    type Target = Vec<Vec<MaterializedNode<NodeType>>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 impl<NodeType: Clone> QueryPresentation<Vec<Vec<MaterializedNode<NodeType>>>>
     for Grouped<NodeType>

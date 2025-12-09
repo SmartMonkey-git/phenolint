@@ -38,7 +38,7 @@ impl LocatableNode for DynamicNode {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MaterializedNode<T> {
     pub inner: T,
     spans: HashMap<Pointer, Range<usize>>,

@@ -1,39 +1,49 @@
 use crate::tree::node::MaterializedNode;
-use crate::tree::querying::presentation::{First, Grouped, QueryPresentation};
+use crate::tree::querying::presentation::{First, Flattened, Grouped, QueryPresentation};
 use crate::tree::scopes::ScopeDefinition;
 use crate::tree::traits::NodeRepository;
 use phenopackets::schema::v2::Phenopacket;
-use phenopackets::schema::v2::core::{OntologyClass, PhenotypicFeature};
+use phenopackets::schema::v2::core::OntologyClass;
 use std::marker::PhantomData;
 
-trait QueryNodeRepo {
-    fn query(node_repo: &impl NodeRepository) -> Self;
+trait QueryStrategy {
+    type Output;
+    fn query(node_repo: &impl NodeRepository) -> Self::Output;
 }
 
-macro_rules! impl_query_node_repo_for_tuples {
-    () => {};
+macro_rules! impl_query_strategy_for_tuples {
+    ($($name:ident),*) => {
+        impl<$($name: QueryStrategy),*> QueryStrategy for ($($name,)*) {
+            type Output = ($($name::Output,)*);
 
-    ($head:ident $(, $tail:ident)*) => {
-        impl<$head, $($tail),*> QueryNodeRepo for ($head, $($tail),*)
-        where
-            $head: QueryNodeRepo,
-            $($tail: QueryNodeRepo),*
-        {
-            fn query(node_repo: &impl NodeRepository) -> Self {
+            fn query(node_repo: &impl NodeRepository) -> Self::Output {
                 (
-                    $head::query(node_repo),
-                    $($tail::query(node_repo)),*
+                    $($name::query(node_repo),)*
                 )
             }
         }
-
-        impl_query_node_repo_for_tuples!($($tail),*);
     };
 }
-impl_query_node_repo_for_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12);
 
-struct QueryNodesInScope<Scope: ScopeDefinition, NodeType, Quantity> {
-    pub result: Quantity,
+impl_query_strategy_for_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12);
+
+#[derive(Debug)]
+struct QueryAllNodes<NodeType, Presentation> {
+    result: PhantomData<Presentation>,
+    node_type: PhantomData<NodeType>,
+}
+
+impl<NodeType: Clone + 'static, Presentation: QueryPresentation<Vec<MaterializedNode<NodeType>>>>
+    QueryStrategy for QueryAllNodes<NodeType, Presentation>
+{
+    type Output = Presentation;
+    fn query(node_repo: &impl NodeRepository) -> Self::Output {
+        Presentation::present(node_repo.get_all::<NodeType>().unwrap_or_default())
+    }
+}
+#[derive(Debug)]
+struct QueryNodesInScope<Scope: ScopeDefinition, NodeType, Presentation> {
+    result: PhantomData<Presentation>,
     scope: PhantomData<Scope>,
     node_type: PhantomData<NodeType>,
 }
@@ -41,24 +51,22 @@ struct QueryNodesInScope<Scope: ScopeDefinition, NodeType, Quantity> {
 impl<
     Scope: ScopeDefinition,
     NodeType: Clone + 'static,
-    Quantity: QueryPresentation<Vec<MaterializedNode<NodeType>>>,
-> QueryNodeRepo for QueryNodesInScope<Scope, NodeType, Quantity>
+    Presentation: QueryPresentation<Vec<MaterializedNode<NodeType>>>,
+> QueryStrategy for QueryNodesInScope<Scope, NodeType, Presentation>
 {
-    fn query(node_repo: &impl NodeRepository) -> Self {
-        let a = node_repo
+    type Output = Presentation;
+    fn query(node_repo: &impl NodeRepository) -> Self::Output {
+        let query_result = node_repo
             .get_nodes_in_scope::<NodeType>(Scope::layer())
             .unwrap_or_default();
 
-        QueryNodesInScope {
-            result: Quantity::present(a),
-            scope: PhantomData,
-            node_type: PhantomData,
-        }
+        Presentation::present(query_result)
     }
 }
 
-struct QueryGroupedNodes<Scope: ScopeDefinition, NodeType, Quantity> {
-    pub result: Quantity,
+#[derive(Debug)]
+struct QueryGroupedNodes<Scope: ScopeDefinition, NodeType, Presentation> {
+    pub result: Presentation,
     _scope: PhantomData<Scope>,
     _node: PhantomData<NodeType>,
 }
@@ -66,26 +74,23 @@ struct QueryGroupedNodes<Scope: ScopeDefinition, NodeType, Quantity> {
 impl<
     Scope: ScopeDefinition,
     NodeType: Clone + 'static,
-    Quantity: QueryPresentation<Vec<Vec<MaterializedNode<NodeType>>>>,
-> QueryNodeRepo for QueryGroupedNodes<Scope, NodeType, Quantity>
+    Presentation: QueryPresentation<Vec<Vec<MaterializedNode<NodeType>>>>,
+> QueryStrategy for QueryGroupedNodes<Scope, NodeType, Presentation>
 {
-    fn query(node_repo: &impl NodeRepository) -> Self {
-        let a = node_repo
+    type Output = Presentation;
+    fn query(node_repo: &impl NodeRepository) -> Self::Output {
+        let query_result = node_repo
             .get_nodes_for_scope_per_top_level_element::<NodeType>(Scope::layer())
             .unwrap_or_default();
 
-        QueryGroupedNodes {
-            result: Quantity::present(a),
-            _scope: Default::default(),
-            _node: Default::default(),
-        }
+        Presentation::present(query_result)
     }
 }
 
-// For show off
+// Testing and see how it would work from here:
 
 trait TheRuleTrait {
-    type Query: QueryNodeRepo;
+    type Query: QueryStrategy;
 
     fn check_erased(&'_ self, board: Self::Query) -> bool;
 }
@@ -100,10 +105,22 @@ impl TheRuleTrait for __RuleImplementation1 {
     }
 }
 
+struct __RuleImplementation2;
+
+type QueryAll<NodeType> = QueryAllNodes<NodeType, Flattened<NodeType>>;
+
+impl TheRuleTrait for __RuleImplementation2 {
+    type Query = QueryAll<OntologyClass>;
+
+    fn check_erased(&self, board: Self::Query) -> bool {
+        todo!()
+    }
+}
+
 struct __RuleImplementation3;
 
 impl TheRuleTrait for __RuleImplementation3 {
-    type Query = QueryNodesInScope<Phenopacket, OntologyClass, First<OntologyClass>>;
+    type Query = QueryGroupedNodes<Phenopacket, OntologyClass, Grouped<OntologyClass>>;
 
     fn check_erased(&self, board: Self::Query) -> bool {
         todo!()
