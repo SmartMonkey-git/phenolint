@@ -29,8 +29,8 @@ impl_query_strategy_for_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T1
 
 #[derive(Debug)]
 struct QueryAllNodes<NodeType, Presentation> {
-    result: PhantomData<Presentation>,
     node_type: PhantomData<NodeType>,
+    presentation: PhantomData<Presentation>,
 }
 
 impl<NodeType: Clone + 'static, Presentation: QueryPresentation<Vec<MaterializedNode<NodeType>>>>
@@ -92,7 +92,7 @@ impl<
 trait TheRuleTrait {
     type Query: QueryStrategy;
 
-    fn check_erased(&'_ self, board: Self::Query) -> bool;
+    fn check_erased(&'_ self, board: <Self::Query as QueryStrategy>::Output) -> bool;
 }
 
 struct __RuleImplementation1;
@@ -100,19 +100,21 @@ struct __RuleImplementation1;
 impl TheRuleTrait for __RuleImplementation1 {
     type Query = QueryNodesInScope<Phenopacket, OntologyClass, First<OntologyClass>>;
 
-    fn check_erased(&'_ self, board: Self::Query) -> bool {
+    fn check_erased(&'_ self, board: <Self::Query as QueryStrategy>::Output) -> bool {
         todo!()
     }
 }
 
 struct __RuleImplementation2;
 
+// More to be added.
 type QueryAll<NodeType> = QueryAllNodes<NodeType, Flattened<NodeType>>;
 
 impl TheRuleTrait for __RuleImplementation2 {
     type Query = QueryAll<OntologyClass>;
 
-    fn check_erased(&self, board: Self::Query) -> bool {
+    fn check_erased(&self, board: <Self::Query as QueryStrategy>::Output) -> bool {
+        let a = board;
         todo!()
     }
 }
@@ -122,7 +124,7 @@ struct __RuleImplementation3;
 impl TheRuleTrait for __RuleImplementation3 {
     type Query = QueryGroupedNodes<Phenopacket, OntologyClass, Grouped<OntologyClass>>;
 
-    fn check_erased(&self, board: Self::Query) -> bool {
+    fn check_erased(&self, board: <Self::Query as QueryStrategy>::Output) -> bool {
         todo!()
     }
 }
