@@ -84,7 +84,7 @@ impl ParsableNode<Disease> for Disease {
         if let Value::Object(map) = &node.inner
             && node
                 .pointer()
-                .segments()
+                .iter_segments()
                 .into_iter()
                 .any(|seg| seg.to_lowercase() == "diseases")
             && map.contains_key("term")
@@ -102,7 +102,7 @@ impl ParsableNode<Diagnosis> for Diagnosis {
         if let Value::Object(map) = &node.inner
             && node
                 .pointer()
-                .segments()
+                .iter_segments()
                 .into_iter()
                 .any(|seg| seg.to_lowercase() == "interpretations")
             && map.contains_key("disease")

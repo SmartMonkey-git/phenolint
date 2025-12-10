@@ -56,7 +56,7 @@ mod tests {
                 serde_json::to_string_pretty(&patched).unwrap(),
             )),
             patches: vec![Patch::new(NonEmptyVec::with_single_entry(Add {
-                at: Pointer::new("/diseases"),
+                at: Pointer::from("/diseases"),
                 value: Value::Array(vec![serde_json::to_value(disease).unwrap()]),
             }))],
             message_snippets: vec![interpretation_id, "disease"],
@@ -131,7 +131,7 @@ mod tests {
             n_violations: 1,
             patched_phenopacket: None,
             patches: vec![Patch::new(NonEmptyVec::with_single_entry(Add {
-                at: Pointer::new("/diseases"),
+                at: Pointer::from("/diseases"),
                 value: Value::Array(vec![
                     serde_json::to_value(Disease {
                         term: Some(OntologyClass {

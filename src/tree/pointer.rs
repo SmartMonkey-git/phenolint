@@ -128,57 +128,8 @@ impl<'a> FromIterator<&'a str> for Pointer {
 }
 
 impl Pointer {
-    #[deprecated(since = "0.1.0", note = "Use From<&str> instead")]
-    pub fn new(location: &str) -> Self {
-        Self::from(location)
-    }
-
     pub fn at_root() -> Self {
         Self(String::new())
-    }
-
-    #[deprecated(
-        since = "0.1.0",
-        note = "Specific to a Phenopacket Schema building block"
-    )]
-    pub fn at_meta_data() -> Self {
-        Self::new("metaData")
-    }
-
-    #[deprecated(
-        since = "0.1.0",
-        note = "Specific to a Phenopacket Schema building block"
-    )]
-    pub fn at_resources() -> Self {
-        let mut mtd_ptr = Pointer::at_meta_data();
-        mtd_ptr.down("resources");
-        mtd_ptr
-    }
-
-    #[deprecated(
-        since = "0.1.0",
-        note = "Specific to a Phenopacket Schema building block"
-    )]
-    pub fn at_phenotypes() -> Self {
-        Self::new("phenotypicFeatures")
-    }
-
-    #[deprecated(
-        since = "0.1.0",
-        note = "Specific to a Phenopacket Schema building block"
-    )]
-    pub fn at_subject() -> Self {
-        Self::new("subject")
-    }
-
-    #[deprecated(
-        since = "0.1.0",
-        note = "Specific to a Phenopacket Schema building block"
-    )]
-    pub fn at_vital_status() -> Self {
-        let mut ptr = Pointer::at_subject();
-        ptr.down("vitalStatus");
-        ptr
     }
 
     /// Returns the final segment (tip) of the pointer path.
@@ -320,11 +271,6 @@ impl Pointer {
         self.0.is_empty()
     }
 
-    #[deprecated(since = "0.1.0", note = "Use iter_segments() instead")]
-    pub fn segments(&self) -> impl Iterator<Item = Cow<'_, str>> {
-        self.iter_segments()
-    }
-
     /// Evaluate the pointer into an iterator over reference tokens.
     ///
     /// ```
@@ -332,9 +278,9 @@ impl Pointer {
     ///
     /// let ptr = Pointer::from("path/to/0/resource");
     ///
-    /// let tokens: Vec<_> = ptr.segments().collect();
+    /// let tokens: Vec<_> = ptr.iter_segments().collect();
     ///
-    /// assert_eq!(&tokens, &["path", "to", "0", "resource"]);
+    /// assert_eq!(&tokens.as_slice(), &["path", "to", "0", "resource"]);
     /// ```
     ///
     /// The tokens are properly unescaped:
@@ -347,9 +293,9 @@ impl Pointer {
     ///
     /// assert_eq!(&ptr, "/path/T~1O/~0resource/~01");
     ///
-    /// let tokens: Vec<_> = ptr.segments().collect();
+    /// let tokens: Vec<_> = ptr.iter_segments().collect();
     ///
-    /// assert_eq!(&tokens, &src);
+    /// assert_eq!(&tokens.as_slice(), &src);
     /// ```
     pub fn iter_segments(&self) -> impl Iterator<Item = Cow<'_, str>> {
         self.0.split(TOKEN_SEP).skip(1).map(unescape)
@@ -369,73 +315,73 @@ mod tests {
     use rstest::rstest;
     #[rstest]
     fn test_new_empty() {
-        let ptr = Pointer::new("");
+        let ptr = Pointer::from("");
         assert_eq!(ptr.position(), "");
         assert!(ptr.is_root());
     }
 
     #[rstest]
     fn test_new_with_leading_slash() {
-        let ptr = Pointer::new("/foo/bar");
+        let ptr = Pointer::from("/foo/bar");
         assert_eq!(ptr.position(), "/foo/bar");
     }
 
     #[rstest]
     fn test_new_without_leading_slash() {
-        let ptr = Pointer::new("foo/bar");
+        let ptr = Pointer::from("foo/bar");
         assert_eq!(ptr.position(), "/foo/bar");
     }
 
     #[rstest]
     #[ignore]
     fn test_new_escapes_special_chars() {
-        let ptr = Pointer::new("/foo/a~b/c/d");
+        let ptr = Pointer::from("/foo/a~b/c/d");
         // Should escape ~ to ~0 and / to ~1
         assert_eq!(ptr.position(), "~1foo~1a~0b~1c~1d");
     }
 
     #[rstest]
     fn test_new_with_slash_in_segment() {
-        let ptr = Pointer::new("a/b");
+        let ptr = Pointer::from("a/b");
         // The slash should be escaped
         assert!(ptr.position().contains("~1") || ptr.position() == "/a/b");
     }
 
     #[rstest]
     fn test_get_tip_simple() {
-        let ptr = Pointer::new("/user/name");
+        let ptr = Pointer::from("/user/name");
         assert_eq!(ptr.get_tip(), "name");
     }
 
     #[rstest]
     fn test_get_tip_root() {
-        let ptr = Pointer::new("");
+        let ptr = Pointer::from("");
         assert_eq!(ptr.get_tip(), "");
     }
 
     #[rstest]
     fn test_get_tip_single_segment() {
-        let ptr = Pointer::new("/foo");
+        let ptr = Pointer::from("/foo");
         assert_eq!(ptr.get_tip(), "foo");
     }
 
     #[rstest]
     fn test_get_tip_with_escaped_chars() {
-        let ptr = Pointer::new("/user/na~0me");
+        let ptr = Pointer::from("/user/na~0me");
         let tip = ptr.get_tip();
         assert_eq!(tip, "na~0me");
     }
 
     #[rstest]
     fn test_up_from_nested() {
-        let mut ptr = Pointer::new("/user/name/first");
+        let mut ptr = Pointer::from("/user/name/first");
         ptr.up();
         assert_eq!(ptr.position(), "/user/name");
     }
 
     #[rstest]
     fn test_up_multiple_times() {
-        let mut ptr = Pointer::new("/a/b/c/d");
+        let mut ptr = Pointer::from("/a/b/c/d");
         ptr.up();
         assert_eq!(ptr.position(), "/a/b/c");
         ptr.up();
@@ -448,7 +394,7 @@ mod tests {
 
     #[rstest]
     fn test_up_at_root() {
-        let mut ptr = Pointer::new("");
+        let mut ptr = Pointer::from("");
         ptr.up();
         assert_eq!(ptr.position(), "");
         assert!(ptr.is_root());
@@ -456,28 +402,28 @@ mod tests {
 
     #[rstest]
     fn test_up_chaining() {
-        let mut ptr = Pointer::new("/a/b/c");
+        let mut ptr = Pointer::from("/a/b/c");
         ptr.up().up();
         assert_eq!(ptr.position(), "/a");
     }
 
     #[rstest]
     fn test_down_simple() {
-        let mut ptr = Pointer::new("");
+        let mut ptr = Pointer::from("");
         ptr.down("user");
         assert_eq!(ptr.position(), "/user");
     }
 
     #[rstest]
     fn test_down_multiple() {
-        let mut ptr = Pointer::new("");
+        let mut ptr = Pointer::from("");
         ptr.down("user").down("name");
         assert_eq!(ptr.position(), "/user/name");
     }
 
     #[rstest]
     fn test_down_with_special_chars() {
-        let mut ptr = Pointer::new("");
+        let mut ptr = Pointer::from("");
         ptr.down("a~b");
         // ~ should be escaped to ~0
         assert_eq!(ptr.position(), "/a~0b");
@@ -485,20 +431,20 @@ mod tests {
 
     #[rstest]
     fn test_down_with_integer() {
-        let mut ptr = Pointer::new("/array");
+        let mut ptr = Pointer::from("/array");
         ptr.down(0);
         assert_eq!(ptr.position(), "/array/0");
     }
 
     #[rstest]
     fn test_position() {
-        let ptr = Pointer::new("/foo/bar");
+        let ptr = Pointer::from("/foo/bar");
         assert_eq!(ptr.position(), "/foo/bar");
     }
 
     #[rstest]
     fn test_root() {
-        let mut ptr = Pointer::new("/user/name");
+        let mut ptr = Pointer::from("/user/name");
         ptr.root();
         assert_eq!(ptr.position(), "");
         assert!(ptr.is_root());
@@ -506,61 +452,61 @@ mod tests {
 
     #[rstest]
     fn test_root_chaining() {
-        let mut ptr = Pointer::new("/a/b/c");
+        let mut ptr = Pointer::from("/a/b/c");
         ptr.root().down("new");
         assert_eq!(ptr.position(), "/new");
     }
 
     #[rstest]
     fn test_is_root_true() {
-        let ptr = Pointer::new("");
+        let ptr = Pointer::from("");
         assert!(ptr.is_root());
     }
 
     #[rstest]
     fn test_is_root_false() {
-        let ptr = Pointer::new("/foo");
+        let ptr = Pointer::from("/foo");
         assert!(!ptr.is_root());
     }
 
     #[rstest]
     fn test_segments_empty() {
-        let ptr = Pointer::new("");
-        let segments: Vec<_> = ptr.segments().collect();
+        let ptr = Pointer::from("");
+        let segments: Vec<_> = ptr.iter_segments().collect();
         assert_eq!(segments, Vec::<String>::new());
     }
 
     #[rstest]
     fn test_segments_single() {
-        let ptr = Pointer::new("/foo");
-        let segments: Vec<_> = ptr.segments().collect();
+        let ptr = Pointer::from("/foo");
+        let segments: Vec<_> = ptr.iter_segments().collect();
         assert_eq!(segments, vec!["foo"]);
     }
 
     #[rstest]
     fn test_segments_multiple() {
-        let ptr = Pointer::new("/foo/bar/baz");
-        let segments: Vec<_> = ptr.segments().collect();
+        let ptr = Pointer::from("/foo/bar/baz");
+        let segments: Vec<_> = ptr.iter_segments().collect();
         assert_eq!(segments, vec!["foo", "bar", "baz"]);
     }
 
     #[rstest]
     fn test_segments_with_escaped_chars() {
-        let ptr = Pointer::new("/foo/a~0b/c~1d");
-        let segments: Vec<_> = ptr.segments().collect();
+        let ptr = Pointer::from("/foo/a~0b/c~1d");
+        let segments: Vec<_> = ptr.iter_segments().collect();
         // Segments should be unescaped
         assert_eq!(segments, vec!["foo", "a~b", "c/d"]);
     }
 
     #[rstest]
     fn test_display_trait() {
-        let ptr = Pointer::new("/user/name");
+        let ptr = Pointer::from("/user/name");
         assert_eq!(format!("{}", ptr), "/user/name");
     }
 
     #[rstest]
     fn test_clone() {
-        let ptr1 = Pointer::new("/foo/bar");
+        let ptr1 = Pointer::from("/foo/bar");
         let ptr2 = ptr1.clone();
         assert_eq!(ptr1, ptr2);
         assert_eq!(ptr1.position(), ptr2.position());
@@ -568,21 +514,21 @@ mod tests {
 
     #[rstest]
     fn test_equality() {
-        let ptr1 = Pointer::new("/foo/bar");
-        let ptr2 = Pointer::new("/foo/bar");
+        let ptr1 = Pointer::from("/foo/bar");
+        let ptr2 = Pointer::from("/foo/bar");
         assert_eq!(ptr1, ptr2);
     }
 
     #[rstest]
     fn test_inequality() {
-        let ptr1 = Pointer::new("/foo/bar");
-        let ptr2 = Pointer::new("/foo/baz");
+        let ptr1 = Pointer::from("/foo/bar");
+        let ptr2 = Pointer::from("/foo/baz");
         assert_ne!(ptr1, ptr2);
     }
 
     #[rstest]
     fn test_complex_navigation() {
-        let mut ptr = Pointer::new("");
+        let mut ptr = Pointer::from("");
         ptr.down("users")
             .down("john")
             .down("address")
@@ -600,30 +546,30 @@ mod tests {
 
     #[rstest]
     fn test_empty_segment() {
-        let ptr = Pointer::new("//");
+        let ptr = Pointer::from("//");
         // Should handle empty segments
-        let segments: Vec<_> = ptr.segments().collect();
+        let segments: Vec<_> = ptr.iter_segments().collect();
         assert_eq!(segments.len(), 2);
     }
 
     #[rstest]
     fn test_numeric_string_segment() {
-        let mut ptr = Pointer::new("");
+        let mut ptr = Pointer::from("");
         ptr.down("123");
         assert_eq!(ptr.position(), "/123");
         assert_eq!(ptr.get_tip(), "123");
     }
 
     #[rstest]
-    fn test_unicode_segments() {
-        let mut ptr = Pointer::new("");
+    fn test_unicode_iter_segments() {
+        let mut ptr = Pointer::from("");
         ptr.down("ユーザー").down("名前");
         assert_eq!(ptr.get_tip(), "名前");
     }
 
     #[rstest]
     fn test_special_json_pointer_chars() {
-        let mut ptr = Pointer::new("");
+        let mut ptr = Pointer::from("");
         ptr.down("~/test");
 
         assert!(ptr.position().contains("~0"));
