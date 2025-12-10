@@ -2,78 +2,20 @@
 use crate::tree::error::NodeRepositoryError;
 use crate::tree::node::MaterializedNode;
 use crate::tree::pointer::Pointer;
+use crate::tree::scopes::{ScopeLayer, ScopeMappings};
 use crate::tree::traits::{LocatableNode, NodeRepository};
-use phenopackets::schema::v2::{Cohort, Family, Phenopacket};
 use std::any::{Any, TypeId};
-use std::cell::Cell;
 use std::collections::{BTreeMap, HashMap};
 use std::ops::Range;
 
-pub(crate) struct ScopeMappings {
-    scope_by_type_id: HashMap<TypeId, u8>,
-    max_scope: Cell<u8>,
-}
-
-impl ScopeMappings {
-    pub(crate) fn new() -> Self {
-        let mut type_id_by_scope: HashMap<TypeId, u8> = HashMap::new();
-        type_id_by_scope.insert(TypeId::of::<Phenopacket>(), 0u8);
-        type_id_by_scope.insert(TypeId::of::<Cohort>(), 1u8);
-        type_id_by_scope.insert(TypeId::of::<Family>(), 1u8);
-
-        Self {
-            max_scope: Cell::from(
-                *type_id_by_scope
-                    .values()
-                    .min()
-                    .expect("Value was just assigned"),
-            ),
-            scope_by_type_id: type_id_by_scope,
-        }
-    }
-
-    pub fn get_scope(&self, type_id: &TypeId) -> Option<u8> {
-        self.scope_by_type_id.get(type_id).copied()
-    }
-
-    pub fn is_scope_boundary(&self, type_id: &TypeId) -> bool {
-        self.scope_by_type_id.contains_key(type_id)
-    }
-
-    pub fn derive_scope(&self, path: &str, type_id: &TypeId) -> u8 {
-        if let Some(scope) = self.get_scope(type_id) {
-            let current_max = self.max_scope.get();
-            self.max_scope.set(current_max.max(scope));
-        }
-
-        let phenopacket_type_id = TypeId::of::<Phenopacket>();
-
-        if path.contains("members")
-            || path.contains("relatives")
-            || path.contains("proband")
-            // This is needed to know, when we only look at a single phenopacket.
-            // Since, we are iterating the phenopacket tree from top to bottom, we will always find top level structures
-            // that are above the phenopacket, if not we can assume, that we are only looking at a single one.
-            || self.max_scope.get() == *self.scope_by_type_id.get(&phenopacket_type_id).unwrap()
-            || type_id == &phenopacket_type_id
-        {
-            self.get_scope(&TypeId::of::<Phenopacket>())
-                .expect("Should always exist")
-        } else {
-            self.get_scope(&TypeId::of::<Cohort>())
-                .expect("Should always exist")
-        }
-    }
-}
-
 struct NodeEntry {
     type_id: TypeId,
-    scope: u8,
+    scope: ScopeLayer,
     is_scope_boundary: bool,
     inner: Box<dyn Any>,
 }
 
-pub(crate) struct BTreeNodeRepository {
+pub struct BTreeNodeRepository {
     node_store: BTreeMap<String, NodeEntry>,
     span_store: BTreeMap<String, Range<usize>>,
     scope_mappings: ScopeMappings,
@@ -96,18 +38,18 @@ impl BTreeNodeRepository {
             .collect()
     }
 
-    fn cast_entry<T>(
+    fn cast_entry<NodeType>(
         &self,
         path: &str,
         entry: &NodeEntry,
-    ) -> Result<MaterializedNode<T>, NodeRepositoryError>
+    ) -> Result<MaterializedNode<NodeType>, NodeRepositoryError>
     where
-        T: Clone + 'static,
+        NodeType: Clone + 'static,
     {
-        let content_ref = entry.inner.downcast_ref::<T>().ok_or_else(|| {
+        let content_ref = entry.inner.downcast_ref::<NodeType>().ok_or_else(|| {
             NodeRepositoryError::CantReinstantiateNode(
                 path.to_string(),
-                std::any::type_name::<T>().to_string(),
+                std::any::type_name::<NodeType>().to_string(),
             )
         })?;
 
@@ -119,8 +61,11 @@ impl BTreeNodeRepository {
 }
 
 impl NodeRepository for BTreeNodeRepository {
-    fn insert<T: 'static>(&mut self, node: MaterializedNode<T>) -> Result<(), NodeRepositoryError> {
-        let type_id = TypeId::of::<T>();
+    fn insert<NodeType: 'static>(
+        &mut self,
+        node: MaterializedNode<NodeType>,
+    ) -> Result<(), NodeRepositoryError> {
+        let type_id = TypeId::of::<NodeType>();
         let node_path = node.pointer().position().to_string();
 
         let scope = self
@@ -146,49 +91,49 @@ impl NodeRepository for BTreeNodeRepository {
         Ok(())
     }
 
-    fn get_all<T>(&self) -> Result<Vec<MaterializedNode<T>>, NodeRepositoryError>
+    fn get_all<NodeType>(&self) -> Result<Vec<MaterializedNode<NodeType>>, NodeRepositoryError>
     where
-        T: Clone + 'static,
+        NodeType: Clone + 'static,
     {
-        let target_type = TypeId::of::<T>();
+        let target_type = TypeId::of::<NodeType>();
 
         let nodes = self
             .node_store
             .iter()
             .filter(|(_, entry)| entry.type_id == target_type)
-            .map(|(path, entry)| self.cast_entry::<T>(path.as_str(), entry))
-            .collect::<Result<Vec<MaterializedNode<T>>, NodeRepositoryError>>()?;
+            .map(|(path, entry)| self.cast_entry::<NodeType>(path.as_str(), entry))
+            .collect::<Result<Vec<MaterializedNode<NodeType>>, NodeRepositoryError>>()?;
 
         Ok(nodes)
     }
 
-    fn get_nodes_in_scope<T>(
+    fn get_nodes_in_scope<NodeType>(
         &self,
-        scope: u8,
-    ) -> Result<Vec<MaterializedNode<T>>, NodeRepositoryError>
+        scope: ScopeLayer,
+    ) -> Result<Vec<MaterializedNode<NodeType>>, NodeRepositoryError>
     where
-        T: Clone + 'static,
+        NodeType: Clone + 'static,
     {
-        let target_type = TypeId::of::<T>();
+        let target_type = TypeId::of::<NodeType>();
 
         let nodes = self
             .node_store
             .iter()
             .filter(|(_, entry)| entry.type_id == target_type && entry.scope == scope)
-            .map(|(path, entry)| self.cast_entry::<T>(path, entry))
-            .collect::<Result<Vec<MaterializedNode<T>>, NodeRepositoryError>>()?;
+            .map(|(path, entry)| self.cast_entry::<NodeType>(path, entry))
+            .collect::<Result<Vec<MaterializedNode<NodeType>>, NodeRepositoryError>>()?;
 
         Ok(nodes)
     }
 
-    fn get_nodes_for_scope_per_top_level_element<T>(
+    fn get_nodes_for_scope_per_top_level_element<NodeType>(
         &self,
-        scope: u8,
-    ) -> Result<Vec<Vec<MaterializedNode<T>>>, NodeRepositoryError>
+        scope: ScopeLayer,
+    ) -> Result<Vec<Vec<MaterializedNode<NodeType>>>, NodeRepositoryError>
     where
-        T: Clone + 'static,
+        NodeType: Clone + 'static,
     {
-        let target_type = TypeId::of::<T>();
+        let target_type = TypeId::of::<NodeType>();
 
         let top_levels: Vec<&String> = self
             .node_store
@@ -205,12 +150,10 @@ impl NodeRepository for BTreeNodeRepository {
                 .range::<String, _>(tl_path.to_string()..)
                 .take_while(|(k, _)| k.starts_with(tl_path))
                 .filter(|(_, entry)| entry.type_id == target_type && entry.scope == scope)
-                .map(|(path, entry)| self.cast_entry::<T>(path, entry))
-                .collect::<Result<Vec<MaterializedNode<T>>, NodeRepositoryError>>()?;
+                .map(|(path, entry)| self.cast_entry::<NodeType>(path, entry))
+                .collect::<Result<Vec<MaterializedNode<NodeType>>, NodeRepositoryError>>()?;
 
-            if !children.is_empty() {
-                output.push(children);
-            }
+            output.push(children);
         }
 
         Ok(output)
@@ -296,7 +239,7 @@ mod tests {
     fn test_get_nodes_for_scope_per_top_level_element() {
         let repo = cohort_board();
         let retrieved = repo
-            .get_nodes_for_scope_per_top_level_element::<OntologyClass>(0u8)
+            .get_nodes_for_scope_per_top_level_element::<OntologyClass>(ScopeLayer::Individual)
             .unwrap();
 
         assert_eq!(retrieved.len(), 2);

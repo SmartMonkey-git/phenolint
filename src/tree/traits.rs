@@ -2,6 +2,7 @@
 use crate::tree::error::NodeRepositoryError;
 use crate::tree::node::MaterializedNode;
 use crate::tree::pointer::Pointer;
+use crate::tree::scopes::ScopeLayer;
 use serde_json::Value;
 use std::borrow::Cow;
 use std::ops::Range;
@@ -19,7 +20,7 @@ pub trait RetrievableNode {
     fn value_at(&self, ptr: &Pointer) -> Option<Cow<'_, Value>>;
 }
 
-pub(crate) trait NodeRepository {
+pub trait NodeRepository {
     fn insert<T: 'static + Clone>(
         &mut self,
         node: MaterializedNode<T>,
@@ -33,13 +34,13 @@ pub(crate) trait NodeRepository {
     // Example: Get all nodes of the phenopacket scope + all resources of the cohort. Check if pp resources are in cohort
     fn get_nodes_in_scope<T: Clone + 'static>(
         &self,
-        scope: u8,
+        scope: ScopeLayer,
     ) -> Result<Vec<MaterializedNode<T>>, NodeRepositoryError>;
 
     // All nodes of a type for cases per case
     // Example: Check if all curie id's are represented in the resources in a phenopacket
     fn get_nodes_for_scope_per_top_level_element<T: Clone + 'static>(
         &self,
-        scope: u8,
+        scope: ScopeLayer,
     ) -> Result<Vec<Vec<MaterializedNode<T>>>, NodeRepositoryError>;
 }
