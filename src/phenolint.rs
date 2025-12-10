@@ -53,7 +53,7 @@ impl Phenolint {
 }
 
 impl Lint<str> for Phenolint {
-    fn lint(&mut self, phenostr: &str, patch: bool, quiet: bool) -> LintResult {
+    fn lint(&self, phenostr: &str, patch: bool, quiet: bool) -> LintResult {
         let mut report = LintReport::default();
 
         let (values, spans, input_type) = match PhenopacketParser::to_abstract_tree(phenostr) {
@@ -142,7 +142,7 @@ impl Lint<str> for Phenolint {
 }
 
 impl Lint<PathBuf> for Phenolint {
-    fn lint(&mut self, phenopath: &PathBuf, patch: bool, quit: bool) -> LintResult {
+    fn lint(&self, phenopath: &PathBuf, patch: bool, quit: bool) -> LintResult {
         let phenodata = match fs::read(phenopath) {
             Ok(phenodata) => phenodata,
             Err(err) => {
@@ -155,7 +155,7 @@ impl Lint<PathBuf> for Phenolint {
 }
 
 impl Lint<[u8]> for Phenolint {
-    fn lint(&mut self, phenodata: &[u8], patch: bool, quit: bool) -> LintResult {
+    fn lint(&self, phenodata: &[u8], patch: bool, quit: bool) -> LintResult {
         let (phenostr, input_type) = match PhenopacketParser::to_string(phenodata) {
             Ok(phenostr) => phenostr,
             Err(err) => {

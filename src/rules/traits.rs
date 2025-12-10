@@ -9,7 +9,7 @@ pub trait LintRule: RuleFromContext + Send + Sync {
     fn check_erased(&self, board: &NodeRepository) -> Vec<LintViolation>;
 }
 
-pub trait RuleMetaData: Send + Sync {
+pub trait RuleMetaData {
     fn rule_id(&self) -> &str;
 }
 
@@ -19,12 +19,12 @@ pub trait RuleFromContext {
         Self: Sized;
 }
 
-pub trait RuleCheck: Send + Sync + 'static {
+pub trait RuleCheck: 'static {
     type Data<'a>: LintData<'a> + ?Sized;
     fn check(&self, data: Self::Data<'_>) -> Vec<LintViolation>;
 }
 
-impl<T> LintRule for T
+impl<T: Send + Sync> LintRule for T
 where
     T: RuleCheck + RuleFromContext + RuleMetaData,
     for<'a> <T as RuleCheck>::Data<'a>: Sized,

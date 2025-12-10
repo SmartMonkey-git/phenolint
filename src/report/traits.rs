@@ -8,12 +8,12 @@ pub trait RuleReport: ReportFromContext + RegisterableReport + CompileReport {
     const RULE_ID: &'static str;
 }
 
-pub trait RegisterableReport {
+pub trait RegisterableReport: Send + Sync {
     fn compile_report(&self, value: &dyn Node, lint_violation: &LintViolation) -> ReportSpecs;
     fn rule_id(&self) -> String;
 }
 
-impl<T: CompileReport + Send + RuleReport> RegisterableReport for T {
+impl<T: CompileReport + RuleReport> RegisterableReport for T {
     fn compile_report(&self, value: &dyn Node, lint_violation: &LintViolation) -> ReportSpecs {
         CompileReport::compile_report(self, value, lint_violation)
     }

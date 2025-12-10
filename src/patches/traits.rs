@@ -15,7 +15,7 @@ pub trait PatchFromContext {
     ) -> Result<Box<dyn RegisterablePatch>, FromContextError>;
 }
 
-impl<T: CompilePatches + Send + RulePatch> RegisterablePatch for T {
+impl<T: CompilePatches + RulePatch> RegisterablePatch for T {
     fn compile_patches(&self, value: &dyn Node, lint_violation: &LintViolation) -> Vec<Patch> {
         CompilePatches::compile_patches(self, value, lint_violation)
     }
@@ -30,6 +30,6 @@ pub trait RulePatch: PatchFromContext + RegisterablePatch + CompilePatches {
 }
 
 /// Tries to compile patches for a given rule.
-pub trait CompilePatches: Send + Sync {
+pub trait CompilePatches {
     fn compile_patches(&self, node: &dyn Node, lint_violation: &LintViolation) -> Vec<Patch>;
 }

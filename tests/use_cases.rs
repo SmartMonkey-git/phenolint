@@ -1,6 +1,6 @@
+use phenolint::LinterContext;
 use phenolint::phenolint::Phenolint;
 use phenolint::traits::Lint;
-use phenolint::LinterContext;
 use serde_json::json;
 use std::path::PathBuf;
 use std::sync::OnceLock;
