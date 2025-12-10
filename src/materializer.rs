@@ -11,7 +11,7 @@ use phenopackets::schema::v2::core::{
 pub(crate) struct NodeMaterializer;
 
 impl NodeMaterializer {
-    pub fn materialize_nodes(&mut self, dyn_node: &DynamicNode, repo: &mut NodeRepository) {
+    pub fn materialize_nodes(&self, dyn_node: &DynamicNode, repo: &mut NodeRepository) {
         if let Some(oc) = OntologyClass::parse(dyn_node) {
             Self::push_to_repo(oc, dyn_node, repo);
         } else if let Some(pf) = PhenotypicFeature::parse(dyn_node) {
