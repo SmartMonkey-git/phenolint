@@ -80,7 +80,7 @@ mod test_curies_have_resources {
                 label: "Seizure".into(),
             },
             Default::default(),
-            Pointer::new("/phenotypicFeatures/0/type"),
+            Pointer::from("/phenotypicFeatures/0/type"),
         )];
         let resources = [];
         let data = (List(&ocs), List(&resources));
@@ -109,12 +109,12 @@ impl ReportFromContext for CuriesHaveResourcesReport {
 
 impl CompileReport for CuriesHaveResourcesReport {
     fn compile_report(&self, full_node: &dyn Node, lint_violation: &LintViolation) -> ReportSpecs {
-        let resources_ptr = Pointer::new("/metaData/resources");
+        let resources_ptr = Pointer::from("/metaData/resources");
         let span = if let Some(resources_range) = full_node.span_at(&resources_ptr).cloned() {
             resources_range
         } else {
             // `metaData` lacks the `resources` field itself.
-            let metadata_ptr = Pointer::new("/metaData");
+            let metadata_ptr = Pointer::from("/metaData");
             full_node.span_at(&metadata_ptr)
                 .cloned()
                 .expect("We assume `metaData` is always in the `Node` because we validate the basic phenopacket invariants before running this rule")

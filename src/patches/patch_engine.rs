@@ -103,12 +103,14 @@ impl PatchEngine {
         patches.sort_by(|p1, p2| match (p1, p2) {
             (PatchInstruction::Add { .. }, PatchInstruction::Remove { .. }) => Ordering::Less,
             (PatchInstruction::Remove { .. }, PatchInstruction::Add { .. }) => Ordering::Greater,
-            (PatchInstruction::Add { at: at1, .. }, PatchInstruction::Add { at: at2, .. }) => {
-                at1.segments().count().cmp(&at2.segments().count())
-            }
-            (PatchInstruction::Remove { at: at1 }, PatchInstruction::Remove { at: at2 }) => {
-                at1.segments().count().cmp(&at2.segments().count())
-            }
+            (PatchInstruction::Add { at: at1, .. }, PatchInstruction::Add { at: at2, .. }) => at1
+                .iter_segments()
+                .count()
+                .cmp(&at2.iter_segments().count()),
+            (PatchInstruction::Remove { at: at1 }, PatchInstruction::Remove { at: at2 }) => at1
+                .iter_segments()
+                .count()
+                .cmp(&at2.iter_segments().count()),
             _ => Ordering::Equal,
         });
     }
@@ -168,7 +170,7 @@ mod tests {
         let phenostr = sample_phenopacket();
         let patch = Patch::new(NonEmptyVec::with_rest(
             PatchInstruction::Add {
-                at: Pointer::new("/metaData"),
+                at: Pointer::from("/metaData"),
                 value: json!({"created": "2024-01-01"}),
             },
             vec![],
@@ -187,7 +189,7 @@ mod tests {
 
         let patch = Patch::new(NonEmptyVec::with_rest(
             PatchInstruction::Add {
-                at: Pointer::new("/subject/timeAtLastEncounter"),
+                at: Pointer::from("/subject/timeAtLastEncounter"),
                 value: json!({"age": "P30Y"}),
             },
             vec![],
@@ -206,7 +208,7 @@ mod tests {
 
         let patch = Patch::new(NonEmptyVec::with_rest(
             PatchInstruction::Remove {
-                at: Pointer::new("/subject/dateOfBirth"),
+                at: Pointer::from("/subject/dateOfBirth"),
             },
             vec![],
         ));
@@ -223,7 +225,7 @@ mod tests {
 
         let patch = Patch::new(NonEmptyVec::with_rest(
             PatchInstruction::Remove {
-                at: Pointer::new("/diseases/0/onset"),
+                at: Pointer::from("/diseases/0/onset"),
             },
             vec![],
         ));
@@ -241,8 +243,8 @@ mod tests {
 
         let patch = Patch::new(NonEmptyVec::with_rest(
             PatchInstruction::Move {
-                from: Pointer::new("/subject/dateOfBirth"),
-                to: Pointer::new("/subject/birthDate"),
+                from: Pointer::from("/subject/dateOfBirth"),
+                to: Pointer::from("/subject/birthDate"),
             },
             vec![],
         ));
@@ -260,8 +262,8 @@ mod tests {
 
         let patch = Patch::new(NonEmptyVec::with_rest(
             PatchInstruction::Move {
-                from: Pointer::new("/diseases/0/onset"),
-                to: Pointer::new("/ageOfOnset"),
+                from: Pointer::from("/diseases/0/onset"),
+                to: Pointer::from("/ageOfOnset"),
             },
             vec![],
         ));
@@ -279,8 +281,8 @@ mod tests {
 
         let patch = Patch::new(NonEmptyVec::with_rest(
             PatchInstruction::Duplicate {
-                from: Pointer::new("/subject/id"),
-                to: Pointer::new("/subject/patientId"),
+                from: Pointer::from("/subject/id"),
+                to: Pointer::from("/subject/patientId"),
             },
             vec![],
         ));
@@ -298,8 +300,8 @@ mod tests {
 
         let patch = Patch::new(NonEmptyVec::with_rest(
             PatchInstruction::Duplicate {
-                from: Pointer::new("/diseases/0/term"),
-                to: Pointer::new("/diagnosisTerm"),
+                from: Pointer::from("/diseases/0/term"),
+                to: Pointer::from("/diagnosisTerm"),
             },
             vec![],
         ));
@@ -318,11 +320,11 @@ mod tests {
 
         let patch = Patch::new(NonEmptyVec::with_rest(
             PatchInstruction::Add {
-                at: Pointer::new("/subject/karyotypicSex"),
+                at: Pointer::from("/subject/karyotypicSex"),
                 value: Value::String("XY".to_string()),
             },
             vec![PatchInstruction::Add {
-                at: Pointer::new("/subject/taxonomy"),
+                at: Pointer::from("/subject/taxonomy"),
                 value: json!({"id": "NCBITaxon:9606", "label": "Homo sapiens"}),
             }],
         ));
@@ -340,16 +342,16 @@ mod tests {
 
         let patch = Patch::new(NonEmptyVec::with_rest(
             PatchInstruction::Add {
-                at: Pointer::new("/metaData"),
+                at: Pointer::from("/metaData"),
                 value: json!({"created": "2024-01-01"}),
             },
             vec![
                 PatchInstruction::Remove {
-                    at: Pointer::new("/subject/dateOfBirth"),
+                    at: Pointer::from("/subject/dateOfBirth"),
                 },
                 PatchInstruction::Move {
-                    from: Pointer::new("/subject/sex"),
-                    to: Pointer::new("/subject/gender"),
+                    from: Pointer::from("/subject/sex"),
+                    to: Pointer::from("/subject/gender"),
                 },
             ],
         ));
@@ -369,10 +371,10 @@ mod tests {
 
         let patch = Patch::new(NonEmptyVec::with_rest(
             PatchInstruction::Remove {
-                at: Pointer::new("/subject/sex"),
+                at: Pointer::from("/subject/sex"),
             },
             vec![PatchInstruction::Add {
-                at: Pointer::new("/subject/gender"),
+                at: Pointer::from("/subject/gender"),
                 value: Value::String("MALE".to_string()),
             }],
         ));
@@ -390,11 +392,11 @@ mod tests {
 
         let patch = Patch::new(NonEmptyVec::with_rest(
             PatchInstruction::Move {
-                from: Pointer::new("/diseases/0"),
-                to: Pointer::new("/primaryDiagnosis"),
+                from: Pointer::from("/diseases/0"),
+                to: Pointer::from("/primaryDiagnosis"),
             },
             vec![PatchInstruction::Add {
-                at: Pointer::new("/primaryDiagnosis/confirmed"),
+                at: Pointer::from("/primaryDiagnosis/confirmed"),
                 value: Value::Bool(true),
             }],
         ));
@@ -423,7 +425,7 @@ mod tests {
 
         let patch = Patch::new(NonEmptyVec::with_rest(
             PatchInstruction::Add {
-                at: Pointer::new("/schemaVersion"),
+                at: Pointer::from("/schemaVersion"),
                 value: Value::Number(Number::from_f64(2.0f64).unwrap()),
             },
             vec![],
@@ -441,11 +443,11 @@ mod tests {
 
         let patch = Patch::new(NonEmptyVec::with_rest(
             PatchInstruction::Duplicate {
-                from: Pointer::new("/subject"),
-                to: Pointer::new("/backup"),
+                from: Pointer::from("/subject"),
+                to: Pointer::from("/backup"),
             },
             vec![PatchInstruction::Remove {
-                at: Pointer::new("/subject/dateOfBirth"),
+                at: Pointer::from("/subject/dateOfBirth"),
             }],
         ));
 
@@ -464,7 +466,7 @@ mod tests {
 
         let patch = Patch::new(NonEmptyVec::with_rest(
             PatchInstruction::Add {
-                at: Pointer::new("/phenotypicFeatures/0/severity"),
+                at: Pointer::from("/phenotypicFeatures/0/severity"),
                 value: json!({"label": "severe"}),
             },
             vec![],
@@ -485,7 +487,7 @@ mod tests {
 
         let patch = Patch::new(NonEmptyVec::with_rest(
             PatchInstruction::Add {
-                at: Pointer::new("/diseases/0/onset/iso8601"),
+                at: Pointer::from("/diseases/0/onset/iso8601"),
                 value: json!({"iso8601duration": "P10Y"}),
             },
             vec![],
@@ -506,7 +508,7 @@ mod tests {
 
         let patch = Patch::new(NonEmptyVec::with_rest(
             PatchInstruction::Add {
-                at: Pointer::new("/notes"),
+                at: Pointer::from("/notes"),
                 value: Value::String(
                     "Patient has \"complex\" symptoms; requires care.".to_string(),
                 ),
@@ -526,12 +528,12 @@ mod tests {
 
         let patch = Patch::new(NonEmptyVec::with_rest(
             PatchInstruction::Move {
-                from: Pointer::new("/subject/sex"),
-                to: Pointer::new("/subject/biologicalSex"),
+                from: Pointer::from("/subject/sex"),
+                to: Pointer::from("/subject/biologicalSex"),
             },
             vec![PatchInstruction::Move {
-                from: Pointer::new("/subject/id"),
-                to: Pointer::new("/patientIdentifier"),
+                from: Pointer::from("/subject/id"),
+                to: Pointer::from("/patientIdentifier"),
             }],
         ));
 
@@ -550,10 +552,10 @@ mod tests {
 
         let patch = Patch::new(NonEmptyVec::with_rest(
             PatchInstruction::Remove {
-                at: Pointer::new("/subject/sex"),
+                at: Pointer::from("/subject/sex"),
             },
             vec![PatchInstruction::Add {
-                at: Pointer::new("/subject/sex"),
+                at: Pointer::from("/subject/sex"),
                 value: Value::String("FEMALE".to_string()),
             }],
         ));
@@ -569,7 +571,7 @@ mod tests {
         let minimal = json!({"id": "test"});
 
         let patch = Patch::new(NonEmptyVec::with_single_entry(PatchInstruction::Add {
-            at: Pointer::new("/subject"),
+            at: Pointer::from("/subject"),
             value: json!({"id": "patient.1"}),
         }));
 
