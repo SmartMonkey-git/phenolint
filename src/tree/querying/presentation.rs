@@ -1,6 +1,7 @@
 use crate::tree::node::MaterializedNode;
 use std::ops::Deref;
 
+#[allow(unused)]
 pub trait QueryPresentation<Input> {
     fn present(query_res: Input) -> Self
     where
