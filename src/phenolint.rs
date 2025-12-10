@@ -14,13 +14,13 @@ use crate::schema_validation::validator::PhenopacketSchemaValidator;
 use crate::traits::Lint;
 use crate::tree::abstract_pheno_tree::AbstractTreeTraversal;
 use crate::tree::node::DynamicNode;
-use crate::tree::node_repository::NodeRepository;
 use crate::tree::pointer::Pointer;
 use log::{error, warn};
 use phenopackets::schema::v2::Phenopacket;
 use prost::Message;
 use serde_json::Value;
 
+use crate::tree::btree_node_repository::BTreeNodeRepository;
 use std::fs;
 use std::path::PathBuf;
 
@@ -71,7 +71,7 @@ impl Lint<str> for Phenolint {
         let root_node = DynamicNode::new(&values, &spans, Pointer::at_root());
 
         let apt = AbstractTreeTraversal::new(values, spans);
-        let mut node_repo: NodeRepository = NodeRepository::new();
+        let mut node_repo = BTreeNodeRepository::new();
 
         for node in apt.traverse() {
             self.node_materializer

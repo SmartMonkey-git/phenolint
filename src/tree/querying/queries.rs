@@ -1,9 +1,8 @@
 use crate::tree::node::MaterializedNode;
 
-use crate::tree::scopes::ScopeDefinition;
 use crate::tree::traits::NodeRepository;
 
-use crate::tree::querying::traits::{QueryPresentation, QueryStrategy};
+use crate::tree::querying::traits::{QueryPresentation, QueryStrategy, ScopeDefinition};
 use std::marker::PhantomData;
 
 #[derive(Debug)]
