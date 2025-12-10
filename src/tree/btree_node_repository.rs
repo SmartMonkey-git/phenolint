@@ -92,7 +92,7 @@ impl BTreeNodeRepository {
         self.span_store
             .range::<String, _>(root_path.to_string()..)
             .take_while(|(k, _)| k.starts_with(root_path))
-            .map(|(p, r)| (Pointer::new(p.as_str()), r.clone()))
+            .map(|(p, r)| (Pointer::from(p.as_str()), r.clone()))
             .collect()
     }
 
@@ -114,7 +114,7 @@ impl BTreeNodeRepository {
         let content = content_ref.clone();
         let spans = self.get_subtree_spans(path);
 
-        Ok(MaterializedNode::new(content, spans, Pointer::new(path)))
+        Ok(MaterializedNode::new(content, spans, Pointer::from(path)))
     }
 }
 
@@ -287,7 +287,7 @@ mod tests {
                 label: "All".to_string(),
             },
             HashMap::new(),
-            Pointer::at_phenotypes().down("0/type").clone(),
+            Pointer::from("phenotypicFeatures/0/type").clone(),
         );
         repo.insert(node).unwrap();
     }
