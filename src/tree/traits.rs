@@ -20,7 +20,7 @@ pub trait RetrievableNode {
     fn value_at(&self, ptr: &Pointer) -> Option<Cow<'_, Value>>;
 }
 
-pub(crate) trait NodeRepository {
+pub trait NodeRepository {
     fn insert<T: 'static + Clone>(
         &mut self,
         node: MaterializedNode<T>,

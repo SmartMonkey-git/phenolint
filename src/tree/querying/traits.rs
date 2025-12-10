@@ -1,6 +1,7 @@
+use crate::tree::scopes::ScopeLayer;
 use crate::tree::traits::NodeRepository;
 
-pub(crate) trait QueryStrategy {
+pub trait QueryStrategy {
     type Output;
     #[allow(unused)]
     fn query(node_repo: &impl NodeRepository) -> Self::Output;
@@ -43,4 +44,12 @@ pub(crate) trait QueryPresentation<Input> {
     fn present(query_res: Input) -> Self
     where
         Self: Sized;
+}
+
+pub trait ScopeDefinition {
+    fn layer() -> ScopeLayer;
+
+    fn partitioning_fields() -> &'static [&'static str] {
+        &[]
+    }
 }

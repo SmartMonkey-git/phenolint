@@ -8,8 +8,9 @@ use crate::report::traits::RuleReport;
 use crate::report::traits::{CompileReport, RegisterableReport, ReportFromContext};
 use crate::rules::rule_registration::RuleRegistration;
 use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext, RuleMetaData};
-use crate::tree::node_repository::List;
 use crate::tree::pointer::Pointer;
+use crate::tree::querying::presentation::Grouped;
+use crate::tree::querying::queries::convenience::GroupedIndividuals;
 use crate::tree::traits::{LocatableNode, Node};
 use phenolint_macros::{register_report, register_rule};
 use phenopackets::schema::v2::core::{OntologyClass, Resource};
@@ -35,28 +36,34 @@ impl RuleFromContext for CuriesHaveResourcesRule {
 }
 
 impl RuleCheck for CuriesHaveResourcesRule {
-    type Data<'a> = (List<'a, OntologyClass>, List<'a, Resource>);
+    type Query = (
+        GroupedIndividuals<OntologyClass>,
+        GroupedIndividuals<Resource>,
+    );
 
-    fn check(&self, data: Self::Data<'_>) -> Vec<LintViolation> {
-        let known_prefixes: HashSet<_> = data
-            .1
-            .iter()
-            .map(|r| r.inner.namespace_prefix.as_str())
-            .collect();
-
+    fn check(&self, data: (Grouped<OntologyClass>, Grouped<Resource>)) -> Vec<LintViolation> {
+        let (ontology_classes, resources) = data;
         let mut violations = vec![];
 
-        for node in data.0.iter() {
-            if let Some(prefix) = find_prefix(node.inner.id.as_str())
-                && !known_prefixes.contains(prefix)
-            {
-                violations.push(LintViolation::new(
-                    ViolationSeverity::Error,
-                    LintRule::rule_id(self),
-                    node.pointer().clone().into(), // <- warns about the ontology class itself
-                ));
+        for (o, r) in ontology_classes.0.iter().zip(resources.0) {
+            let known_prefixes: HashSet<_> = r
+                .iter()
+                .map(|r| r.inner.namespace_prefix.as_str())
+                .collect();
+
+            for node in o.iter() {
+                if let Some(prefix) = find_prefix(node.inner.id.as_str())
+                    && !known_prefixes.contains(prefix)
+                {
+                    violations.push(LintViolation::new(
+                        ViolationSeverity::Error,
+                        LintRule::rule_id(self),
+                        node.pointer().clone().into(), // <- warns about the ontology class itself
+                    ));
+                }
             }
         }
+
         violations
     }
 }
@@ -66,8 +73,8 @@ mod test_curies_have_resources {
     use crate::rules::resources::CuriesHaveResourcesRule;
     use crate::rules::traits::{RuleCheck, RuleMetaData};
     use crate::tree::node::MaterializedNode;
-    use crate::tree::node_repository::List;
     use crate::tree::pointer::Pointer;
+    use crate::tree::querying::presentation::Grouped;
     use phenopackets::schema::v2::core::OntologyClass;
 
     #[test]
@@ -82,8 +89,8 @@ mod test_curies_have_resources {
             Default::default(),
             Pointer::new("/phenotypicFeatures/0/type"),
         )];
-        let resources = [];
-        let data = (List(&ocs), List(&resources));
+        let resources = vec![vec![]];
+        let data = (Grouped(vec![ocs.to_vec()]), Grouped(resources));
 
         let violations = rule.check(data);
 

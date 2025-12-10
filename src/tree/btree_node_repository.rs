@@ -15,7 +15,7 @@ struct NodeEntry {
     inner: Box<dyn Any>,
 }
 
-pub(crate) struct BTreeNodeRepository {
+pub struct BTreeNodeRepository {
     node_store: BTreeMap<String, NodeEntry>,
     span_store: BTreeMap<String, Range<usize>>,
     scope_mappings: ScopeMappings,
