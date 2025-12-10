@@ -1,21 +1,14 @@
 use crate::tree::pointer::Pointer;
+use crate::tree::querying::traits::ScopeDefinition;
 use phenopackets::schema::v2::{Cohort, Family, Phenopacket};
 use std::any::TypeId;
 use std::cell::Cell;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub(crate) enum ScopeLayer {
+pub enum ScopeLayer {
     Individual = 0,
     Aggregated = 1,
-}
-
-pub(crate) trait ScopeDefinition {
-    fn layer() -> ScopeLayer;
-
-    fn partitioning_fields() -> &'static [&'static str] {
-        &[]
-    }
 }
 
 impl ScopeDefinition for Phenopacket {
@@ -61,11 +54,11 @@ impl ScopeMappings {
         scope_map
     }
 
-    fn register<T: ScopeDefinition + 'static>(&mut self) {
-        let type_id = TypeId::of::<T>();
-        self.scope_by_type_id.insert(type_id, T::layer());
+    fn register<NodeType: ScopeDefinition + 'static>(&mut self) {
+        let type_id = TypeId::of::<NodeType>();
+        self.scope_by_type_id.insert(type_id, NodeType::layer());
 
-        for b_field in T::partitioning_fields() {
+        for b_field in NodeType::partitioning_fields() {
             self.boundaries.insert(b_field, type_id);
         }
     }

@@ -18,8 +18,9 @@ use phenolint::report::specs::{LabelSpecs, ReportSpecs};
 use phenolint::report::traits::{CompileReport, RegisterableReport, ReportFromContext, RuleReport};
 use phenolint::rules::traits::LintRule;
 use phenolint::rules::traits::{RuleCheck, RuleFromContext};
-use phenolint::tree::node_repository::List;
 use phenolint::tree::pointer::Pointer;
+use phenolint::tree::querying::presentation::Flattened;
+use phenolint::tree::querying::queries::convenience::All;
 use phenolint::tree::traits::Node;
 use phenolint_macros::{register_patch, register_report, register_rule};
 use phenopackets::schema::v2::Phenopacket;
@@ -43,9 +44,9 @@ impl RuleFromContext for CustomRule {
 }
 
 impl RuleCheck for CustomRule {
-    type Data<'a> = List<'a, OntologyClass>;
+    type Query = All<OntologyClass>;
 
-    fn check(&self, _: Self::Data<'_>) -> Vec<LintViolation> {
+    fn check(&self, _: Flattened<OntologyClass>) -> Vec<LintViolation> {
         vec![LintViolation::new(
             ViolationSeverity::Info,
             LintRule::rule_id(self),

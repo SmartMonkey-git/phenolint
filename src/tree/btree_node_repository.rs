@@ -15,7 +15,7 @@ struct NodeEntry {
     inner: Box<dyn Any>,
 }
 
-pub(crate) struct BTreeNodeRepository {
+pub struct BTreeNodeRepository {
     node_store: BTreeMap<String, NodeEntry>,
     span_store: BTreeMap<String, Range<usize>>,
     scope_mappings: ScopeMappings,
@@ -38,18 +38,18 @@ impl BTreeNodeRepository {
             .collect()
     }
 
-    fn cast_entry<T>(
+    fn cast_entry<NodeType>(
         &self,
         path: &str,
         entry: &NodeEntry,
-    ) -> Result<MaterializedNode<T>, NodeRepositoryError>
+    ) -> Result<MaterializedNode<NodeType>, NodeRepositoryError>
     where
-        T: Clone + 'static,
+        NodeType: Clone + 'static,
     {
-        let content_ref = entry.inner.downcast_ref::<T>().ok_or_else(|| {
+        let content_ref = entry.inner.downcast_ref::<NodeType>().ok_or_else(|| {
             NodeRepositoryError::CantReinstantiateNode(
                 path.to_string(),
-                std::any::type_name::<T>().to_string(),
+                std::any::type_name::<NodeType>().to_string(),
             )
         })?;
 
@@ -61,8 +61,11 @@ impl BTreeNodeRepository {
 }
 
 impl NodeRepository for BTreeNodeRepository {
-    fn insert<T: 'static>(&mut self, node: MaterializedNode<T>) -> Result<(), NodeRepositoryError> {
-        let type_id = TypeId::of::<T>();
+    fn insert<NodeType: 'static>(
+        &mut self,
+        node: MaterializedNode<NodeType>,
+    ) -> Result<(), NodeRepositoryError> {
+        let type_id = TypeId::of::<NodeType>();
         let node_path = node.pointer().position().to_string();
 
         let scope = self
@@ -88,49 +91,49 @@ impl NodeRepository for BTreeNodeRepository {
         Ok(())
     }
 
-    fn get_all<T>(&self) -> Result<Vec<MaterializedNode<T>>, NodeRepositoryError>
+    fn get_all<NodeType>(&self) -> Result<Vec<MaterializedNode<NodeType>>, NodeRepositoryError>
     where
-        T: Clone + 'static,
+        NodeType: Clone + 'static,
     {
-        let target_type = TypeId::of::<T>();
+        let target_type = TypeId::of::<NodeType>();
 
         let nodes = self
             .node_store
             .iter()
             .filter(|(_, entry)| entry.type_id == target_type)
-            .map(|(path, entry)| self.cast_entry::<T>(path.as_str(), entry))
-            .collect::<Result<Vec<MaterializedNode<T>>, NodeRepositoryError>>()?;
+            .map(|(path, entry)| self.cast_entry::<NodeType>(path.as_str(), entry))
+            .collect::<Result<Vec<MaterializedNode<NodeType>>, NodeRepositoryError>>()?;
 
         Ok(nodes)
     }
 
-    fn get_nodes_in_scope<T>(
+    fn get_nodes_in_scope<NodeType>(
         &self,
         scope: ScopeLayer,
-    ) -> Result<Vec<MaterializedNode<T>>, NodeRepositoryError>
+    ) -> Result<Vec<MaterializedNode<NodeType>>, NodeRepositoryError>
     where
-        T: Clone + 'static,
+        NodeType: Clone + 'static,
     {
-        let target_type = TypeId::of::<T>();
+        let target_type = TypeId::of::<NodeType>();
 
         let nodes = self
             .node_store
             .iter()
             .filter(|(_, entry)| entry.type_id == target_type && entry.scope == scope)
-            .map(|(path, entry)| self.cast_entry::<T>(path, entry))
-            .collect::<Result<Vec<MaterializedNode<T>>, NodeRepositoryError>>()?;
+            .map(|(path, entry)| self.cast_entry::<NodeType>(path, entry))
+            .collect::<Result<Vec<MaterializedNode<NodeType>>, NodeRepositoryError>>()?;
 
         Ok(nodes)
     }
 
-    fn get_nodes_for_scope_per_top_level_element<T>(
+    fn get_nodes_for_scope_per_top_level_element<NodeType>(
         &self,
         scope: ScopeLayer,
-    ) -> Result<Vec<Vec<MaterializedNode<T>>>, NodeRepositoryError>
+    ) -> Result<Vec<Vec<MaterializedNode<NodeType>>>, NodeRepositoryError>
     where
-        T: Clone + 'static,
+        NodeType: Clone + 'static,
     {
-        let target_type = TypeId::of::<T>();
+        let target_type = TypeId::of::<NodeType>();
 
         let top_levels: Vec<&String> = self
             .node_store
@@ -147,12 +150,10 @@ impl NodeRepository for BTreeNodeRepository {
                 .range::<String, _>(tl_path.to_string()..)
                 .take_while(|(k, _)| k.starts_with(tl_path))
                 .filter(|(_, entry)| entry.type_id == target_type && entry.scope == scope)
-                .map(|(path, entry)| self.cast_entry::<T>(path, entry))
-                .collect::<Result<Vec<MaterializedNode<T>>, NodeRepositoryError>>()?;
+                .map(|(path, entry)| self.cast_entry::<NodeType>(path, entry))
+                .collect::<Result<Vec<MaterializedNode<NodeType>>, NodeRepositoryError>>()?;
 
-            if !children.is_empty() {
-                output.push(children);
-            }
+            output.push(children);
         }
 
         Ok(output)

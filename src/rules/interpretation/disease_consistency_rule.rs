@@ -14,8 +14,9 @@ use crate::report::traits::{CompileReport, RegisterableReport, ReportFromContext
 use crate::rules::rule_registration::RuleRegistration;
 use crate::rules::traits::RuleMetaData;
 use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
-use crate::tree::node_repository::List;
 use crate::tree::pointer::Pointer;
+use crate::tree::querying::presentation::Grouped;
+use crate::tree::querying::queries::convenience::GroupedIndividuals;
 use crate::tree::traits::{LocatableNode, Node};
 use phenolint_macros::{register_patch, register_report, register_rule};
 use phenopackets::schema::v2::core::{Diagnosis, Disease, OntologyClass};
@@ -38,34 +39,37 @@ impl RuleFromContext for DiseaseConsistencyRule {
 }
 
 impl RuleCheck for DiseaseConsistencyRule {
-    type Data<'a> = (List<'a, Diagnosis>, List<'a, Disease>);
+    type Query = (GroupedIndividuals<Diagnosis>, GroupedIndividuals<Disease>);
 
-    fn check(&self, data: Self::Data<'_>) -> Vec<LintViolation> {
+    fn check(&self, data: (Grouped<Diagnosis>, Grouped<Disease>)) -> Vec<LintViolation> {
         let mut violations = vec![];
 
-        let disease_terms: Vec<(&str, &str)> = data
-            .1
-            .iter()
-            .filter_map(|disease| {
-                disease
-                    .inner
-                    .term
-                    .as_ref()
-                    .map(|oc| (oc.id.as_str(), oc.label.as_str()))
-            })
-            .collect();
+        let (diagnosis_groups, diseases_group) = data;
 
-        for diagnosis in data.0.iter() {
-            if let Some(oc) = &diagnosis.inner.disease
-                && !disease_terms.contains(&(oc.id.as_str(), oc.label.as_str()))
-            {
-                violations.push(LintViolation::new(
-                    ViolationSeverity::Warning,
-                    LintRule::rule_id(self),
-                    NonEmptyVec::with_single_entry(
-                        diagnosis.pointer().clone().down("disease").clone(),
-                    ),
-                ))
+        for (diagnosis, diseases) in diagnosis_groups.0.iter().zip(diseases_group.0) {
+            let disease_terms: Vec<(&str, &str)> = diseases
+                .iter()
+                .filter_map(|disease| {
+                    disease
+                        .inner
+                        .term
+                        .as_ref()
+                        .map(|oc| (oc.id.as_str(), oc.label.as_str()))
+                })
+                .collect();
+
+            for diagnosis in diagnosis.iter() {
+                if let Some(oc) = &diagnosis.inner.disease
+                    && !disease_terms.contains(&(oc.id.as_str(), oc.label.as_str()))
+                {
+                    violations.push(LintViolation::new(
+                        ViolationSeverity::Warning,
+                        LintRule::rule_id(self),
+                        NonEmptyVec::with_single_entry(
+                            diagnosis.pointer().clone().down("disease").clone(),
+                        ),
+                    ))
+                }
             }
         }
 
