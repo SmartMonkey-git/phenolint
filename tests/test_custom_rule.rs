@@ -108,7 +108,7 @@ fn test_custom_rule(json_phenopacket: Phenopacket) {
         .one_violation()
         .patch(Patch::new(NonEmptyVec::with_single_entry(
             PatchInstruction::Remove {
-                at: Pointer::new("/id"),
+                at: Pointer::from("/id"),
             },
         )))
         .build();
