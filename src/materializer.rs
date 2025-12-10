@@ -33,8 +33,8 @@ impl NodeMaterializer {
         };
     }
 
-    fn push_to_repo<T: 'static>(
-        materialized: T,
+    fn push_to_repo<NodeType: 'static>(
+        materialized: NodeType,
         dyn_node: &DynamicNode,
         board: &mut NodeRepository,
     ) {

@@ -61,11 +61,11 @@ impl ScopeMappings {
         scope_map
     }
 
-    fn register<T: ScopeDefinition + 'static>(&mut self) {
-        let type_id = TypeId::of::<T>();
-        self.scope_by_type_id.insert(type_id, T::layer());
+    fn register<NodeType: ScopeDefinition + 'static>(&mut self) {
+        let type_id = TypeId::of::<NodeType>();
+        self.scope_by_type_id.insert(type_id, NodeType::layer());
 
-        for b_field in T::partitioning_fields() {
+        for b_field in NodeType::partitioning_fields() {
             self.boundaries.insert(b_field, type_id);
         }
     }

@@ -1,7 +1,10 @@
+use crate::rules::traits::LintRule;
 use crate::tree::node::MaterializedNode;
-use crate::tree::querying::presentation::{First, Flattened, Grouped, QueryPresentation};
+use crate::tree::querying::data_query::queries::{All, GroupedIndividuals, SingleInScope};
+use crate::tree::querying::presentation::{First, Flattened, QueryPresentation};
 use crate::tree::scopes::ScopeDefinition;
 use crate::tree::traits::NodeRepository;
+use phenopackets::schema::v1::core::PhenotypicFeature;
 use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::OntologyClass;
 use std::marker::PhantomData;
@@ -11,21 +14,37 @@ trait QueryStrategy {
     fn query(node_repo: &impl NodeRepository) -> Self::Output;
 }
 
-macro_rules! impl_query_strategy_for_tuples {
-    ($($name:ident),*) => {
-        impl<$($name: QueryStrategy),*> QueryStrategy for ($($name,)*) {
-            type Output = ($($name::Output,)*);
+macro_rules! impl_query_strategy_tuple {
+    () => {
+        impl QueryStrategy for () {
+            type Output = ();
+            fn query(_node_repo: &impl NodeRepository) -> Self::Output {
+
+            }
+        }
+    };
+
+    ($head:ident $(, $tail:ident)*) => {
+        impl_query_strategy_tuple!($($tail),*);
+
+        impl<$head, $($tail),*> QueryStrategy for ($head, $($tail,)*)
+        where
+            $head: QueryStrategy,
+            $($tail: QueryStrategy),*
+        {
+            type Output = ($head::Output, $($tail::Output,)*);
 
             fn query(node_repo: &impl NodeRepository) -> Self::Output {
                 (
-                    $($name::query(node_repo),)*
+                    $head::query(node_repo),
+                    $($tail::query(node_repo),)*
                 )
             }
         }
     };
 }
 
-impl_query_strategy_for_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12);
+impl_query_strategy_tuple!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12);
 
 #[derive(Debug)]
 struct QueryAllNodes<NodeType, Presentation>(PhantomData<(Presentation, NodeType)>);
@@ -91,7 +110,10 @@ trait TheRuleTrait {
 struct __RuleImplementation1;
 
 impl TheRuleTrait for __RuleImplementation1 {
-    type Query = QueryNodesInScope<Phenopacket, OntologyClass, First<OntologyClass>>;
+    type Query = (
+        QueryNodesInScope<Phenopacket, OntologyClass, First<OntologyClass>>,
+        QueryAllNodes<OntologyClass, Flattened<OntologyClass>>,
+    );
 
     fn check_erased(&'_ self, board: <Self::Query as QueryStrategy>::Output) -> bool {
         todo!()
@@ -100,11 +122,23 @@ impl TheRuleTrait for __RuleImplementation1 {
 
 struct __RuleImplementation2;
 
-// More to be added.
-type QueryAll<NodeType> = QueryAllNodes<NodeType, Flattened<NodeType>>;
+pub mod queries {
+    use crate::tree::querying::data_query::{QueryAllNodes, QueryGroupedNodes, QueryNodesInScope};
+    use crate::tree::querying::presentation::{First, Flattened, Grouped};
+    use phenopackets::schema::v2::Phenopacket;
 
+    // More to be added.
+    pub type All<NodeType> = QueryAllNodes<NodeType, Flattened<NodeType>>;
+    pub type GroupedIndividuals<NodeType> =
+        QueryGroupedNodes<Phenopacket, NodeType, Grouped<NodeType>>;
+    pub type SingleInScope<Scope, NodeType> = QueryNodesInScope<Scope, NodeType, First<NodeType>>;
+}
 impl TheRuleTrait for __RuleImplementation2 {
-    type Query = QueryAll<OntologyClass>;
+    type Query = (
+        All<OntologyClass>,
+        SingleInScope<Phenopacket, OntologyClass>,
+        GroupedIndividuals<PhenotypicFeature>,
+    );
 
     fn check_erased(&self, board: <Self::Query as QueryStrategy>::Output) -> bool {
         let a = board;
@@ -115,7 +149,7 @@ impl TheRuleTrait for __RuleImplementation2 {
 struct __RuleImplementation3;
 
 impl TheRuleTrait for __RuleImplementation3 {
-    type Query = QueryGroupedNodes<Phenopacket, OntologyClass, Grouped<OntologyClass>>;
+    type Query = GroupedIndividuals<OntologyClass>;
 
     fn check_erased(&self, board: <Self::Query as QueryStrategy>::Output) -> bool {
         todo!()
