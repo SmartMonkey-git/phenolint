@@ -1,12 +1,6 @@
 use crate::tree::node::MaterializedNode;
+use crate::tree::querying::traits::QueryPresentation;
 use std::ops::Deref;
-
-#[allow(unused)]
-pub trait QueryPresentation<Input> {
-    fn present(query_res: Input) -> Self
-    where
-        Self: Sized;
-}
 
 pub struct Flattened<NodeType>(pub Vec<MaterializedNode<NodeType>>);
 
