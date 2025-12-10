@@ -153,9 +153,7 @@ impl NodeRepository for BTreeNodeRepository {
                 .map(|(path, entry)| self.cast_entry::<NodeType>(path, entry))
                 .collect::<Result<Vec<MaterializedNode<NodeType>>, NodeRepositoryError>>()?;
 
-            if children.is_empty() {
-                output.push(children);
-            }
+            output.push(children);
         }
 
         Ok(output)
