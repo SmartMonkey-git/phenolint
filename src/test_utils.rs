@@ -2,6 +2,7 @@ use crate::diagnostics::LintFinding;
 use once_cell::sync::Lazy;
 use ontolius::io::OntologyLoaderBuilder;
 use ontolius::ontology::csr::FullCsrOntology;
+use phenopackets::schema::v2::Phenopacket;
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -13,6 +14,10 @@ pub(crate) fn assets_dir() -> PathBuf {
 
 pub(crate) fn json_phenopacket_dir() -> PathBuf {
     assets_dir().join("phenopacket.json")
+}
+pub(crate) fn test_phenopacket() -> Phenopacket {
+    let pp_dir = json_phenopacket_dir();
+    serde_json::from_reader(std::fs::File::open(pp_dir).unwrap()).unwrap()
 }
 
 pub(crate) static HPO: Lazy<Arc<FullCsrOntology>> =

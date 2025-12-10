@@ -1,13 +1,17 @@
 #![allow(dead_code)]
+use crate::materializer::NodeMaterializer;
+use crate::tree::abstract_pheno_tree::AbstractTreeTraversal;
 use crate::tree::error::NodeRepositoryError;
 use crate::tree::node::MaterializedNode;
 use crate::tree::pointer::Pointer;
 use crate::tree::scopes::{ScopeLayer, ScopeMappings};
-use crate::tree::traits::{LocatableNode, NodeRepository};
+use crate::tree::traits::{LocatableNode, NodeRepository, NodeRepositoryBuilder};
+use serde_json::Value;
 use std::any::{Any, TypeId};
 use std::collections::{BTreeMap, HashMap};
 use std::ops::Range;
 
+#[derive(Debug)]
 struct NodeEntry {
     type_id: TypeId,
     scope: ScopeLayer,
@@ -66,11 +70,8 @@ impl NodeRepository for BTreeNodeRepository {
         node: MaterializedNode<NodeType>,
     ) -> Result<(), NodeRepositoryError> {
         let type_id = TypeId::of::<NodeType>();
-        let node_path = node.pointer().position().to_string();
 
-        let scope = self
-            .scope_mappings
-            .derive_scope(node_path.as_str(), &type_id);
+        let scope = self.scope_mappings.derive_scope(node.pointer(), &type_id);
         let is_scope_boundary = self.scope_mappings.is_scope_boundary(&type_id);
 
         for (ptr, span) in node.spans() {
@@ -79,6 +80,8 @@ impl NodeRepository for BTreeNodeRepository {
                 .or_insert_with(|| span.clone());
         }
 
+        let ptr = node.pointer().clone();
+
         let entry = NodeEntry {
             type_id,
             scope,
@@ -86,7 +89,7 @@ impl NodeRepository for BTreeNodeRepository {
             inner: Box::new(node.inner),
         };
 
-        self.node_store.insert(node_path.to_string(), entry);
+        self.node_store.insert(ptr.to_string(), entry);
 
         Ok(())
     }
@@ -134,7 +137,6 @@ impl NodeRepository for BTreeNodeRepository {
         NodeType: Clone + 'static,
     {
         let target_type = TypeId::of::<NodeType>();
-
         let top_levels: Vec<&String> = self
             .node_store
             .iter()
@@ -160,17 +162,80 @@ impl NodeRepository for BTreeNodeRepository {
     }
 }
 
+pub(crate) struct BTreeNodeRepositoryBuilder;
+
+impl NodeRepositoryBuilder<BTreeNodeRepository> for BTreeNodeRepositoryBuilder {
+    fn build(tree: Value, spans: HashMap<Pointer, Range<usize>>) -> BTreeNodeRepository {
+        let mut repo = BTreeNodeRepository::new();
+        let mut materialized = NodeMaterializer;
+        for node in AbstractTreeTraversal::new(tree, spans).traverse() {
+            materialized.materialize_nodes(&node, &mut repo);
+        }
+        repo
+    }
+}
+
+#[cfg(test)]
+mod test_builder {
+    use super::*;
+    use crate::test_utils::test_phenopacket;
+    use phenopackets::schema::v2::Phenopacket;
+    use phenopackets::schema::v2::core::{MetaData, Resource};
+    use std::thread::Scope;
+
+    #[test]
+    fn test_builder_single_phenopacket() {
+        let test_pp = Phenopacket {
+            id: "some_id".to_string(),
+            meta_data: Some(MetaData {
+                created: Some(Default::default()),
+                created_by: "Daniel The Man".to_string(),
+                submitted_by: "Peter Hobbitson".to_string(),
+                resources: vec![Resource {
+                    id: "HP".to_string(),
+                    name: "HPO".to_string(),
+                    url: "www.hpo.com".to_string(),
+                    version: "2.0".to_string(),
+                    namespace_prefix: "hp".to_string(),
+                    iri_prefix: "prefix".to_string(),
+                }],
+                phenopacket_schema_version: "2".to_string(),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+
+        let values = serde_json::to_value(&test_pp).unwrap();
+        let repo = BTreeNodeRepositoryBuilder::build(values, HashMap::new());
+
+        assert_eq!(repo.node_store.len(), 2);
+
+        let boundries: Vec<_> = repo
+            .node_store
+            .values()
+            .filter(|node| node.is_scope_boundary)
+            .collect();
+
+        assert_eq!(boundries.len(), 1);
+
+        let pp_node = boundries.first().unwrap();
+        assert_eq!(pp_node.type_id, TypeId::of::<Phenopacket>());
+        assert_eq!(pp_node.scope, ScopeLayer::Individual);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::tree::pointer::Pointer;
+    use crate::tree::traits::NodeRepositoryBuilder;
     use phenopackets::schema::v2::core::{MetaData, OntologyClass, Resource};
     use phenopackets::schema::v2::{Cohort, Phenopacket};
     use std::collections::HashMap;
     use std::fs;
     use std::path::PathBuf;
 
-    fn test_cohort() -> Cohort {
+    fn generate_test_cohort() -> Cohort {
         let assets_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("tests")
             .join("assets");
@@ -203,41 +268,45 @@ mod tests {
             }),
         }
     }
-    fn cohort_board() -> BTreeNodeRepository {
-        /*let cohort = test_cohort();
+    fn cohort_repository() -> BTreeNodeRepository {
+        let cohort = generate_test_cohort();
         let value = serde_json::to_value(&cohort).unwrap();
 
-         let tree = AbstractTreeTraversal::new(value, HashMap::new());
-        let repo = BTreeNodeRepository::new();
-
-        let mat = NodeMaterializer;
-        // TODO: Change interface of materialize_nodes to take an impl NodeRepository trait
-        for node in tree.traverse() {
-            mat.materialize_nodes(&node, &mut repo);
-        }
-        repo
-         */
-        BTreeNodeRepository::new()
+        BTreeNodeRepositoryBuilder::build(value, HashMap::new())
     }
 
     #[test]
     fn test_insert() {
         let mut repo = BTreeNodeRepository::new();
 
+        let node_pointer = Pointer::from("phenotypicFeatures/0/type");
+        let mut spans = BTreeMap::new();
+        spans.insert(node_pointer.to_string().clone(), 0usize..50usize);
+
         let node = MaterializedNode::new(
             OntologyClass {
                 id: "HP:0000001".to_string(),
                 label: "All".to_string(),
             },
-            HashMap::new(),
-            Pointer::from("phenotypicFeatures/0/type").clone(),
+            spans
+                .iter()
+                .map(|(key, val)| (Pointer::from(key.as_str()), val.clone()))
+                .collect(),
+            node_pointer.clone(),
         );
         repo.insert(node).unwrap();
+
+        let node_entry = repo.node_store.get(&node_pointer.to_string()).unwrap();
+
+        assert_eq!(repo.span_store, spans);
+        assert_eq!(node_entry.type_id, TypeId::of::<OntologyClass>());
+        assert_eq!(node_entry.scope, ScopeLayer::Individual);
+        assert!(!node_entry.is_scope_boundary);
     }
 
     #[test]
     fn test_get_nodes_for_scope_per_top_level_element() {
-        let repo = cohort_board();
+        let repo = cohort_repository();
         let retrieved = repo
             .get_nodes_for_scope_per_top_level_element::<OntologyClass>(ScopeLayer::Individual)
             .unwrap();
@@ -247,8 +316,8 @@ mod tests {
 
     #[test]
     fn test_get_all_nodes() {
-        let repo = cohort_board();
-        let test_cohort = test_cohort();
+        let repo = cohort_repository();
+        let test_cohort = generate_test_cohort();
         let retrieved = repo.get_all::<Resource>().unwrap();
 
         let mut n_resources = test_cohort.meta_data.unwrap().resources.len();

@@ -5,6 +5,7 @@ use crate::tree::pointer::Pointer;
 use crate::tree::scopes::ScopeLayer;
 use serde_json::Value;
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::ops::Range;
 
 pub trait Node: LocatableNode + RetrievableNode {}
@@ -43,4 +44,10 @@ pub trait NodeRepository {
         &self,
         scope: ScopeLayer,
     ) -> Result<Vec<Vec<MaterializedNode<T>>>, NodeRepositoryError>;
+}
+
+pub(crate) trait NodeRepositoryBuilder<T: NodeRepository> {
+    fn build(tree: Value, spans: HashMap<Pointer, Range<usize>>) -> T
+    where
+        Self: Sized;
 }

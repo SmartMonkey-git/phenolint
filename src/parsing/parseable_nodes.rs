@@ -55,7 +55,6 @@ impl ParsableNode<Phenopacket> for Phenopacket {
         if let Value::Object(map) = &node.inner
             && map.contains_key("id")
             && map.contains_key("metaData")
-            && node.pointer().is_root()
             && let Ok(pp) = serde_json::from_value::<Phenopacket>(node.inner.clone())
         {
             Some(pp)
@@ -71,8 +70,12 @@ impl ParsableNode<Resource> for Resource {
             && map.contains_key("id")
             && map.contains_key("name")
             && map.contains_key("url")
+            && map.contains_key("namespacePrefix")
+            && map.contains_key("version")
+            && map.contains_key("iriPrefix")
             && let Ok(resource) = serde_json::from_value::<Resource>(node.inner.clone())
         {
+            print!("Parsed Resource");
             Some(resource)
         } else {
             None

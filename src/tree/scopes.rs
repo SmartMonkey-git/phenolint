@@ -2,6 +2,7 @@ use crate::tree::pointer::Pointer;
 use crate::tree::querying::traits::ScopeDefinition;
 use phenopackets::schema::v2::{Cohort, Family, Phenopacket};
 use std::any::TypeId;
+use std::borrow::Cow;
 use std::cell::Cell;
 use std::collections::HashMap;
 
@@ -71,15 +72,16 @@ impl ScopeMappings {
         self.scope_by_type_id.contains_key(type_id)
     }
 
-    pub fn derive_scope(&self, path: &str, type_id: &TypeId) -> ScopeLayer {
+    pub fn derive_scope(&self, path: &Pointer, type_id: &TypeId) -> ScopeLayer {
         if let Some(scope) = self.get_scope(type_id) {
             let current_max = self.max_seen_scope.get();
             self.max_seen_scope.set(current_max.max(scope));
         }
 
-        let segments: Vec<_> = Pointer::new(path).segments().collect();
+        let segments: Vec<Cow<str>> = path.iter_segments().collect();
+
         for segment in segments.iter().rev() {
-            if let Some(boundary_type_id) = self.boundaries.get(segment.as_str()) {
+            if let Some(boundary_type_id) = self.boundaries.get(segment.as_ref()) {
                 return self
                     .scope_by_type_id
                     .get(boundary_type_id)
@@ -103,7 +105,10 @@ mod tests {
 
         let type_id = TypeId::of::<Phenopacket>();
 
-        assert_eq!(scope_map.derive_scope("", &type_id), ScopeLayer::Individual);
+        assert_eq!(
+            scope_map.derive_scope(&Pointer::at_root(), &type_id),
+            ScopeLayer::Individual
+        );
     }
 
     #[test]
@@ -112,7 +117,10 @@ mod tests {
 
         let type_id = TypeId::of::<Cohort>();
 
-        assert_eq!(scope_map.derive_scope("", &type_id), ScopeLayer::Aggregated);
+        assert_eq!(
+            scope_map.derive_scope(&Pointer::at_root(), &type_id),
+            ScopeLayer::Aggregated
+        );
     }
 
     #[test]
@@ -121,7 +129,10 @@ mod tests {
 
         let type_id = TypeId::of::<Family>();
 
-        assert_eq!(scope_map.derive_scope("", &type_id), ScopeLayer::Aggregated);
+        assert_eq!(
+            scope_map.derive_scope(&Pointer::at_root(), &type_id),
+            ScopeLayer::Aggregated
+        );
     }
 
     #[test]
@@ -130,13 +141,18 @@ mod tests {
 
         let type_id = TypeId::of::<Cohort>();
 
-        assert_eq!(scope_map.derive_scope("", &type_id), ScopeLayer::Aggregated);
+        assert_eq!(
+            scope_map.derive_scope(&Pointer::at_root(), &type_id),
+            ScopeLayer::Aggregated
+        );
 
         let type_id = TypeId::of::<Phenopacket>();
 
         assert_eq!(
             scope_map.derive_scope(
-                &format!("/{}", Phenopacket::partitioning_fields().first().unwrap()),
+                &Pointer::from(
+                    format!("/{}", Phenopacket::partitioning_fields().first().unwrap()).as_str()
+                ),
                 &type_id
             ),
             ScopeLayer::Individual
@@ -149,15 +165,21 @@ mod tests {
 
         let type_id = TypeId::of::<Cohort>();
 
-        assert_eq!(scope_map.derive_scope("", &type_id), ScopeLayer::Aggregated);
+        assert_eq!(
+            scope_map.derive_scope(&Pointer::at_root(), &type_id),
+            ScopeLayer::Aggregated
+        );
 
         let type_id = TypeId::of::<Resource>();
 
         assert_eq!(
             scope_map.derive_scope(
-                &format!(
-                    "/{}/metaData/resources",
-                    Phenopacket::partitioning_fields().first().unwrap()
+                &Pointer::from(
+                    format!(
+                        "/{}/metaData/resources",
+                        Phenopacket::partitioning_fields().first().unwrap()
+                    )
+                    .as_str()
                 ),
                 &type_id
             ),
@@ -165,7 +187,7 @@ mod tests {
         );
 
         assert_eq!(
-            scope_map.derive_scope("/resources", &type_id),
+            scope_map.derive_scope(&Pointer::from("/resources"), &type_id),
             ScopeLayer::Aggregated
         );
     }

@@ -20,7 +20,8 @@ use phenopackets::schema::v2::Phenopacket;
 use prost::Message;
 use serde_json::Value;
 
-use crate::tree::btree_node_repository::BTreeNodeRepository;
+use crate::tree::btree_node_repository::{BTreeNodeRepository, BTreeNodeRepositoryBuilder};
+use crate::tree::traits::NodeRepositoryBuilder;
 use std::fs;
 use std::path::PathBuf;
 
@@ -70,13 +71,7 @@ impl Lint<str> for Phenolint {
 
         let root_node = DynamicNode::new(&values, &spans, Pointer::at_root());
 
-        let apt = AbstractTreeTraversal::new(values, spans);
-        let mut node_repo = BTreeNodeRepository::new();
-
-        for node in apt.traverse() {
-            self.node_materializer
-                .materialize_nodes(&node, &mut node_repo)
-        }
+        let node_repo = BTreeNodeRepositoryBuilder::build(values, spans);
 
         let mut findings = vec![];
         for rule in self.rule_registry.rules() {
