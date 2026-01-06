@@ -1,6 +1,5 @@
 use crate::parsing::traits::ParsableNode;
 use crate::tree::node::DynamicNode;
-use crate::tree::pointer::Pointer;
 use crate::tree::traits::LocatableNode;
 use phenopackets::schema::v2::core::{
     Diagnosis, Disease, OntologyClass, PhenotypicFeature, Resource, VitalStatus,

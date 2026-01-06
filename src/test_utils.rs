@@ -3,6 +3,8 @@ use once_cell::sync::Lazy;
 use ontolius::io::OntologyLoaderBuilder;
 use ontolius::ontology::csr::FullCsrOntology;
 use phenopackets::schema::v2::Phenopacket;
+use serde_json::Value;
+use std::fs;
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -15,6 +17,12 @@ pub(crate) fn assets_dir() -> PathBuf {
 pub(crate) fn json_phenopacket_dir() -> PathBuf {
     assets_dir().join("phenopacket.json")
 }
+
+pub(crate) fn test_phenopacket_as_value() -> Value {
+    let phenostr = fs::read_to_string(json_phenopacket_dir()).expect("Could not read test file");
+    serde_json::from_str(&phenostr).expect("Invalid JSON in test file")
+}
+#[allow(dead_code)]
 pub(crate) fn test_phenopacket() -> Phenopacket {
     let pp_dir = json_phenopacket_dir();
     serde_json::from_reader(std::fs::File::open(pp_dir).unwrap()).unwrap()

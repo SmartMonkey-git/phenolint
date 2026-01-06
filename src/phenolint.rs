@@ -3,7 +3,6 @@ use crate::diagnostics::enums::PhenopacketData;
 use crate::diagnostics::{LintFinding, LintReport};
 use crate::enums::InputTypes;
 use crate::error::{InitError, LintResult, LinterError, ParsingError, validation_error_to_string};
-use crate::materializer::NodeMaterializer;
 use crate::parsing::phenopacket_parser::PhenopacketParser;
 use crate::patches::patch_engine::PatchEngine;
 use crate::patches::patch_registry::PatchRegistry;
@@ -28,7 +27,6 @@ pub struct Phenolint {
     rule_registry: RuleRegistry,
     patch_registry: PatchRegistry,
     report_registry: ReportRegistry,
-    node_materializer: NodeMaterializer,
     patch_engine: PatchEngine,
     validator: PhenopacketSchemaValidator,
 }
@@ -45,7 +43,6 @@ impl Phenolint {
             rule_registry,
             report_registry,
             patch_registry,
-            node_materializer: NodeMaterializer,
             patch_engine: PatchEngine,
             validator: PhenopacketSchemaValidator::default(),
         }
