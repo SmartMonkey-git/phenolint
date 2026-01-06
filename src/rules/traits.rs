@@ -1,14 +1,14 @@
 use crate::LinterContext;
 use crate::diagnostics::LintViolation;
 use crate::error::FromContextError;
-use crate::tree::btree_node_repository::BTreeNodeRepository;
+use crate::tree::flat_node_repository::FlatNodeRepository;
 use crate::tree::querying::traits::QueryStrategy;
 
 pub trait LintRule: Send + Sync {
     fn rule_id(&self) -> &str;
 
     // Needs to be concrete type, because NodeRepository trait is not dyn compatible :(
-    fn check_erased(&self, board: &BTreeNodeRepository) -> Vec<LintViolation>;
+    fn check_erased(&self, board: &FlatNodeRepository) -> Vec<LintViolation>;
 }
 
 pub trait RuleMetaData {
@@ -35,7 +35,7 @@ where
         self.rule_id()
     }
 
-    fn check_erased(&self, board: &BTreeNodeRepository) -> Vec<LintViolation> {
+    fn check_erased(&self, board: &FlatNodeRepository) -> Vec<LintViolation> {
         let data = <Self as RuleCheck>::Query::query(board);
 
         self.check(data)

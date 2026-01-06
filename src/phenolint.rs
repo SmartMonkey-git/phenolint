@@ -12,7 +12,6 @@ use crate::report::report_registry::ReportRegistry;
 use crate::rules::rule_registry::{RuleRegistry, check_duplicate_rule_ids};
 use crate::schema_validation::validator::PhenopacketSchemaValidator;
 use crate::traits::Lint;
-use crate::tree::abstract_pheno_tree::AbstractTreeTraversal;
 use crate::tree::node::DynamicNode;
 use crate::tree::pointer::Pointer;
 use log::{error, warn};
@@ -20,7 +19,7 @@ use phenopackets::schema::v2::Phenopacket;
 use prost::Message;
 use serde_json::Value;
 
-use crate::tree::btree_node_repository::{BTreeNodeRepository, BTreeNodeRepositoryBuilder};
+use crate::tree::flat_node_repository::FlatNodeRepositoryBuilder;
 use crate::tree::traits::NodeRepositoryBuilder;
 use std::fs;
 use std::path::PathBuf;
@@ -71,7 +70,7 @@ impl Lint<str> for Phenolint {
 
         let root_node = DynamicNode::new(&values, &spans, Pointer::at_root());
 
-        let node_repo = BTreeNodeRepositoryBuilder::build(values, spans);
+        let node_repo = FlatNodeRepositoryBuilder::build(values, spans);
 
         let mut findings = vec![];
         for rule in self.rule_registry.rules() {

@@ -19,13 +19,13 @@ struct NodeEntry {
     inner: Box<dyn Any>,
 }
 
-pub struct BTreeNodeRepository {
+pub struct FlatNodeRepository {
     node_store: BTreeMap<String, NodeEntry>,
     span_store: BTreeMap<String, Range<usize>>,
     scope_mappings: ScopeMappings,
 }
 
-impl BTreeNodeRepository {
+impl FlatNodeRepository {
     pub(crate) fn new() -> Self {
         Self {
             node_store: BTreeMap::new(),
@@ -64,7 +64,7 @@ impl BTreeNodeRepository {
     }
 }
 
-impl NodeRepository for BTreeNodeRepository {
+impl NodeRepository for FlatNodeRepository {
     fn insert<NodeType: 'static>(
         &mut self,
         node: MaterializedNode<NodeType>,
@@ -162,11 +162,11 @@ impl NodeRepository for BTreeNodeRepository {
     }
 }
 
-pub(crate) struct BTreeNodeRepositoryBuilder;
+pub(crate) struct FlatNodeRepositoryBuilder;
 
-impl NodeRepositoryBuilder<BTreeNodeRepository> for BTreeNodeRepositoryBuilder {
-    fn build(tree: Value, spans: HashMap<Pointer, Range<usize>>) -> BTreeNodeRepository {
-        let mut repo = BTreeNodeRepository::new();
+impl NodeRepositoryBuilder<FlatNodeRepository> for FlatNodeRepositoryBuilder {
+    fn build(tree: Value, spans: HashMap<Pointer, Range<usize>>) -> FlatNodeRepository {
+        let mut repo = FlatNodeRepository::new();
         let mut materialized = NodeMaterializer;
         for node in AbstractTreeTraversal::new(tree, spans).traverse() {
             materialized.materialize_nodes(&node, &mut repo);
@@ -178,10 +178,8 @@ impl NodeRepositoryBuilder<BTreeNodeRepository> for BTreeNodeRepositoryBuilder {
 #[cfg(test)]
 mod test_builder {
     use super::*;
-    use crate::test_utils::test_phenopacket;
     use phenopackets::schema::v2::Phenopacket;
     use phenopackets::schema::v2::core::{MetaData, Resource};
-    use std::thread::Scope;
 
     #[test]
     fn test_builder_single_phenopacket() {
@@ -206,7 +204,7 @@ mod test_builder {
         };
 
         let values = serde_json::to_value(&test_pp).unwrap();
-        let repo = BTreeNodeRepositoryBuilder::build(values, HashMap::new());
+        let repo = FlatNodeRepositoryBuilder::build(values, HashMap::new());
 
         assert_eq!(repo.node_store.len(), 2);
 
@@ -268,16 +266,16 @@ mod tests {
             }),
         }
     }
-    fn cohort_repository() -> BTreeNodeRepository {
+    fn cohort_repository() -> FlatNodeRepository {
         let cohort = generate_test_cohort();
         let value = serde_json::to_value(&cohort).unwrap();
 
-        BTreeNodeRepositoryBuilder::build(value, HashMap::new())
+        FlatNodeRepositoryBuilder::build(value, HashMap::new())
     }
 
     #[test]
     fn test_insert() {
-        let mut repo = BTreeNodeRepository::new();
+        let mut repo = FlatNodeRepository::new();
 
         let node_pointer = Pointer::from("phenotypicFeatures/0/type");
         let mut spans = BTreeMap::new();
