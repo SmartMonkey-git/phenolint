@@ -10,7 +10,8 @@ use crate::report::traits::{CompileReport, RegisterableReport, ReportFromContext
 use crate::rules::rule_registration::RuleRegistration;
 use crate::rules::traits::RuleMetaData;
 use crate::rules::traits::{LintRule, RuleCheck, RuleFromContext};
-use crate::tree::node_repository::List;
+use crate::tree::querying::presentation::Flattened;
+use crate::tree::querying::queries::convenience::All;
 use crate::tree::traits::{LocatableNode, Node};
 use phenolint_macros::{register_report, register_rule};
 use phenopackets::schema::v2::core::OntologyClass;
@@ -38,9 +39,9 @@ impl RuleFromContext for CurieFormatRule {
 }
 
 impl RuleCheck for CurieFormatRule {
-    type Data<'a> = List<'a, OntologyClass>;
+    type Query = All<OntologyClass>;
 
-    fn check(&self, data: Self::Data<'_>) -> Vec<LintViolation> {
+    fn check(&self, data: Flattened<OntologyClass>) -> Vec<LintViolation> {
         let mut violations = vec![];
 
         for node in data.0.iter() {

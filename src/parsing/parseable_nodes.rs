@@ -1,11 +1,25 @@
 use crate::parsing::traits::ParsableNode;
 use crate::tree::node::DynamicNode;
 use crate::tree::traits::LocatableNode;
-use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{
     Diagnosis, Disease, OntologyClass, PhenotypicFeature, Resource, VitalStatus,
 };
+use phenopackets::schema::v2::{Cohort, Phenopacket};
 use serde_json::Value;
+
+impl ParsableNode<Cohort> for Cohort {
+    fn parse(node: &DynamicNode) -> Option<Cohort> {
+        if let Value::Object(map) = &node.inner
+            && map.contains_key("id")
+            && map.contains_key("members")
+            && let Ok(cohort) = serde_json::from_value::<Cohort>(node.inner.clone())
+        {
+            Some(cohort)
+        } else {
+            None
+        }
+    }
+}
 
 impl ParsableNode<OntologyClass> for OntologyClass {
     fn parse(node: &DynamicNode) -> Option<OntologyClass> {
@@ -41,7 +55,6 @@ impl ParsableNode<Phenopacket> for Phenopacket {
         if let Value::Object(map) = &node.inner
             && map.contains_key("id")
             && map.contains_key("metaData")
-            && node.pointer().is_root()
             && let Ok(pp) = serde_json::from_value::<Phenopacket>(node.inner.clone())
         {
             Some(pp)
@@ -57,6 +70,9 @@ impl ParsableNode<Resource> for Resource {
             && map.contains_key("id")
             && map.contains_key("name")
             && map.contains_key("url")
+            && map.contains_key("namespacePrefix")
+            && map.contains_key("version")
+            && map.contains_key("iriPrefix")
             && let Ok(resource) = serde_json::from_value::<Resource>(node.inner.clone())
         {
             Some(resource)

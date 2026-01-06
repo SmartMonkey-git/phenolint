@@ -38,15 +38,16 @@ impl LocatableNode for DynamicNode {
     }
 }
 
-pub struct MaterializedNode<T> {
-    pub inner: T,
+#[derive(Clone, Debug)]
+pub struct MaterializedNode<NodeType> {
+    pub inner: NodeType,
     spans: HashMap<Pointer, Range<usize>>,
     pointer: Pointer,
 }
 
-impl<T> MaterializedNode<T> {
+impl<NodeType> MaterializedNode<NodeType> {
     pub fn new(
-        materialized_node: T,
+        materialized_node: NodeType,
         spans: HashMap<Pointer, Range<usize>>,
         pointer: Pointer,
     ) -> Self {
@@ -57,16 +58,21 @@ impl<T> MaterializedNode<T> {
         }
     }
 
-    pub(crate) fn from_dynamic(materialized: T, dyn_node: &DynamicNode) -> Self {
+    pub(crate) fn from_dynamic(materialized: NodeType, dyn_node: &DynamicNode) -> Self {
         Self::new(
             materialized,
             dyn_node.spans.clone(),
             dyn_node.pointer().clone(),
         )
     }
+
+    #[allow(dead_code)]
+    pub(crate) fn spans(&self) -> &HashMap<Pointer, Range<usize>> {
+        &self.spans
+    }
 }
 
-impl<T: Serialize> RetrievableNode for MaterializedNode<T> {
+impl<NodeType: Serialize> RetrievableNode for MaterializedNode<NodeType> {
     fn value_at(&self, ptr: &Pointer) -> Option<Cow<'_, Value>> {
         let node_opt = serde_json::to_value(&self.inner).ok()?;
         let value = node_opt.pointer(ptr.position())?.clone();
@@ -74,7 +80,7 @@ impl<T: Serialize> RetrievableNode for MaterializedNode<T> {
     }
 }
 
-impl<T> LocatableNode for MaterializedNode<T> {
+impl<NodeType> LocatableNode for MaterializedNode<NodeType> {
     fn span_at(&self, ptr: &Pointer) -> Option<&Range<usize>> {
         self.spans.get(ptr)
     }

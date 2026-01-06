@@ -1,18 +1,19 @@
 use crate::parsing::traits::ParsableNode;
 use crate::tree::node::{DynamicNode, MaterializedNode};
-use crate::tree::node_repository::NodeRepository;
-use crate::tree::traits::LocatableNode;
+use crate::tree::traits::{LocatableNode, NodeRepository};
 use log::error;
-use phenopackets::schema::v2::Phenopacket;
 use phenopackets::schema::v2::core::{
     Diagnosis, Disease, OntologyClass, PhenotypicFeature, Resource, VitalStatus,
 };
+use phenopackets::schema::v2::{Cohort, Phenopacket};
 
 pub(crate) struct NodeMaterializer;
 
 impl NodeMaterializer {
-    pub fn materialize_nodes(&mut self, dyn_node: &DynamicNode, repo: &mut NodeRepository) {
-        if let Some(oc) = OntologyClass::parse(dyn_node) {
+    pub fn materialize_nodes(&mut self, dyn_node: &DynamicNode, repo: &mut impl NodeRepository) {
+        if let Some(cohort) = Cohort::parse(dyn_node) {
+            Self::push_to_repo(cohort, dyn_node, repo);
+        } else if let Some(oc) = OntologyClass::parse(dyn_node) {
             Self::push_to_repo(oc, dyn_node, repo);
         } else if let Some(pf) = PhenotypicFeature::parse(dyn_node) {
             Self::push_to_repo(pf, dyn_node, repo);
@@ -31,12 +32,13 @@ impl NodeMaterializer {
         };
     }
 
-    fn push_to_repo<T: 'static>(
-        materialized: T,
+    fn push_to_repo<NodeType: 'static + Clone>(
+        materialized: NodeType,
         dyn_node: &DynamicNode,
-        board: &mut NodeRepository,
+        board: &mut impl NodeRepository,
     ) {
         let node = MaterializedNode::from_dynamic(materialized, dyn_node);
-        board.insert(node);
+        // TODO: Error throwing
+        board.insert(node).expect("Unable to insert node");
     }
 }

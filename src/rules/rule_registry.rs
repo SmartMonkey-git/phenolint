@@ -80,7 +80,8 @@ mod tests {
     use crate::rules::traits::RuleCheck;
     use crate::rules::traits::RuleFromContext;
     use crate::rules::traits::RuleMetaData;
-    use crate::tree::node_repository::List;
+    use crate::tree::querying::presentation::Flattened;
+    use crate::tree::querying::queries::convenience::All;
     use phenolint_macros::register_rule;
     use phenopackets::schema::v2::core::OntologyClass;
     use rstest::rstest;
@@ -100,9 +101,9 @@ mod tests {
         }
     }
     impl RuleCheck for TestRule {
-        type Data<'a> = List<'a, OntologyClass>;
+        type Query = All<OntologyClass>;
 
-        fn check(&self, _: Self::Data<'_>) -> Vec<LintViolation> {
+        fn check(&self, _: Flattened<OntologyClass>) -> Vec<LintViolation> {
             todo!()
         }
     }

@@ -3,7 +3,6 @@ use crate::diagnostics::enums::PhenopacketData;
 use crate::diagnostics::{LintFinding, LintReport};
 use crate::enums::InputTypes;
 use crate::error::{InitError, LintResult, LinterError, ParsingError, validation_error_to_string};
-use crate::materializer::NodeMaterializer;
 use crate::parsing::phenopacket_parser::PhenopacketParser;
 use crate::patches::patch_engine::PatchEngine;
 use crate::patches::patch_registry::PatchRegistry;
@@ -12,15 +11,15 @@ use crate::report::report_registry::ReportRegistry;
 use crate::rules::rule_registry::{RuleRegistry, check_duplicate_rule_ids};
 use crate::schema_validation::validator::PhenopacketSchemaValidator;
 use crate::traits::Lint;
-use crate::tree::abstract_pheno_tree::AbstractTreeTraversal;
 use crate::tree::node::DynamicNode;
-use crate::tree::node_repository::NodeRepository;
 use crate::tree::pointer::Pointer;
 use log::{error, warn};
 use phenopackets::schema::v2::Phenopacket;
 use prost::Message;
 use serde_json::Value;
 
+use crate::tree::flat_node_repository::FlatNodeRepositoryBuilder;
+use crate::tree::traits::NodeRepositoryBuilder;
 use std::fs;
 use std::path::PathBuf;
 
@@ -28,7 +27,6 @@ pub struct Phenolint {
     rule_registry: RuleRegistry,
     patch_registry: PatchRegistry,
     report_registry: ReportRegistry,
-    node_materializer: NodeMaterializer,
     patch_engine: PatchEngine,
     validator: PhenopacketSchemaValidator,
 }
@@ -45,7 +43,6 @@ impl Phenolint {
             rule_registry,
             report_registry,
             patch_registry,
-            node_materializer: NodeMaterializer,
             patch_engine: PatchEngine,
             validator: PhenopacketSchemaValidator::default(),
         }
@@ -70,13 +67,7 @@ impl Lint<str> for Phenolint {
 
         let root_node = DynamicNode::new(&values, &spans, Pointer::at_root());
 
-        let apt = AbstractTreeTraversal::new(values, spans);
-        let mut node_repo: NodeRepository = NodeRepository::new();
-
-        for node in apt.traverse() {
-            self.node_materializer
-                .materialize_nodes(&node, &mut node_repo)
-        }
+        let node_repo = FlatNodeRepositoryBuilder::build(values, spans);
 
         let mut findings = vec![];
         for rule in self.rule_registry.rules() {

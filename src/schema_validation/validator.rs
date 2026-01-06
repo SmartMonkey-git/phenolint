@@ -131,10 +131,9 @@ impl Default for PhenopacketSchemaValidator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::json_phenopacket_dir;
+    use crate::test_utils::test_phenopacket_as_value;
     use rstest::{fixture, rstest};
     use serde_json::json;
-    use std::fs;
 
     #[fixture]
     #[once]
@@ -144,9 +143,7 @@ mod tests {
 
     #[fixture]
     fn base_phenopacket() -> Value {
-        let phenostr =
-            fs::read_to_string(json_phenopacket_dir()).expect("Could not read test file");
-        serde_json::from_str(&phenostr).expect("Invalid JSON in test file")
+        test_phenopacket_as_value()
     }
 
     #[rstest]
@@ -231,16 +228,14 @@ mod tests {
     }
 
     #[rstest]
-    fn test_validator_thread_safety() {
+    fn test_validator_thread_safety(base_phenopacket: Value) {
         let validator = std::sync::Arc::new(PhenopacketSchemaValidator::default());
-        let phenostr = fs::read_to_string(json_phenopacket_dir()).unwrap();
-        let pp: Value = serde_json::from_str(&phenostr).unwrap();
 
         let mut handles = vec![];
 
         for _ in 0..5 {
             let v_clone = validator.clone();
-            let pp_clone = pp.clone();
+            let pp_clone = base_phenopacket.clone();
             handles.push(std::thread::spawn(move || {
                 let res = v_clone.validate_phenopacket(&pp_clone);
                 assert!(res.is_ok());
