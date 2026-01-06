@@ -223,7 +223,7 @@ mod test_builder {
 }
 
 #[cfg(test)]
-mod tests {
+mod tests_repository {
     use super::*;
     use crate::tree::pointer::Pointer;
     use crate::tree::traits::NodeRepositoryBuilder;
@@ -266,11 +266,72 @@ mod tests {
             }),
         }
     }
-    fn cohort_repository() -> FlatNodeRepository {
+
+    struct NodeRepoUnitTester;
+
+    impl NodeRepoUnitTester {
+        pub fn test<R, B>(cohort: Cohort)
+        where
+            R: NodeRepository,
+            B: NodeRepositoryBuilder<R>,
+        {
+            let node_repo: R = Self::build_test_repo::<R, B>(&cohort);
+            Self::test_get_nodes_for_scope_per_top_level_element(node_repo, &cohort);
+        }
+
+        fn build_test_repo<R, B>(cohort: &Cohort) -> R
+        where
+            R: NodeRepository,
+            B: NodeRepositoryBuilder<R>,
+        {
+            let value = serde_json::to_value(cohort).unwrap();
+            B::build(value, HashMap::new())
+        }
+
+        fn test_get_nodes_for_scope_per_top_level_element<R>(repo: R, cohort: &Cohort)
+        where
+            R: NodeRepository,
+        {
+            let retrieved = repo
+                .get_nodes_for_scope_per_top_level_element::<Resource>(ScopeLayer::Individual)
+                .unwrap();
+
+            for (member, nodes) in cohort.members.iter().zip(&retrieved) {
+                let resources = &member.meta_data.as_ref().unwrap().resources;
+                for (resource, node) in resources.iter().zip(nodes) {
+                    assert_eq!(&node.inner, resource);
+                }
+            }
+        }
+
+        fn test_get_all_nodes<R>(repo: R, cohort: &Cohort)
+        where
+            R: NodeRepository,
+        {
+            let retrieved = repo.get_all::<Resource>().unwrap();
+
+            let mut n_resources = cohort.meta_data.clone().unwrap().resources.len();
+
+            for pp in cohort.members.clone() {
+                n_resources += pp.meta_data.unwrap().resources.len()
+            }
+
+            assert_eq!(retrieved.len(), n_resources);
+        }
+    }
+
+    fn build_test_repo() -> FlatNodeRepository {
         let cohort = generate_test_cohort();
         let value = serde_json::to_value(&cohort).unwrap();
 
         FlatNodeRepositoryBuilder::build(value, HashMap::new())
+    }
+
+    #[test]
+    fn test_node_repository() {
+        let cohort = generate_test_cohort();
+
+        NodeRepoUnitTester::test::<FlatNodeRepository, FlatNodeRepositoryBuilder>(cohort);
     }
 
     #[test]
@@ -300,30 +361,5 @@ mod tests {
         assert_eq!(node_entry.type_id, TypeId::of::<OntologyClass>());
         assert_eq!(node_entry.scope, ScopeLayer::Individual);
         assert!(!node_entry.is_scope_boundary);
-    }
-
-    #[test]
-    fn test_get_nodes_for_scope_per_top_level_element() {
-        let repo = cohort_repository();
-        let retrieved = repo
-            .get_nodes_for_scope_per_top_level_element::<OntologyClass>(ScopeLayer::Individual)
-            .unwrap();
-
-        assert_eq!(retrieved.len(), 2);
-    }
-
-    #[test]
-    fn test_get_all_nodes() {
-        let repo = cohort_repository();
-        let test_cohort = generate_test_cohort();
-        let retrieved = repo.get_all::<Resource>().unwrap();
-
-        let mut n_resources = test_cohort.meta_data.unwrap().resources.len();
-
-        for pp in test_cohort.members {
-            n_resources += pp.meta_data.unwrap().resources.len()
-        }
-
-        assert_eq!(retrieved.len(), n_resources);
     }
 }

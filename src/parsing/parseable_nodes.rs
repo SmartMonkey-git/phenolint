@@ -75,7 +75,6 @@ impl ParsableNode<Resource> for Resource {
             && map.contains_key("iriPrefix")
             && let Ok(resource) = serde_json::from_value::<Resource>(node.inner.clone())
         {
-            print!("Parsed Resource");
             Some(resource)
         } else {
             None
