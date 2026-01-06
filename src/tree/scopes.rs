@@ -9,6 +9,7 @@ use std::collections::HashMap;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ScopeLayer {
     Individual = 0,
+    // TODO: Find better name than Aggregated
     Aggregated = 1,
 }
 

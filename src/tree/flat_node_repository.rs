@@ -258,7 +258,7 @@ mod tests_repository {
                     url: "www.example.com".to_string(),
                     version: "2020-10-10".to_string(),
                     namespace_prefix: "hp".to_string(),
-                    iri_prefix: "".to_string(),
+                    iri_prefix: "hp".to_string(),
                 }],
                 updates: vec![],
                 phenopacket_schema_version: "2".to_string(),
@@ -276,7 +276,9 @@ mod tests_repository {
             B: NodeRepositoryBuilder<R>,
         {
             let node_repo: R = Self::build_test_repo::<R, B>(&cohort);
-            Self::test_get_nodes_for_scope_per_top_level_element(node_repo, &cohort);
+            Self::test_get_nodes_for_scope_per_top_level_element(&node_repo, &cohort);
+            Self::test_get_all_nodes(&node_repo, &cohort);
+            Self::test_get_nodes_in_scope(&node_repo, &cohort);
         }
 
         fn build_test_repo<R, B>(cohort: &Cohort) -> R
@@ -288,7 +290,47 @@ mod tests_repository {
             B::build(value, HashMap::new())
         }
 
-        fn test_get_nodes_for_scope_per_top_level_element<R>(repo: R, cohort: &Cohort)
+        fn test_get_nodes_in_scope<R>(repo: &R, cohort: &Cohort)
+        where
+            R: NodeRepository,
+        {
+            let cohort_level_resources = repo
+                .get_nodes_in_scope::<Resource>(ScopeLayer::Aggregated)
+                .unwrap();
+
+            for node_resource in cohort_level_resources.iter() {
+                assert!(
+                    cohort
+                        .meta_data
+                        .clone()
+                        .unwrap()
+                        .resources
+                        .contains(&node_resource.inner)
+                );
+            }
+            assert_eq!(
+                cohort.meta_data.clone().unwrap().resources.len(),
+                cohort_level_resources.len()
+            );
+
+            let pp_level_resources = repo
+                .get_nodes_in_scope::<Resource>(ScopeLayer::Individual)
+                .unwrap();
+
+            let all_pp_resources: Vec<Resource> = cohort
+                .members
+                .clone()
+                .iter()
+                .flat_map(|pp| pp.meta_data.clone().unwrap().resources)
+                .collect();
+
+            for node_resource in pp_level_resources.iter() {
+                assert!(all_pp_resources.contains(&node_resource.inner));
+            }
+            assert_eq!(pp_level_resources.len(), all_pp_resources.len());
+        }
+
+        fn test_get_nodes_for_scope_per_top_level_element<R>(repo: &R, cohort: &Cohort)
         where
             R: NodeRepository,
         {
@@ -304,33 +346,30 @@ mod tests_repository {
             }
         }
 
-        fn test_get_all_nodes<R>(repo: R, cohort: &Cohort)
+        fn test_get_all_nodes<R>(repo: &R, cohort: &Cohort)
         where
             R: NodeRepository,
         {
             let retrieved = repo.get_all::<Resource>().unwrap();
 
             let mut n_resources = cohort.meta_data.clone().unwrap().resources.len();
-
             for pp in cohort.members.clone() {
                 n_resources += pp.meta_data.unwrap().resources.len()
             }
 
-            assert_eq!(retrieved.len(), n_resources);
+            assert_eq!(
+                retrieved.len(),
+                n_resources,
+                "Got {} resources from repo, but expected {}",
+                retrieved.len(),
+                n_resources
+            );
         }
-    }
-
-    fn build_test_repo() -> FlatNodeRepository {
-        let cohort = generate_test_cohort();
-        let value = serde_json::to_value(&cohort).unwrap();
-
-        FlatNodeRepositoryBuilder::build(value, HashMap::new())
     }
 
     #[test]
     fn test_node_repository() {
         let cohort = generate_test_cohort();
-
         NodeRepoUnitTester::test::<FlatNodeRepository, FlatNodeRepositoryBuilder>(cohort);
     }
 
